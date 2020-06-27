@@ -1,0 +1,64 @@
+---
+title: "README"
+author: "Zachary McCaw"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    keep_md: TRUE
+--- 
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+# Description
+
+This package provides functions for inference on the difference and ratio in the areas under mean cumulative count curves comparing two treatment arms. 
+
+# Installation
+
+```{R, eval=FALSE}
+devtools::install_github(repo = 'zrmacc/MCC')
+```
+
+# Examples
+
+Synthetic example data in the format expected by this package may be loaded via:
+
+```{R}
+library(MCC)
+data(mcc_data)
+head(mcc_data)
+```
+
+Here: 
+
+* `idx` is the subject index. 
+* `time` is the event time. 
+* `status` is coded 1 for the recurrent event, and 0 otherwise.
+* `arm` is the treatment arm, coded as 1 for treatment, 0 for reference. 
+
+For analyses of other data sets, arm and status should have the same coding. 
+
+## Difference and Ratio of AUCs
+
+To find a confidence interval and p-vaue for the difference and ratio in areas under the mean cumulative count curve at time $\tau = 60$: 
+```{r}
+# Confidence interval calculation.
+ci <- AUCCI(
+  time = mcc_data$time, 
+  status = mcc_data$status, 
+  arm = mcc_data$arm, 
+  idx = mcc_data$idx,
+  tau = 60)
+show(ci)
+
+# P-value calculation. 
+pval <- AUCP(
+  time = mcc_data$time, 
+  status = mcc_data$status, 
+  arm = mcc_data$arm, 
+  idx = mcc_data$idx,
+  tau = 60)
+show(pval)
+```
