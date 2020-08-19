@@ -44,21 +44,16 @@ For analyses of other data sets, arm and status should have the same coding.
 
 To find a confidence interval and p-vaue for the difference and ratio in areas under the mean cumulative count curve at time $\tau = 60$: 
 ```{r}
-# Confidence interval calculation.
-ci <- AUCCI(
-  time = mcc_data$time, 
-  status = mcc_data$status, 
-  arm = mcc_data$arm, 
+set.seed(100)
+results <- AUCumCountCurve(
+  time = mcc_data$time,
+  status = mcc_data$status,
+  arm = mcc_data$arm,
   idx = mcc_data$idx,
-  tau = 60)
-show(ci)
+  tau = 60,
+  reps = 2000,
+  alpha = 0.05
+)
+show(results)
 
-# P-value calculation. 
-pval <- AUCP(
-  time = mcc_data$time, 
-  status = mcc_data$status, 
-  arm = mcc_data$arm, 
-  idx = mcc_data$idx,
-  tau = 60)
-show(pval)
 ```

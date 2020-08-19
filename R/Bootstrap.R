@@ -1,7 +1,7 @@
 #' Generate Bootstrap Data.frame.
 #'
 #' Bootstrap observations grouped by an index. The index `idx` is relabeled
-#' in the returned data.frame so that resampled group has a distinct value.  
+#' in the returned data.frame so that each resampled group has a distinct value.  
 #'
 #' @param data Data.frame.
 #' @param idx_offset Index offset.
@@ -19,9 +19,11 @@ BootData <- function(data, idx_offset = 0) {
   out <- split_data[key]
 
   # Relabel ID.
-  for (i in 1:n) {
-    out[[i]]$idx <- i + idx_offset
-  }
+  out <- lapply(1:n, function(i) {
+    sub <- out[[i]]
+    sub$idx <- i + idx_offset 
+    return(sub)
+  })
 
   # Output data.frame.
   out <- do.call(rbind, out)
@@ -39,23 +41,17 @@ BootData <- function(data, idx_offset = 0) {
 #' @importFrom stats rbinom
 #' @return Bootstrapped data.frame.
 
-PermuteData <- function(data) {
-  ids <- sort(unique(data$idx))
-  n <- length(ids)
-
-  # Split data by ID.
-  split_data <- split(data, data$idx)
-
-  # Relabel ID.
-  for (i in 1:n) {
-    flip <- rbinom(n = 1, size = 1, prob = 0.5)
-    if (flip == 1) {
-      split_data[[i]]$arm <- 1 - split_data[[i]]$arm
-    }
-  }
-
-  # Output data.frame.
-  out <- do.call(rbind, split_data)
-  rownames(out) <- NULL
-  return(out)
+PermData <- function(data) {
+  obs_per_subj <- table(data$idx)
+  subj <- length(obs_per_subj)
+  
+  # Proportion of subjects in Arm-1. 
+  trt_prop <- sum(tapply(data$arm, data$idx, max)) / subj
+  
+  # Randomize treatment assignment.
+  flip <- rbinom(n = subj, size = 1, prob = trt_prop)
+  flip <- rep(x = flip, times = obs_per_subj)
+  
+  data$arm <- flip
+  return(data)
 }

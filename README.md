@@ -1,3 +1,12 @@
+---
+title: "README"
+author: "Zachary McCaw"
+date: "2020-08-19"
+output: 
+  html_document: 
+    keep_md: TRUE
+--- 
+
 
 
 # Description
@@ -46,35 +55,24 @@ For analyses of other data sets, arm and status should have the same coding.
 To find a confidence interval and p-vaue for the difference and ratio in areas under the mean cumulative count curve at time $\tau = 60$: 
 
 ```r
-# Confidence interval calculation.
-ci <- AUCCI(
-  time = mcc_data$time, 
-  status = mcc_data$status, 
-  arm = mcc_data$arm, 
+set.seed(100)
+results <- AUCumCountCurve(
+  time = mcc_data$time,
+  status = mcc_data$status,
+  arm = mcc_data$arm,
   idx = mcc_data$idx,
-  tau = 60)
-show(ci)
+  tau = 60,
+  reps = 2000,
+  alpha = 0.05
+)
+show(results)
 ```
 
 ```
-##   Time     Arm0     Arm1 Contrast    Estimate          L           U
-## 1   60 115.3972 64.91554    A1-A0 -50.4816819 -76.894785 -20.9601586
-## 2   60 115.3972 64.91554    A1/A0   0.5625399   0.396426   0.7943053
-```
-
-```r
-# P-value calculation. 
-pval <- AUCP(
-  time = mcc_data$time, 
-  status = mcc_data$status, 
-  arm = mcc_data$arm, 
-  idx = mcc_data$idx,
-  tau = 60)
-show(pval)
-```
-
-```
-##   Time     Arm0     Arm1 Contrast    Estimate           P
-## 1   60 115.3972 64.91554    A1-A0 -50.4816819 0.002998501
-## 2   60 115.3972 64.91554    A1/A0   0.5625399 0.003498251
+##   Time     Arm0     Arm1 Contrast    Estimate           L           U
+## 1   60 115.3972 64.91554    A1-A0 -50.4816819 -78.8839927 -21.4368074
+## 2   60 115.3972 64.91554    A1/A0   0.5625399   0.3863428   0.7844707
+##              P
+## 1 0.0014992504
+## 2 0.0009995002
 ```

@@ -11,7 +11,7 @@
 
 <meta name="author" content="Zachary McCaw" />
 
-<meta name="date" content="2020-06-27" />
+<meta name="date" content="2020-08-19" />
 
 <title>README</title>
 
@@ -365,7 +365,7 @@ summary {
 
 <h1 class="title toc-ignore">README</h1>
 <h4 class="author">Zachary McCaw</h4>
-<h4 class="date">2020-06-27</h4>
+<h4 class="date">2020-08-19</h4>
 
 </div>
 
@@ -376,7 +376,7 @@ summary {
 </div>
 <div id="installation" class="section level1">
 <h1>Installation</h1>
-<pre class="r"><code>devtools::install_github(repo = 'zrmacc/MCC')</code></pre>
+<pre class="r"><code>devtools::install_github(repo = &#39;zrmacc/MCC&#39;)</code></pre>
 </div>
 <div id="examples" class="section level1">
 <h1>Examples</h1>
@@ -402,28 +402,23 @@ head(mcc_data)</code></pre>
 <div id="difference-and-ratio-of-aucs" class="section level2">
 <h2>Difference and Ratio of AUCs</h2>
 <p>To find a confidence interval and p-vaue for the difference and ratio in areas under the mean cumulative count curve at time <span class="math inline">\(\tau = 60\)</span>:</p>
-<pre class="r"><code># Confidence interval calculation.
-ci &lt;- AUCCI(
-  time = mcc_data$time, 
-  status = mcc_data$status, 
-  arm = mcc_data$arm, 
+<pre class="r"><code>set.seed(100)
+results &lt;- AUCumCountCurve(
+  time = mcc_data$time,
+  status = mcc_data$status,
+  arm = mcc_data$arm,
   idx = mcc_data$idx,
-  tau = 60)
-show(ci)</code></pre>
-<pre><code>##   Time     Arm0     Arm1 Contrast    Estimate          L           U
-## 1   60 115.3972 64.91554    A1-A0 -50.4816819 -76.894785 -20.9601586
-## 2   60 115.3972 64.91554    A1/A0   0.5625399   0.396426   0.7943053</code></pre>
-<pre class="r"><code># P-value calculation. 
-pval &lt;- AUCP(
-  time = mcc_data$time, 
-  status = mcc_data$status, 
-  arm = mcc_data$arm, 
-  idx = mcc_data$idx,
-  tau = 60)
-show(pval)</code></pre>
-<pre><code>##   Time     Arm0     Arm1 Contrast    Estimate           P
-## 1   60 115.3972 64.91554    A1-A0 -50.4816819 0.002998501
-## 2   60 115.3972 64.91554    A1/A0   0.5625399 0.003498251</code></pre>
+  tau = 60,
+  reps = 2000,
+  alpha = 0.05
+)
+show(results)</code></pre>
+<pre><code>##   Time     Arm0     Arm1 Contrast    Estimate           L           U
+## 1   60 115.3972 64.91554    A1-A0 -50.4816819 -78.8839927 -21.4368074
+## 2   60 115.3972 64.91554    A1/A0   0.5625399   0.3863428   0.7844707
+##              P
+## 1 0.0014992504
+## 2 0.0009995002</code></pre>
 </div>
 </div>
 
