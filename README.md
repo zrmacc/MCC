@@ -1,14 +1,3 @@
----
-title: "README"
-author: "Zachary McCaw"
-date: "2020-08-19"
-output: 
-  html_document: 
-    keep_md: TRUE
---- 
-
-
-
 # Description
 
 This package provides functions for inference on the difference and ratio in the areas under mean cumulative count curves comparing two treatment arms. 
