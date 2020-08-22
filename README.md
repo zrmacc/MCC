@@ -1,14 +1,3 @@
----
-title: "README"
-author: "Zachary McCaw"
-date: "2020-08-21"
-output: 
-  html_document: 
-    keep_md: TRUE
---- 
-
-
-
 # Description
 
 This package provides functions for inference on the difference and ratio in the areas under mean cumulative count curves comparing two treatment arms. 
@@ -56,7 +45,7 @@ To find a confidence interval and p-vaue for the difference and ratio in areas u
 
 ```r
 set.seed(100)
-results <- CompareAUC(
+aucs <- CompareAUCs(
   time = mcc_data$time,
   status = mcc_data$status,
   arm = mcc_data$arm,
@@ -65,7 +54,7 @@ results <- CompareAUC(
   reps = 2000,
   alpha = 0.05
 )
-show(results)
+show(aucs)
 ```
 
 ```

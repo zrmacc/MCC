@@ -11,7 +11,7 @@
 
 <meta name="author" content="Zachary McCaw" />
 
-<meta name="date" content="2020-08-21" />
+<meta name="date" content="2020-08-22" />
 
 <title>README</title>
 
@@ -365,7 +365,7 @@ summary {
 
 <h1 class="title toc-ignore">README</h1>
 <h4 class="author">Zachary McCaw</h4>
-<h4 class="date">2020-08-21</h4>
+<h4 class="date">2020-08-22</h4>
 
 </div>
 
@@ -403,7 +403,7 @@ head(mcc_data)</code></pre>
 <h2>Difference and Ratio of AUCs</h2>
 <p>To find a confidence interval and p-vaue for the difference and ratio in areas under the mean cumulative count curve at time <span class="math inline">\(\tau = 60\)</span>:</p>
 <pre class="r"><code>set.seed(100)
-results &lt;- CompareAUC(
+aucs &lt;- CompareAUCs(
   time = mcc_data$time,
   status = mcc_data$status,
   arm = mcc_data$arm,
@@ -412,7 +412,7 @@ results &lt;- CompareAUC(
   reps = 2000,
   alpha = 0.05
 )
-show(results)</code></pre>
+show(aucs)</code></pre>
 <pre><code>##   Time     Arm0     Arm1 Contrast    Estimate           L           U
 ## 1   60 115.3972 64.91554    A1-A0 -50.4816819 -78.8839927 -21.4368074
 ## 2   60 115.3972 64.91554    A1/A0   0.5625399   0.3863428   0.7844707

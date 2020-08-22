@@ -89,7 +89,7 @@ AUC.Stats <- function(data, tau, return_areas = FALSE) {
 #'   \item{P}{P-value.}
 #' }
 
-CompareAUC <- function(
+CompareAUCs <- function(
   time, 
   status, 
   arm, 
