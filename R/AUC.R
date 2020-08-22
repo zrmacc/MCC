@@ -34,7 +34,7 @@ FindAUC <- function(times, values, tau) {
 #' }
 #'  If `return_areas = FALSE`, only `stats` is returned. 
 
-CalcTestStats <- function(data, tau, return_areas = FALSE) {
+AUC.Stats <- function(data, tau, return_areas = FALSE) {
   
   # Fit mean cumulative function.
   fit <- mcf(Recur(time = time, id = idx, event = status, check = 'none') ~ arm, data = data)
@@ -77,7 +77,7 @@ CalcTestStats <- function(data, tau, return_areas = FALSE) {
 #' @param alpha Alpha level.
 #' @importFrom stats quantile 
 #' @export 
-#' @return A data.frame containing these columns:
+#' @return Data.frame containing these columns:
 #' \describe{
 #'   \item{Time}{Truncation time.}
 #'   \item{Arm0}{AUC for arm 0.}
@@ -89,7 +89,7 @@ CalcTestStats <- function(data, tau, return_areas = FALSE) {
 #'   \item{P}{P-value.}
 #' }
 
-AUCumCountCurve <- function(
+CompareAUC <- function(
   time, 
   status, 
   arm, 
@@ -103,7 +103,7 @@ AUCumCountCurve <- function(
   data <- data.frame(time, status, arm, idx)
   
   # Observed test stats.
-  obs <- CalcTestStats(data = data, tau = tau, return_areas = TRUE) 
+  obs <- AUC.Stats(data = data, tau = tau, return_areas = TRUE) 
   obs_areas <- obs$areas
   obs_stats <- obs$stats
   
@@ -121,18 +121,18 @@ AUCumCountCurve <- function(
     boot <- rbind(boot1, boot0)
     
     # Bootstrap statistics
-    boot_stats <- CalcTestStats(data = boot, tau = tau)
+    boot_stats <- AUC.Stats(data = boot, tau = tau)
     
     # Permute data.
     perm <- PermData(boot)
     
     # Permutation statistics
-    perm_stats <- CalcTestStats(data = perm, tau = tau)
+    perm_stats <- AUC.Stats(data = perm, tau = tau)
     
     # Results
     out <- boot_stats
     out[3] <- 1 * abs(perm_stats[1]) >= abs(obs_stats[1])
-    out[4] <- 1 * abs(log(perm_stats[2]) >= abs(log(obs_stats[2])))
+    out[4] <- 1 * abs(log(perm_stats[2])) >= abs(log(obs_stats[2]))
     return(out)
   }
   

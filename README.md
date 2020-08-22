@@ -1,3 +1,14 @@
+---
+title: "README"
+author: "Zachary McCaw"
+date: "2020-08-21"
+output: 
+  html_document: 
+    keep_md: TRUE
+--- 
+
+
+
 # Description
 
 This package provides functions for inference on the difference and ratio in the areas under mean cumulative count curves comparing two treatment arms. 
@@ -45,7 +56,7 @@ To find a confidence interval and p-vaue for the difference and ratio in areas u
 
 ```r
 set.seed(100)
-results <- AUCumCountCurve(
+results <- CompareAUC(
   time = mcc_data$time,
   status = mcc_data$status,
   arm = mcc_data$arm,
@@ -61,7 +72,7 @@ show(results)
 ##   Time     Arm0     Arm1 Contrast    Estimate           L           U
 ## 1   60 115.3972 64.91554    A1-A0 -50.4816819 -78.8839927 -21.4368074
 ## 2   60 115.3972 64.91554    A1/A0   0.5625399   0.3863428   0.7844707
-##              P
-## 1 0.0014992504
-## 2 0.0009995002
+##            P
+## 1 0.00149925
+## 2 0.00199900
 ```
