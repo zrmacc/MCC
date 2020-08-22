@@ -7,13 +7,15 @@
 CompareAUCs(time, status, arm, idx, tau, reps = 2000, alpha = 0.05)
 }
 \arguments{
-\item{time}{Event time.}
+\item{time}{Observation time.}
 
-\item{status}{Status, coded as 1 for the recurrent event, 0 otherwise.}
+\item{status}{Status, coded as 0 for censoring, 1 for event, 2 for death. 
+Note that subjects who are neither censored nor die are assumed to
+remain at risk throughout the observation period.}
 
 \item{arm}{Arm, coded as 1 for treatment, 0 for reference.}
 
-\item{idx}{Subject index.}
+\item{idx}{Unique subject index.}
 
 \item{tau}{Truncation time.}
 

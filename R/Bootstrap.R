@@ -45,7 +45,7 @@ PermData <- function(data) {
   obs_per_subj <- table(data$idx)
   subj <- length(obs_per_subj)
   
-  # Proportion of subjects in Arm-1. 
+  # Proportion of subjects in Arm 1. 
   trt_prop <- sum(tapply(data$arm, data$idx, max)) / subj
   
   # Randomize treatment assignment.

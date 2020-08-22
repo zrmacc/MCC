@@ -13,7 +13,7 @@ knitr::opts_chunk$set(cache = TRUE)
 
 # Description
 
-This package provides functions for inference on the difference and ratio in the areas under mean cumulative count curves comparing two treatment arms. 
+This package provides functions for inference on the difference and ratio in the areas under mean cumulative count (MCC) curves, comparing two treatment arms. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. 
 
 # Installation
 
@@ -34,15 +34,15 @@ head(mcc_data)
 Here: 
 
 * `idx` is the subject index. 
-* `time` is the event time. 
-* `status` is coded 1 for the recurrent event, and 0 otherwise.
+* `time` is the observation time. 
+* `status` is coded 0 for censoring, 1 for an event, 2 for death.
 * `arm` is the treatment arm, coded as 1 for treatment, 0 for reference. 
 
-For analyses of other data sets, arm and status should have the same coding. 
+For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up 
 
 ## Difference and Ratio of AUCs
 
-To find a confidence interval and p-vaue for the difference and ratio in areas under the mean cumulative count curve at time $\tau = 60$: 
+To compare the areas under the mean cumulative count curves up to time $\tau = 60$: 
 ```{r}
 set.seed(100)
 aucs <- CompareAUCs(

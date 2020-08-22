@@ -4,11 +4,12 @@
 \alias{AUC.Stats}
 \title{Calculate Test Statistics}
 \usage{
-AUC.Stats(data, tau, return_areas = FALSE)
+AUC.Stats(data1, data0, tau, return_areas = FALSE)
 }
 \arguments{
-\item{data}{Data.frame containing `time`, `status`, `arm`, 
-and subject `idx`.}
+\item{data1}{Data.frame containing `time`, `status`, `idx` for arm 1.}
+
+\item{data0}{Data.frame containing `time`, `status`, `idx` for arm 0.}
 
 \item{tau}{Truncation time.}
 

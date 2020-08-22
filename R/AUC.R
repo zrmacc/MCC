@@ -22,11 +22,10 @@ FindAUC <- function(times, values, tau) {
 
 #' Calculate Test Statistics
 #'
-#' @param data Data.frame containing `time`, `status`, `arm`, 
-#'   and subject `idx`. 
+#' @param data0 Data.frame containing `time`, `status`, `idx` for arm 0.
+#' @param data1 Data.frame containing `time`, `status`, `idx` for arm 1.
 #' @param tau Truncation time.
 #' @param return_areas Return the AUCs?
-#' @importFrom reda mcf Recur
 #' @return If `return_areas = TRUE`, list containing:
 #' \itemize{
 #'   \item `areas` under the mean cumulative count curve for each arm.
@@ -34,17 +33,31 @@ FindAUC <- function(times, values, tau) {
 #' }
 #'  If `return_areas = FALSE`, only `stats` is returned. 
 
-AUC.Stats <- function(data, tau, return_areas = FALSE) {
+AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
   
-  # Fit mean cumulative function.
-  fit <- mcf(Recur(time = time, id = idx, event = status, check = 'none') ~ arm, data = data)
-  fit_tab <- fit@MCF
-  fit_tab0 <- fit_tab[fit_tab$arm == 0, ]
-  fit_tab1 <- fit_tab[fit_tab$arm == 1, ]
+  # Fit mean cumulative functions.
+  fit_tab0 <- CalculateMCF(
+    time = data0$time,
+    status = data0$status,
+    idx = data0$idx
+  )
+  fit_tab1 <- CalculateMCF(
+    time = data1$time, 
+    status = data1$status, 
+    idx = data1$idx
+  )
   
   # Areas. 
-  a0 <- FindAUC(times = fit_tab0$time, values = fit_tab0$MCF, tau = tau)
-  a1 <- FindAUC(times = fit_tab1$time, values = fit_tab1$MCF, tau = tau)
+  a0 <- FindAUC(
+    times = fit_tab0$event_times, 
+    values = fit_tab0$mcf, 
+    tau = tau
+  )
+  a1 <- FindAUC(
+    times = fit_tab1$event_times, 
+    values = fit_tab1$mcf, 
+    tau = tau
+  )
   areas <- c('a0' = a0, 'a1' = a1)
   
   # Difference and ratio
@@ -68,10 +81,12 @@ AUC.Stats <- function(data, tau, return_areas = FALSE) {
 #' the mean cumulative count curves, comparing treatment (arm = 1) with
 #' reference (arm = 0).
 #' 
-#' @param time Event time.
-#' @param status Status, coded as 1 for the recurrent event, 0 otherwise. 
+#' @param time Observation time.
+#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
+#'   Note that subjects who are neither censored nor die are assumed to
+#'   remain at risk throughout the observation period. 
 #' @param arm Arm, coded as 1 for treatment, 0 for reference. 
-#' @param idx Subject index. 
+#' @param idx Unique subject index. 
 #' @param tau Truncation time. 
 #' @param reps Bootstrap replicates.
 #' @param alpha Alpha level.
@@ -99,35 +114,51 @@ CompareAUCs <- function(
   alpha = 0.05
 ) { 
   
-  # Data.
+  # Form data.
   data <- data.frame(time, status, arm, idx)
   
-  # Observed test stats.
-  obs <- AUC.Stats(data = data, tau = tau, return_areas = TRUE) 
-  obs_areas <- obs$areas
-  obs_stats <- obs$stats
-  
-  # Split data.
+  # Split data. 
   data0 <- data[data$arm == 0, ]
   data1 <- data[data$arm == 1, ]
-  n1 <- nrow(data1)
+  n0 <- nrow(data0)
+  
+  # Observed test stats.
+  obs <- AUC.Stats(
+    data0 = data0,
+    data1 = data1,
+    tau = tau, 
+    return_areas = TRUE
+  ) 
+  obs_areas <- obs$areas
+  obs_stats <- obs$stats
+
   
   # Bootstrap function.
   aux <- function(b) {
     
     # Bootstrap data sets.
-    boot1 <- BootData(data1)
-    boot0 <- BootData(data0, idx_offset = n1)
-    boot <- rbind(boot1, boot0)
+    boot0 <- BootData(data0, idx_offset = 0)
+    boot1 <- BootData(data1, idx_offset = n0)
     
     # Bootstrap statistics
-    boot_stats <- AUC.Stats(data = boot, tau = tau)
+    boot_stats <- AUC.Stats(
+      data0 = boot0,
+      data1 = boot1,
+      tau = tau
+    )
     
     # Permute data.
-    perm <- PermData(boot)
+    perm <- PermData(rbind(boot0, boot1))
+    perm0 <- perm[perm$arm == 0, ]
+    perm1 <- perm[perm$arm == 1, ]
+    
     
     # Permutation statistics
-    perm_stats <- AUC.Stats(data = perm, tau = tau)
+    perm_stats <- AUC.Stats(
+      data0 = perm0,
+      data1 = perm1,
+      tau = tau
+    )
     
     # Results
     out <- boot_stats

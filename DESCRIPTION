@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.0.2
+Version: 0.0.3
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -8,11 +8,12 @@ Authors@R:
            email = "zmccaw@alumni.harvard.edu",
            comment = c(ORCID = "0000-0002-2006-9828"))
 Description: Provides functions for inference on the difference and ratio in the areas under the 
-	mean cumulative count curves between two treatment arms. 
+	mean cumulative count curve, comparing two treatment arms. Estimates the curve using the method 
+	of Ghosh and Lin (2000) <doi:10.1111/j.0006-341X.2000.00554.x>.
 Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Imports:
-	reda
+  survival
 RoxygenNote: 7.1.1
