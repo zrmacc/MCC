@@ -45,13 +45,10 @@ PermData <- function(data) {
   obs_per_subj <- table(data$idx)
   subj <- length(obs_per_subj)
   
-  # Proportion of subjects in Arm 1. 
-  trt_prop <- sum(tapply(data$arm, data$idx, max)) / subj
-  
   # Randomize treatment assignment.
-  flip <- rbinom(n = subj, size = 1, prob = trt_prop)
+  flip <- rbinom(n = subj, size = 1, prob = 0.5)
   flip <- rep(x = flip, times = obs_per_subj)
   
-  data$arm <- flip
+  data$arm <- data$arm * (1 - flip) + (1 - data$arm) * flip
   return(data)
 }

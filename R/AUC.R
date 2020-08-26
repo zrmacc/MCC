@@ -152,7 +152,6 @@ CompareAUCs <- function(
     perm0 <- perm[perm$arm == 0, ]
     perm1 <- perm[perm$arm == 1, ]
     
-    
     # Permutation statistics
     perm_stats <- AUC.Stats(
       data0 = perm0,
