@@ -54,6 +54,7 @@ TabulateEvents <- function(time, status, idx){
 #' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
 #' @param idx Unique subject index. 
 #' @import survival
+#' @export 
 #' @return Data.frame with these columns:
 #' \itemize{
 #'   \item `event_times` distinct recurrent event times.
@@ -80,12 +81,20 @@ CalculateMCF <- function(
   
   # If no deaths are present, the the KM estimator is 1 throughout the 
   # follow-up period. 
-  km_data <- data
-  km_data$status <- 1 * (data$status == 2)
-  km_data <- km_data[order(km_data$idx, km_data$time, decreasing = c(FALSE, TRUE)), ]
-  km_data <- km_data[!duplicated(km_data$idx), ]
-  km <- survfit(Surv(time, status) ~ 1, data = km_data)
-  shat <- stepfun(x = km$time, y = c(1, km$surv), right = TRUE)
+  n_death <- sum(data$status == 2)
+  if(n_death == 0) {
+    shat <- function(x) {1}
+  } else {
+    
+    # Otherwise, estimate the survival function (using deaths only). 
+    km_data <- data
+    km_data$status <- 1 * (data$status == 2)
+    km_data <- km_data[order(km_data$idx, km_data$time, decreasing = c(FALSE, TRUE)), ]
+    km_data <- km_data[!duplicated(km_data$idx), ]
+    km <- survfit(Surv(time, status) ~ 1, data = km_data)
+    shat <- stepfun(x = km$time, y = c(1, km$surv), right = TRUE)
+  }
+
   
   # Nelson-Aalen estimator of event rate.
   rate_data <- data[data$status != 2, ]
