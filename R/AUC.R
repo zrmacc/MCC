@@ -20,6 +20,8 @@ FindAUC <- function(times, values, tau) {
 }
 
 
+# -----------------------------------------------------------------------------
+
 #' Calculate Test Statistics
 #'
 #' @param data0 Data.frame containing `time`, `status`, `idx` for arm 0.
@@ -74,12 +76,20 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
   return(out)
 }
 
+# -----------------------------------------------------------------------------
 
 #' Bootstrap Inference on the Area Under the Cumulative Count Curve
 #'
 #' Confidence intervals and p-values for the difference and ratio of areas under
 #' the mean cumulative count curves, comparing treatment (arm = 1) with
 #' reference (arm = 0).
+#' 
+#' Two methods of p-value calculation are available. For '2-sided', treatment 
+#' assignments are permuted on each bootstrap iteration, and the p-value is the
+#' proportion of the *null* test statistics that are as or more extreme than
+#' the *observed* test statistics. For '1-sided', the p-value is the proportion
+#' of bootstrap replicates on which the sign of the difference is areas is 
+#' reversed. 
 #' 
 #' @param time Observation time.
 #' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
@@ -90,6 +100,7 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
 #' @param tau Truncation time. 
 #' @param reps Bootstrap replicates.
 #' @param alpha Alpha level.
+#' @param pval_type Either '2-sided' or '1-sided'.
 #' @importFrom stats quantile 
 #' @export 
 #' @return Data.frame containing these columns:
@@ -111,7 +122,8 @@ CompareAUCs <- function(
   idx, 
   tau, 
   reps = 2000, 
-  alpha = 0.05
+  alpha = 0.05,
+  pval_type = '2-sided'
 ) { 
   
   # Form data.
@@ -131,7 +143,6 @@ CompareAUCs <- function(
   ) 
   obs_areas <- obs$areas
   obs_stats <- obs$stats
-
   
   # Bootstrap function.
   aux <- function(b) {
@@ -147,22 +158,34 @@ CompareAUCs <- function(
       tau = tau
     )
     
-    # Permute data.
-    perm <- PermData(rbind(boot0, boot1))
-    perm0 <- perm[perm$arm == 0, ]
-    perm1 <- perm[perm$arm == 1, ]
-    
-    # Permutation statistics
-    perm_stats <- AUC.Stats(
-      data0 = perm0,
-      data1 = perm1,
-      tau = tau
-    )
+    if (pval_type == '1-sided') {
+      
+      # Indicators of being opposite sign. 
+      ind <- as.numeric(sign(boot_stats[1]) != sign(obs_stats[1]))
+      ind <- rep(ind, 2)
+      
+    } else if (pval_type == '2-sided') { 
+      
+      # Permute data.
+      perm <- PermData(rbind(boot0, boot1))
+      perm0 <- perm[perm$arm == 0, ]
+      perm1 <- perm[perm$arm == 1, ]
+      
+      # Permutation statistics
+      perm_stats <- AUC.Stats(
+        data0 = perm0,
+        data1 = perm1,
+        tau = tau
+      )
+      
+      # Indicators of being more extreme.
+      ind1 <- as.numeric(abs(perm_stats[1]) >= abs(obs_stats[1]))
+      ind2 <- as.numeric(abs(log(perm_stats[2])) >= abs(log(obs_stats[2])))
+      ind <- c(ind1, ind2)
+    }
     
     # Results
-    out <- boot_stats
-    out[3] <- 1 * abs(perm_stats[1]) >= abs(obs_stats[1])
-    out[4] <- 1 * abs(log(perm_stats[2])) >= abs(log(obs_stats[2]))
+    out <- c(boot_stats, ind)
     return(out)
   }
   
@@ -179,7 +202,7 @@ CompareAUCs <- function(
   upper <- apply(
     X = sim[, 1:2], 
     MARGIN = 2, 
-    FUN = function(x){as.numeric(quantile(x, 1 - alpha2, na.rm = TRUE))}
+    FUN = function(x) {as.numeric(quantile(x, 1 - alpha2, na.rm = TRUE))}
   )
   
   # P-values

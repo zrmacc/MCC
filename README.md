@@ -1,14 +1,3 @@
----
-title: "README"
-author: "Zachary McCaw"
-date: "2020-08-25"
-output: 
-  html_document: 
-    keep_md: TRUE
---- 
-
-
-
 # Description
 
 This package provides functions for inference on the difference and ratio in areas under mean cumulative count (MCC) curves, comparing two treatment arms. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. 
@@ -63,7 +52,8 @@ aucs <- CompareAUCs(
   idx = mcc_data$idx,
   tau = 60,
   reps = 2000,
-  alpha = 0.05
+  alpha = 0.05,
+  pval_type = '2-sided'
 )
 show(aucs)
 ```
@@ -76,3 +66,7 @@ show(aucs)
 ## 1 0.005497251
 ## 2 0.005997001
 ```
+
+## P-value Calculation
+Two methods of p-value calculation are available. For `pval_type = '2-sided'`, on each resample, the per-patient treatment assignments are randomized, and a null value of the test statistic is calculated. The p-value represents the proportion of resamples on which the null test statistic was as or more extreme than observed. For `pval_type = '1-sided'`, the treatment assignments are not randomized; instead, the p-value is calculated as the proportion of resamples on which the sign of the bootstrapped difference in areas disagrees with the observed sign. 
+

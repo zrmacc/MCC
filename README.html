@@ -11,7 +11,7 @@
 
 <meta name="author" content="Zachary McCaw" />
 
-<meta name="date" content="2020-08-25" />
+<meta name="date" content="2020-08-27" />
 
 <title>README</title>
 
@@ -365,7 +365,7 @@ summary {
 
 <h1 class="title toc-ignore">README</h1>
 <h4 class="author">Zachary McCaw</h4>
-<h4 class="date">2020-08-25</h4>
+<h4 class="date">2020-08-27</h4>
 
 </div>
 
@@ -410,7 +410,8 @@ aucs &lt;- CompareAUCs(
   idx = mcc_data$idx,
   tau = 60,
   reps = 2000,
-  alpha = 0.05
+  alpha = 0.05,
+  pval_type = &#39;2-sided&#39;
 )
 show(aucs)</code></pre>
 <pre><code>##   Time     Arm0     Arm1 Contrast    Estimate           L          U
@@ -419,6 +420,10 @@ show(aucs)</code></pre>
 ##             P
 ## 1 0.005497251
 ## 2 0.005997001</code></pre>
+</div>
+<div id="p-value-calculation" class="section level2">
+<h2>P-value Calculation</h2>
+<p>Two methods of p-value calculation are available. For <code>pval_type = &#39;2-sided&#39;</code>, on each resample, the per-patient treatment assignments are randomized, and a null value of the test statistic is calculated. The p-value represents the proportion of resamples on which the null test statistic was as or more extreme than observed. For <code>pval_type = &#39;1-sided&#39;</code>, the treatment assignments are not randomized; instead, the p-value is calculated as the proportion of resamples on which the sign of the bootstrapped difference in areas disagrees with the observed sign.</p>
 </div>
 </div>
 

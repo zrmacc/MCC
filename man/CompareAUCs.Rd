@@ -4,7 +4,16 @@
 \alias{CompareAUCs}
 \title{Bootstrap Inference on the Area Under the Cumulative Count Curve}
 \usage{
-CompareAUCs(time, status, arm, idx, tau, reps = 2000, alpha = 0.05)
+CompareAUCs(
+  time,
+  status,
+  arm,
+  idx,
+  tau,
+  reps = 2000,
+  alpha = 0.05,
+  pval_type = "2-sided"
+)
 }
 \arguments{
 \item{time}{Observation time.}
@@ -22,6 +31,8 @@ remain at risk throughout the observation period.}
 \item{reps}{Bootstrap replicates.}
 
 \item{alpha}{Alpha level.}
+
+\item{pval_type}{Either '2-sided' or '1-sided'.}
 }
 \value{
 Data.frame containing these columns:
@@ -40,4 +51,12 @@ Data.frame containing these columns:
 Confidence intervals and p-values for the difference and ratio of areas under
 the mean cumulative count curves, comparing treatment (arm = 1) with
 reference (arm = 0).
+}
+\details{
+Two methods of p-value calculation are available. For '2-sided', treatment 
+assignments are permuted on each bootstrap iteration, and the p-value is the
+proportion of the *null* test statistics that are as or more extreme than
+the *observed* test statistics. For '1-sided', the p-value is the proportion
+of bootstrap replicates on which the sign of the difference is areas is 
+reversed.
 }

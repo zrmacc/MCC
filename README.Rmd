@@ -52,7 +52,12 @@ aucs <- CompareAUCs(
   idx = mcc_data$idx,
   tau = 60,
   reps = 2000,
-  alpha = 0.05
+  alpha = 0.05,
+  pval_type = '2-sided'
 )
 show(aucs)
 ```
+
+## P-value Calculation
+Two methods of p-value calculation are available. For `pval_type = '2-sided'`, on each resample, the per-patient treatment assignments are randomized, and a null value of the test statistic is calculated. The p-value represents the proportion of resamples on which the null test statistic was as or more extreme than observed. For `pval_type = '1-sided'`, the treatment assignments are not randomized; instead, the p-value is calculated as the proportion of resamples on which the sign of the bootstrapped difference in areas disagrees with the observed sign. 
+
