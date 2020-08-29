@@ -1,3 +1,4 @@
+
 # Description
 
 This package provides functions for inference on the difference and ratio in areas under mean cumulative count (MCC) curves, comparing two treatment arms. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. 
@@ -21,13 +22,13 @@ head(mcc_data)
 ```
 
 ```
-##   idx time status arm
-## 1   1    3      1   0
-## 2   1   15      1   0
-## 3   1   46      1   0
-## 4   1   51      1   0
-## 5   1   53      1   0
-## 6   2   29      1   0
+##   idx time status arm strata
+## 1   1    3      1   0      1
+## 2   1   15      1   0      3
+## 3   1   46      1   0      1
+## 4   1   51      1   0      2
+## 5   1   53      1   0      2
+## 6   2   29      1   0      1
 ```
 
 Here: 
@@ -36,6 +37,7 @@ Here:
 * `time` is the observation time. 
 * `status` is coded 0 for censoring, 1 for an event, 2 for death.
 * `arm` is the treatment arm, coded as 1 for treatment, 0 for reference. 
+* `strata` is a 3-level stratification factor. 
 
 For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up 
 
@@ -51,7 +53,8 @@ aucs <- CompareAUCs(
   arm = mcc_data$arm,
   idx = mcc_data$idx,
   tau = 60,
-  reps = 2000,
+  strata = mcc_data$strata,
+  reps = 100,
   alpha = 0.05,
   pval_type = '2-sided'
 )
@@ -59,14 +62,16 @@ show(aucs)
 ```
 
 ```
-##   Time     Arm0     Arm1 Contrast    Estimate           L          U
-## 1   60 103.5674 67.53429    A1-A0 -36.0330694 -62.0591162 -8.7798990
-## 2   60 103.5674 67.53429    A1/A0   0.6520808   0.4632125  0.9019682
-##             P
-## 1 0.005497251
-## 2 0.005997001
+##   Time     Arm0     Arm1 Contrast   Estimate           L        U          P
+## 1   60 44.23623 52.89457    A1-A0 -8.6583336 -17.7383583 1.759781 0.05940594
+## 2   60 44.23623 52.89457    A1/A0  0.8363096   0.6920833 1.036865 0.06930693
 ```
 
-## P-value Calculation
-Two methods of p-value calculation are available. For `pval_type = '2-sided'`, on each resample, the per-patient treatment assignments are randomized, and a null value of the test statistic is calculated. The p-value represents the proportion of resamples on which the null test statistic was as or more extreme than observed. For `pval_type = '1-sided'`, the treatment assignments are not randomized; instead, the p-value is calculated as the proportion of resamples on which the sign of the bootstrapped difference in areas disagrees with the observed sign. 
+Arguments include: 
+
+* `tau` is the truncation time, or the time up to which the AUC is calculated. 
+* The stratification factor `strata` is optional, and may be omitted. Strata empty in one arm or the other are allowed; these strata receive weight zero when combining areas across arms.
+* `reps` is the number of bootstrap replicates. The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable. 
+* `alpha` is 1 minus the desired confidence interval (CI) coverage. CIs are obtained via the percentile method, with probability $\alpha / 2$ allocated to each tail. 
+* `pval_type` is either `'2-sided'` or `'1-sided'`. For `'2-sided'`, on each resample, the per-patient treatment assignments are randomized, and null values for the test statistics area calculated. The final p-value represents the proportion of resamples on which the null test statistics were as or more extreme than observed. For `pval_type = '1-sided'`, the treatment assignments are not randomized; instead, the p-value is calculated as the proportion of resamples on which the sign of the bootstrapped difference in areas disagrees with the observed sign. 
 

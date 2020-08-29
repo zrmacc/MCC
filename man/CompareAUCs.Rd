@@ -10,6 +10,7 @@ CompareAUCs(
   arm,
   idx,
   tau,
+  strata = NULL,
   reps = 2000,
   alpha = 0.05,
   pval_type = "2-sided"
@@ -27,6 +28,8 @@ remain at risk throughout the observation period.}
 \item{idx}{Unique subject index.}
 
 \item{tau}{Truncation time.}
+
+\item{strata}{Optional stratification factor.}
 
 \item{reps}{Bootstrap replicates.}
 
@@ -59,4 +62,22 @@ proportion of the *null* test statistics that are as or more extreme than
 the *observed* test statistics. For '1-sided', the p-value is the proportion
 of bootstrap replicates on which the sign of the difference is areas is 
 reversed.
+}
+\examples{
+\donttest{
+data(mcc_data)
+set.seed(100)
+aucs <- CompareAUCs(
+  time = mcc_data$time,
+  status = mcc_data$status,
+  arm = mcc_data$arm,
+  idx = mcc_data$idx,
+  tau = 60,
+  strata = mcc_data$strata,
+  reps = 100,
+  alpha = 0.05,
+  pval_type = '2-sided'
+)
+show(aucs)
+}
 }

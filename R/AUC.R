@@ -19,15 +19,52 @@ FindAUC <- function(times, values, tau) {
   return(area$value)
 }
 
+# -----------------------------------------------------------------------------
+
+#' Calculate MCF and Find Area
+#' 
+#' @param time Observation time.
+#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
+#'   Note that subjects who are neither censored nor die are assumed to
+#'   remain at risk throughout the observation period. 
+#' @param idx Unique subject index. 
+#' @param tau Truncation time. 
+#' @return Numeric AUC.
+
+AUC.Area <- function(
+  time, 
+  status,
+  idx,
+  tau
+) { 
+  
+  # Fit MCF.
+  fit <- CalculateMCF(
+    time = time,
+    status = status,
+    idx = idx
+  )
+  
+  # Find Area.
+  area <- FindAUC(
+    times = fit$event_times,
+    values = fit$mcf,
+    tau = tau
+  )
+  
+  # Return area
+  return(area)
+}
 
 # -----------------------------------------------------------------------------
 
 #' Calculate Test Statistics
 #'
-#' @param data0 Data.frame containing `time`, `status`, `idx` for arm 0.
-#' @param data1 Data.frame containing `time`, `status`, `idx` for arm 1.
+#' @param data0 Data.frame containing `time`, `status`, `idx`, `strata` for arm 0.
+#' @param data1 Data.frame containing `time`, `status`, `idx`, `strata` for arm 1.
 #' @param tau Truncation time.
 #' @param return_areas Return the AUCs?
+#' @importFrom stats weighted.mean
 #' @return If `return_areas = TRUE`, list containing:
 #' \itemize{
 #'   \item `areas` under the mean cumulative count curve for each arm.
@@ -37,30 +74,24 @@ FindAUC <- function(times, values, tau) {
 
 AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
   
-  # Fit mean cumulative functions.
-  fit_tab0 <- CalculateMCF(
-    time = data0$time,
-    status = data0$status,
-    idx = data0$idx
-  )
-  fit_tab1 <- CalculateMCF(
-    time = data1$time, 
-    status = data1$status, 
-    idx = data1$idx
-  )
+  # Partition by strata.
+  data1_strata <- split(data1, data1$strata, drop = TRUE)
+  data0_strata <- split(data0, data0$strata, drop = TRUE)
   
-  # Areas. 
-  a0 <- FindAUC(
-    times = fit_tab0$event_times, 
-    values = fit_tab0$mcf, 
-    tau = tau
-  )
-  a1 <- FindAUC(
-    times = fit_tab1$event_times, 
-    values = fit_tab1$mcf, 
-    tau = tau
-  )
-  areas <- c('a0' = a0, 'a1' = a1)
+  # Stratum sizes.
+  aux1 <- function (x) {length(unique(x$idx))}
+  data1_sizes <- sapply(data1_strata, aux1)
+  data0_sizes <- sapply(data0_strata, aux1)
+  
+  # Stratum areas.
+  aux2 <- function (x) {AUC.Area(x$time, x$status, x$idx, tau)}
+  data1_areas <- sapply(data1_strata, aux2)
+  data0_areas <- sapply(data0_strata, aux2)
+  
+  # Final areas.
+  a1 <- weighted.mean(x = data1_areas, w = data1_sizes)
+  a0 <- weighted.mean(x = data0_areas, w = data0_sizes)
+  areas <- c('a1' = a1, 'a0' = a0)
   
   # Difference and ratio
   diff <- a1 - a0
@@ -98,6 +129,7 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
 #' @param arm Arm, coded as 1 for treatment, 0 for reference. 
 #' @param idx Unique subject index. 
 #' @param tau Truncation time. 
+#' @param strata Optional stratification factor. 
 #' @param reps Bootstrap replicates.
 #' @param alpha Alpha level.
 #' @param pval_type Either '2-sided' or '1-sided'.
@@ -114,6 +146,23 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
 #'   \item{U}{Confidence upper bound.}
 #'   \item{P}{P-value.}
 #' }
+#' @examples 
+#' \donttest{
+#' data(mcc_data)
+#' set.seed(100)
+#' aucs <- CompareAUCs(
+#'   time = mcc_data$time,
+#'   status = mcc_data$status,
+#'   arm = mcc_data$arm,
+#'   idx = mcc_data$idx,
+#'   tau = 60,
+#'   strata = mcc_data$strata,
+#'   reps = 100,
+#'   alpha = 0.05,
+#'   pval_type = '2-sided'
+#' )
+#' show(aucs)
+#' }
 
 CompareAUCs <- function(
   time, 
@@ -121,13 +170,20 @@ CompareAUCs <- function(
   arm, 
   idx, 
   tau, 
+  strata = NULL,
   reps = 2000, 
   alpha = 0.05,
   pval_type = '2-sided'
 ) { 
   
+  # Create single stratum if no strata are provided. 
+  if (is.null(strata)){
+    strata <- rep(1, length(time))
+  }
+  
   # Form data.
-  data <- data.frame(time, status, arm, idx)
+  data <- data.frame(time, status, arm, idx, strata)
+  data$strata <- factor(data$strata)
   
   # Split data. 
   data0 <- data[data$arm == 0, ]
@@ -148,8 +204,8 @@ CompareAUCs <- function(
   aux <- function(b) {
     
     # Bootstrap data sets.
-    boot0 <- BootData(data0, idx_offset = 0)
-    boot1 <- BootData(data1, idx_offset = n0)
+    boot0 <- StratGroupBoot(data0, idx_offset = 0)
+    boot1 <- StratGroupBoot(data1, idx_offset = n0)
     
     # Bootstrap statistics
     boot_stats <- AUC.Stats(

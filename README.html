@@ -11,7 +11,7 @@
 
 <meta name="author" content="Zachary McCaw" />
 
-<meta name="date" content="2020-08-27" />
+<meta name="date" content="2020-08-29" />
 
 <title>README</title>
 
@@ -365,7 +365,7 @@ summary {
 
 <h1 class="title toc-ignore">README</h1>
 <h4 class="author">Zachary McCaw</h4>
-<h4 class="date">2020-08-27</h4>
+<h4 class="date">2020-08-29</h4>
 
 </div>
 
@@ -384,19 +384,20 @@ summary {
 <pre class="r"><code>library(MCC)
 data(mcc_data)
 head(mcc_data)</code></pre>
-<pre><code>##   idx time status arm
-## 1   1    3      1   0
-## 2   1   15      1   0
-## 3   1   46      1   0
-## 4   1   51      1   0
-## 5   1   53      1   0
-## 6   2   29      1   0</code></pre>
+<pre><code>##   idx time status arm strata
+## 1   1    3      1   0      1
+## 2   1   15      1   0      3
+## 3   1   46      1   0      1
+## 4   1   51      1   0      2
+## 5   1   53      1   0      2
+## 6   2   29      1   0      1</code></pre>
 <p>Here:</p>
 <ul>
 <li><code>idx</code> is the subject index.</li>
 <li><code>time</code> is the observation time.</li>
 <li><code>status</code> is coded 0 for censoring, 1 for an event, 2 for death.</li>
 <li><code>arm</code> is the treatment arm, coded as 1 for treatment, 0 for reference.</li>
+<li><code>strata</code> is a 3-level stratification factor.</li>
 </ul>
 <p>For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up</p>
 <div id="difference-and-ratio-of-aucs" class="section level2">
@@ -409,21 +410,23 @@ aucs &lt;- CompareAUCs(
   arm = mcc_data$arm,
   idx = mcc_data$idx,
   tau = 60,
-  reps = 2000,
+  strata = mcc_data$strata,
+  reps = 100,
   alpha = 0.05,
   pval_type = &#39;2-sided&#39;
 )
 show(aucs)</code></pre>
-<pre><code>##   Time     Arm0     Arm1 Contrast    Estimate           L          U
-## 1   60 103.5674 67.53429    A1-A0 -36.0330694 -62.0591162 -8.7798990
-## 2   60 103.5674 67.53429    A1/A0   0.6520808   0.4632125  0.9019682
-##             P
-## 1 0.005497251
-## 2 0.005997001</code></pre>
-</div>
-<div id="p-value-calculation" class="section level2">
-<h2>P-value Calculation</h2>
-<p>Two methods of p-value calculation are available. For <code>pval_type = &#39;2-sided&#39;</code>, on each resample, the per-patient treatment assignments are randomized, and a null value of the test statistic is calculated. The p-value represents the proportion of resamples on which the null test statistic was as or more extreme than observed. For <code>pval_type = &#39;1-sided&#39;</code>, the treatment assignments are not randomized; instead, the p-value is calculated as the proportion of resamples on which the sign of the bootstrapped difference in areas disagrees with the observed sign.</p>
+<pre><code>##   Time     Arm0     Arm1 Contrast   Estimate           L        U          P
+## 1   60 44.23623 52.89457    A1-A0 -8.6583336 -17.7383583 1.759781 0.05940594
+## 2   60 44.23623 52.89457    A1/A0  0.8363096   0.6920833 1.036865 0.06930693</code></pre>
+<p>Arguments include:</p>
+<ul>
+<li><code>tau</code> is the truncation time, or the time up to which the AUC is calculated.</li>
+<li>The stratification factor <code>strata</code> is optional, and may be omitted. Strata empty in one arm or the other are allowed; these strata receive weight zero when combining areas across arms.</li>
+<li><code>reps</code> is the number of bootstrap replicates. The bootstrap is grouped by <code>idx</code>, and stratified by <code>strata</code>, if applicable.</li>
+<li><code>alpha</code> is 1 minus the desired confidence interval (CI) coverage. CIs are obtained via the percentile method, with probability <span class="math inline">\(\alpha / 2\)</span> allocated to each tail.</li>
+<li><code>pval_type</code> is either <code>&#39;2-sided&#39;</code> or <code>&#39;1-sided&#39;</code>. For <code>&#39;2-sided&#39;</code>, on each resample, the per-patient treatment assignments are randomized, and null values for the test statistics area calculated. The final p-value represents the proportion of resamples on which the null test statistics were as or more extreme than observed. For <code>pval_type = &#39;1-sided&#39;</code>, the treatment assignments are not randomized; instead, the p-value is calculated as the proportion of resamples on which the sign of the bootstrapped difference in areas disagrees with the observed sign.</li>
+</ul>
 </div>
 </div>
 

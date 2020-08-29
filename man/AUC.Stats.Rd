@@ -7,9 +7,9 @@
 AUC.Stats(data1, data0, tau, return_areas = FALSE)
 }
 \arguments{
-\item{data1}{Data.frame containing `time`, `status`, `idx` for arm 1.}
+\item{data1}{Data.frame containing `time`, `status`, `idx`, `strata` for arm 1.}
 
-\item{data0}{Data.frame containing `time`, `status`, `idx` for arm 0.}
+\item{data0}{Data.frame containing `time`, `status`, `idx`, `strata` for arm 0.}
 
 \item{tau}{Truncation time.}
 
