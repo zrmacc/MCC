@@ -444,7 +444,7 @@ show(aucs)</code></pre>
 <p>Here:</p>
 <ul>
 <li><code>tau</code> is the truncation time, or the time up to which the AUC is calculated.</li>
-<li>The stratification factor <code>strata</code> is optional, and may be omitted. Strata empty in one arm or the other are allowed; these strata receive weight zero when combining areas across arms.</li>
+<li>The stratification factor <code>strata</code> is optional, and may be omitted. No strata should be empty in either arm.</li>
 <li><code>reps</code> is the number of bootstrap replicates. The bootstrap is grouped by <code>idx</code>, and stratified by <code>strata</code>, if applicable.</li>
 <li><code>alpha</code> is 1 minus the desired confidence interval (CI) coverage.</li>
 </ul>

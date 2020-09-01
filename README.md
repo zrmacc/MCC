@@ -91,7 +91,7 @@ show(aucs)
 Here:
 
 * `tau` is the truncation time, or the time up to which the AUC is calculated. 
-* The stratification factor `strata` is optional, and may be omitted. Strata empty in one arm or the other are allowed; these strata receive weight zero when combining areas across arms.
+* The stratification factor `strata` is optional, and may be omitted. No strata should be empty in either arm.
 * `reps` is the number of bootstrap replicates. The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable. 
 * `alpha` is 1 minus the desired confidence interval (CI) coverage. 
 
