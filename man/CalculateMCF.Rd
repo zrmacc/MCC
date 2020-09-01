@@ -16,7 +16,7 @@ CalculateMCF(time, status, idx)
 \value{
 Data.frame with these columns:
 \itemize{
-  \item `event_times` distinct recurrent event times.
+  \item `event_times`, distinct recurrent event times.
   \item `nar` number at risk at the event time. 
   \item `events` number of events that occurred. 
   \item `surv`, survival probability.

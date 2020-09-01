@@ -57,7 +57,7 @@ TabulateEvents <- function(time, status, idx){
 #' @export 
 #' @return Data.frame with these columns:
 #' \itemize{
-#'   \item `event_times` distinct recurrent event times.
+#'   \item `event_times`, distinct recurrent event times.
 #'   \item `nar` number at risk at the event time. 
 #'   \item `events` number of events that occurred. 
 #'   \item `surv`, survival probability.
@@ -109,3 +109,36 @@ CalculateMCF <- function(
   return(event_tab)
 }
 
+# -----------------------------------------------------------------------------
+
+#' Calculate Average MCF Curve
+#' 
+#' Calculates the weighted average of MCF curves.
+#' 
+#' @param curve_list List of tabulated MCFs as returned by \code{\link{CalculateMCF}}.
+#' @param weights Numeric vector of weights.
+#' @return Data.frame containing `Time` and the average MCF `Avg_MCF`.
+
+AverageMCF <- function (curve_list, weights) {
+  
+  # Extract event times.
+  times <- lapply(curve_list, function(x) {x$event_times})
+  times <- do.call(c, times)
+  times <- sort(unique(times))
+  
+  # Extract mcfs evaluated on times.
+  aux <- function(x) {
+    g <- stepfun(x$event_times, c(0, x$mcf), right = TRUE)
+    return(g(times))
+  }
+  mcfs <- lapply(curve_list, aux)
+  mcfs <- do.call(cbind, mcfs)
+  avg_mcf <- mcfs %*% weights
+  
+  # Output table.
+  out <- data.frame(
+    'Time' = times,
+    'MCF' = avg_mcf
+  )
+  return(out)
+}

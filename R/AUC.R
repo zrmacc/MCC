@@ -82,16 +82,36 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
   aux1 <- function (x) {length(unique(x$idx))}
   data1_sizes <- sapply(data1_strata, aux1)
   data0_sizes <- sapply(data0_strata, aux1)
+  sizes <- data1_sizes + data0_sizes
+  weights <- sizes / sum(sizes)
   
   # Stratum areas.
   aux2 <- function (x) {AUC.Area(x$time, x$status, x$idx, tau)}
   data1_areas <- sapply(data1_strata, aux2)
   data0_areas <- sapply(data0_strata, aux2)
   
+  # Average curves
+  aux3 <- function(x) {CalculateMCF(x$time, x$status, x$idx)}
+  data1_curves <- lapply(data1_strata, aux3)
+  data0_curves <- lapply(data0_strata, aux3)
+  
+  data1_mcf <- AverageMCF(data1_curves, weights)
+  data0_mcf <- AverageMCF(data0_curves, weights)
+  
+  data1_mcf$Arm = 1
+  data0_mcf$Arm = 0
+  
+  mcf <- rbind(data0_mcf, data1_mcf)
+  
   # Final areas.
-  a1 <- weighted.mean(x = data1_areas, w = data1_sizes)
-  a0 <- weighted.mean(x = data0_areas, w = data0_sizes)
-  areas <- c('a1' = a1, 'a0' = a0)
+  a1 <- mean(data1_areas * weights)
+  a0 <- mean(data0_areas * weights)
+  areas <- data.frame(
+    'N0' = sum(data0_sizes), 
+    'Area0' = a0, 
+    'N1' = sum(data1_sizes),
+    'Area1' = a1
+  )
   
   # Difference and ratio
   diff <- a1 - a0
@@ -100,256 +120,23 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
   
   # Output
   if(return_areas){
-    out <- list('areas' = areas, 'stats' = stats)
+    weights_df <- data.frame(
+      'Stratum' = names(data1_areas),
+      'Stratum_weight' = weights,
+      'N0' = data0_sizes,
+      'Area0' = data0_areas,
+      'N1' = data1_sizes,
+      'Area1' = data1_areas
+    )
+    
+    out <- list(
+      'areas' = areas, 
+      'mcf' = mcf,
+      'stats' = stats,
+      'weights' = weights_df
+    )
   } else {
     out <- stats
   }
   return(out)
 }
-
-# -----------------------------------------------------------------------------
-
-#' Highest Density Confidence Interval
-#' 
-#' @param x Bootstrap replicates.
-#' @param alpha Alpha level.
-#' @param min_tail_prob Minimum alpha per tail. 
-#' @param intervals Intervals to consider. 
-
-HighDensCI <- function(
-  x,
-  alpha = 0.05,
-  min_tail_prob = 0.005,
-  intervals = 1e2
-) {
-  
-  # Evaluation grid.
-  lower_probs <- seq(
-    from = min_tail_prob,
-    to = alpha - min_tail_prob,
-    length.out = intervals + 1
-  )
-  upper_probs <- rev(1 - lower_probs)
-  
-  # Bounds.
-  lower <- quantile(x = x, probs = lower_probs, na.rm = TRUE)
-  upper <- quantile(x = x, probs = upper_probs, na.rm = TRUE)
-  
-  # Minimum length.
-  len <- abs(upper - lower)
-  
-  # Final interval.
-  key <- which.min(len)
-  out <- c(
-    "L" = as.numeric(lower[key]),
-    "U" = as.numeric(upper[key])
-  )
-  return(out)
-}
-
-
-# -----------------------------------------------------------------------------
-
-#' Bootstrap Inference on the Area Under the Cumulative Count Curve
-#'
-#' Confidence intervals and p-values for the difference and ratio of areas under
-#' the mean cumulative count curves, comparing treatment (arm = 1) with
-#' reference (arm = 0).
-#' 
-#' Two methods of p-value calculation are available. For 'perm', treatment 
-#' assignments are permuted on each iteration, and the p-value is the
-#' proportion of the *null* statistics that are as or more extreme than
-#' the *observed* statistics. For 'boot', the p-value is twice the proportion
-#' of bootstrap replicates on which the sign of the difference is areas is 
-#' reversed. 
-#' 
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
-#'   Note that subjects who are neither censored nor die are assumed to
-#'   remain at risk throughout the observation period. 
-#' @param arm Arm, coded as 1 for treatment, 0 for reference. 
-#' @param idx Unique subject index. 
-#' @param tau Truncation time. 
-#' @param strata Optional stratification factor. 
-#' @param reps Bootstrap replicates.
-#' @param alpha Alpha level.
-#' @param ci_type Either 'ETI' for equi-tailed or 'HDI' for highest-density.
-#' @param pval_type Either 'perm' for permutation or 'boot' bootstrap.
-#' @importFrom stats quantile 
-#' @export 
-#' @return Data.frame containing these columns:
-#' \describe{
-#'   \item{Time}{Truncation time.}
-#'   \item{Arm0}{AUC for arm 0.}
-#'   \item{Arm1}{AUC for arm 1.}
-#'   \item{Contrast}{'A1-A0' for the difference and 'A1/A0' for the ratio.}
-#'   \item{Estimate}{The estimated difference and ratio of AUCs.}
-#'   \item{L}{Confidence lower bound.}
-#'   \item{U}{Confidence upper bound.}
-#'   \item{P}{P-value.}
-#' }
-#' @examples 
-#' \donttest{
-#' data(mcc_data)
-#' set.seed(100)
-#' aucs <- CompareAUCs(
-#'   time = mcc_data$time,
-#'   status = mcc_data$status,
-#'   arm = mcc_data$arm,
-#'   idx = mcc_data$idx,
-#'   tau = 60,
-#'   strata = mcc_data$strata,
-#'   reps = 100,
-#'   alpha = 0.05,
-#'   ci_type = 'ETI',
-#'   pval_type = 'perm'
-#' )
-#' show(aucs)
-#' }
-
-CompareAUCs <- function(
-  time, 
-  status, 
-  arm, 
-  idx, 
-  tau, 
-  strata = NULL,
-  reps = 2000, 
-  alpha = 0.05,
-  ci_type = 'ETI',
-  pval_type = 'perm'
-) { 
-  
-  # Create single stratum if no strata are provided. 
-  if (is.null(strata)){
-    strata <- rep(1, length(time))
-  }
-  
-  # Form data.
-  data <- data.frame(time, status, arm, idx, strata)
-  data$strata <- factor(data$strata)
-  
-  # Split data. 
-  data0 <- data[data$arm == 0, ]
-  data1 <- data[data$arm == 1, ]
-  n0 <- nrow(data0)
-  
-  # Observed test stats.
-  obs <- AUC.Stats(
-    data0 = data0,
-    data1 = data1,
-    tau = tau, 
-    return_areas = TRUE
-  ) 
-  obs_areas <- obs$areas
-  obs_stats <- obs$stats
-  
-  # Bootstrap function.
-  aux <- function(b) {
-    
-    # Bootstrap data sets.
-    boot0 <- StratGroupBoot(data0, idx_offset = 0)
-    boot1 <- StratGroupBoot(data1, idx_offset = n0)
-    
-    # Bootstrap statistics
-    boot_stats <- AUC.Stats(
-      data0 = boot0,
-      data1 = boot1,
-      tau = tau
-    )
-    
-    if (pval_type == 'boot') {
-      
-      # Indicators of being opposite sign. 
-      ind <- as.numeric(sign(boot_stats[1]) != sign(obs_stats[1]))
-      ind <- rep(ind, 2)
-      
-    } else if (pval_type == 'perm') { 
-      
-      # Permute data.
-      perm <- PermData(data)
-      perm0 <- perm[perm$arm == 0, ]
-      perm1 <- perm[perm$arm == 1, ]
-      
-      # Permutation statistics
-      perm_stats <- AUC.Stats(
-        data0 = perm0,
-        data1 = perm1,
-        tau = tau
-      )
-      
-      # Indicators of being more extreme.
-      ind1 <- as.numeric(abs(perm_stats[1]) >= abs(obs_stats[1]))
-      ind2 <- as.numeric(abs(log(perm_stats[2])) >= abs(log(obs_stats[2])))
-      ind <- c(ind1, ind2)
-    }
-    
-    # Results
-    out <- c(boot_stats, ind)
-    return(out)
-  }
-  
-  sim <- lapply(seq(1:reps), aux)
-  sim <- do.call(rbind, sim)
-  
-  # Confidence intervals.
-  if (ci_type == 'ETI') {
-    
-    # Equi-tailed.
-    ci_diff <- HighDensCI(
-      x = sim[, 1], 
-      min_tail_prob = alpha / 2,
-      intervals = 0
-    )
-    ci_ratio <- HighDensCI(
-      x = log(sim[, 2]),
-      min_tail_prob = alpha / 2,
-      intervals = 0
-    )
-    
-  } else if (ci_type == 'HDI') {
-    
-    # Highest density.
-    ci_diff <- HighDensCI(
-      x = sim[, 1],
-      alpha = alpha,
-      min_tail_prob = 1 / reps,
-      intervals = 1e3
-    )
-    ci_ratio <- HighDensCI(
-      x = log(sim[, 2]),
-      alpha = alpha,
-      min_tail_prob = 1 / reps,
-      intervals = 1e3
-    )
-    
-  }
-  ci_ratio <- exp(ci_ratio)
-  cis <- data.frame(rbind(ci_diff, ci_ratio))
-  
-  # P-values
-  pval <- apply(
-    X = rbind(sim[, 3:4], c(1, 1)),
-    MARGIN = 2,
-    FUN = function(x){as.numeric(mean(x, na.rm = TRUE))}
-  )
-  if (pval_type == 'boot') {
-    pval <- 2 * pval
-  }
-  
-  # Output
-  out <- data.frame(
-    'Time' = c(tau, tau), 
-    'Arm0' = rep(x = obs_areas[1], times = 2),
-    'Arm1' = rep(x = obs_areas[2], times = 2)
-  )
-  out$Contrast <- c('A1-A0', 'A1/A0')
-  out$Estimate <- obs_stats
-  out$CI_type <- ci_type
-  out$L <- cis$L
-  out$U <- cis$U
-  out$P_type <- pval_type
-  out$P <- pval
-  return(out)
-}
-
