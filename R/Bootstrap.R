@@ -68,24 +68,25 @@ StratGroupBoot <- function (data, idx_offset = 0) {
 
 # -----------------------------------------------------------------------------
 
-#' Generate Permuted Data.frame.
-#'
-#' Permute observations grouped by an index by flipping the treatment arm
-#' `arm` of an observations with probability 0.5. Arm is assumed to be labeled
-#' 1 for treatment, 0 for reference. 
+#' Permute Treatment Assignments.
 #'
 #' @param data Data.frame.
 #' @importFrom stats rbinom
 #' @return Bootstrapped data.frame.
 
 PermData <- function(data) {
-  obs_per_subj <- table(data$idx)
-  subj <- length(obs_per_subj)
   
-  # Randomize treatment assignment.
-  flip <- rbinom(n = subj, size = 1, prob = 0.5)
-  flip <- rep(x = flip, times = obs_per_subj)
+  # Observed assignments.
+  obs_assignments <- unique(data[, c('idx', 'arm')])
+  n <- nrow(obs_assignments)
   
-  data$arm <- data$arm * (1 - flip) + (1 - data$arm) * flip
+  # Permute assignments.
+  perm_assignments <- obs_assignments
+  perm_assignments$arm <- obs_assignments$arm[sample(n, n, FALSE)]
+  perm_trt_arm <- perm_assignments$idx[perm_assignments$arm == 1]
+  
+  # Format output.
+  data$arm <- 0
+  data$arm[data$idx %in% perm_trt_arm] <- 1
   return(data)
 }

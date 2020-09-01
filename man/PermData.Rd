@@ -2,7 +2,7 @@
 % Please edit documentation in R/Bootstrap.R
 \name{PermData}
 \alias{PermData}
-\title{Generate Permuted Data.frame.}
+\title{Permute Treatment Assignments.}
 \usage{
 PermData(data)
 }
@@ -13,7 +13,5 @@ PermData(data)
 Bootstrapped data.frame.
 }
 \description{
-Permute observations grouped by an index by flipping the treatment arm
-`arm` of an observations with probability 0.5. Arm is assumed to be labeled
-1 for treatment, 0 for reference.
+Permute Treatment Assignments.
 }

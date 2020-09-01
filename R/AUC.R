@@ -109,16 +109,57 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
 
 # -----------------------------------------------------------------------------
 
+#' Highest Density Confidence Interval
+#' 
+#' @param x Bootstrap replicates.
+#' @param alpha Alpha level.
+#' @param min_tail_prob Minimum alpha per tail. 
+#' @param intervals Intervals to consider. 
+
+HighDensCI <- function(
+  x,
+  alpha = 0.05,
+  min_tail_prob = 0.005,
+  intervals = 1e2
+) {
+  
+  # Evaluation grid.
+  lower_probs <- seq(
+    from = min_tail_prob,
+    to = alpha - min_tail_prob,
+    length.out = intervals + 1
+  )
+  upper_probs <- rev(1 - lower_probs)
+  
+  # Bounds.
+  lower <- quantile(x = x, probs = lower_probs, na.rm = TRUE)
+  upper <- quantile(x = x, probs = upper_probs, na.rm = TRUE)
+  
+  # Minimum length.
+  len <- abs(upper - lower)
+  
+  # Final interval.
+  key <- which.min(len)
+  out <- c(
+    "L" = as.numeric(lower[key]),
+    "U" = as.numeric(upper[key])
+  )
+  return(out)
+}
+
+
+# -----------------------------------------------------------------------------
+
 #' Bootstrap Inference on the Area Under the Cumulative Count Curve
 #'
 #' Confidence intervals and p-values for the difference and ratio of areas under
 #' the mean cumulative count curves, comparing treatment (arm = 1) with
 #' reference (arm = 0).
 #' 
-#' Two methods of p-value calculation are available. For '2-sided', treatment 
-#' assignments are permuted on each bootstrap iteration, and the p-value is the
-#' proportion of the *null* test statistics that are as or more extreme than
-#' the *observed* test statistics. For '1-sided', the p-value is the proportion
+#' Two methods of p-value calculation are available. For 'perm', treatment 
+#' assignments are permuted on each iteration, and the p-value is the
+#' proportion of the *null* statistics that are as or more extreme than
+#' the *observed* statistics. For 'boot', the p-value is twice the proportion
 #' of bootstrap replicates on which the sign of the difference is areas is 
 #' reversed. 
 #' 
@@ -132,7 +173,8 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
 #' @param strata Optional stratification factor. 
 #' @param reps Bootstrap replicates.
 #' @param alpha Alpha level.
-#' @param pval_type Either '2-sided' or '1-sided'.
+#' @param ci_type Either 'ETI' for equi-tailed or 'HDI' for highest-density.
+#' @param pval_type Either 'perm' for permutation or 'boot' bootstrap.
 #' @importFrom stats quantile 
 #' @export 
 #' @return Data.frame containing these columns:
@@ -159,7 +201,8 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
 #'   strata = mcc_data$strata,
 #'   reps = 100,
 #'   alpha = 0.05,
-#'   pval_type = '2-sided'
+#'   ci_type = 'ETI',
+#'   pval_type = 'perm'
 #' )
 #' show(aucs)
 #' }
@@ -173,7 +216,8 @@ CompareAUCs <- function(
   strata = NULL,
   reps = 2000, 
   alpha = 0.05,
-  pval_type = '2-sided'
+  ci_type = 'ETI',
+  pval_type = 'perm'
 ) { 
   
   # Create single stratum if no strata are provided. 
@@ -214,16 +258,16 @@ CompareAUCs <- function(
       tau = tau
     )
     
-    if (pval_type == '1-sided') {
+    if (pval_type == 'boot') {
       
       # Indicators of being opposite sign. 
       ind <- as.numeric(sign(boot_stats[1]) != sign(obs_stats[1]))
       ind <- rep(ind, 2)
       
-    } else if (pval_type == '2-sided') { 
+    } else if (pval_type == 'perm') { 
       
       # Permute data.
-      perm <- PermData(rbind(boot0, boot1))
+      perm <- PermData(data)
       perm0 <- perm[perm$arm == 0, ]
       perm1 <- perm[perm$arm == 1, ]
       
@@ -248,18 +292,40 @@ CompareAUCs <- function(
   sim <- lapply(seq(1:reps), aux)
   sim <- do.call(rbind, sim)
   
-  # Confidence interval
-  alpha2 <- alpha / 2
-  lower <- apply(
-    X = sim[, 1:2], 
-    MARGIN = 2, 
-    FUN = function(x) {as.numeric(quantile(x, alpha2, na.rm = TRUE))}
-  )
-  upper <- apply(
-    X = sim[, 1:2], 
-    MARGIN = 2, 
-    FUN = function(x) {as.numeric(quantile(x, 1 - alpha2, na.rm = TRUE))}
-  )
+  # Confidence intervals.
+  if (ci_type == 'ETI') {
+    
+    # Equi-tailed.
+    ci_diff <- HighDensCI(
+      x = sim[, 1], 
+      min_tail_prob = alpha / 2,
+      intervals = 0
+    )
+    ci_ratio <- HighDensCI(
+      x = log(sim[, 2]),
+      min_tail_prob = alpha / 2,
+      intervals = 0
+    )
+    
+  } else if (ci_type == 'HDI') {
+    
+    # Highest density.
+    ci_diff <- HighDensCI(
+      x = sim[, 1],
+      alpha = alpha,
+      min_tail_prob = 1 / reps,
+      intervals = 1e3
+    )
+    ci_ratio <- HighDensCI(
+      x = log(sim[, 2]),
+      alpha = alpha,
+      min_tail_prob = 1 / reps,
+      intervals = 1e3
+    )
+    
+  }
+  ci_ratio <- exp(ci_ratio)
+  cis <- data.frame(rbind(ci_diff, ci_ratio))
   
   # P-values
   pval <- apply(
@@ -267,6 +333,9 @@ CompareAUCs <- function(
     MARGIN = 2,
     FUN = function(x){as.numeric(mean(x, na.rm = TRUE))}
   )
+  if (pval_type == 'boot') {
+    pval <- 2 * pval
+  }
   
   # Output
   out <- data.frame(
@@ -276,10 +345,11 @@ CompareAUCs <- function(
   )
   out$Contrast <- c('A1-A0', 'A1/A0')
   out$Estimate <- obs_stats
-  out$L <- lower
-  out$U <- upper
+  out$CI_type <- ci_type
+  out$L <- cis$L
+  out$U <- cis$U
+  out$P_type <- pval_type
   out$P <- pval
   return(out)
 }
-
 

@@ -1,3 +1,13 @@
+---
+title: "README"
+author: "Zachary McCaw"
+date: "2020-08-31"
+output: 
+  html_document: 
+    keep_md: TRUE
+--- 
+
+
 
 # Description
 
@@ -56,15 +66,19 @@ aucs <- CompareAUCs(
   strata = mcc_data$strata,
   reps = 100,
   alpha = 0.05,
-  pval_type = '2-sided'
+  ci_type = 'ETI',
+  pval_type = 'perm'
 )
 show(aucs)
 ```
 
 ```
-##   Time     Arm0     Arm1 Contrast   Estimate           L        U          P
-## 1   60 44.23623 52.89457    A1-A0 -8.6583336 -17.7383583 1.759781 0.05940594
-## 2   60 44.23623 52.89457    A1/A0  0.8363096   0.6920833 1.036865 0.06930693
+##   Time     Arm0     Arm1 Contrast   Estimate CI_type           L         U
+## 1   60 44.23623 52.89457    A1-A0 -8.6583336     ETI -17.7354610 0.5196249
+## 2   60 44.23623 52.89457    A1/A0  0.8363096     ETI   0.6897325 1.0100526
+##   P_type         P
+## 1   perm 0.0990099
+## 2   perm 0.0990099
 ```
 
 Arguments include: 
@@ -73,5 +87,6 @@ Arguments include:
 * The stratification factor `strata` is optional, and may be omitted. Strata empty in one arm or the other are allowed; these strata receive weight zero when combining areas across arms.
 * `reps` is the number of bootstrap replicates. The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable. 
 * `alpha` is 1 minus the desired confidence interval (CI) coverage. CIs are obtained via the percentile method, with probability $\alpha / 2$ allocated to each tail. 
-* `pval_type` is either `'2-sided'` or `'1-sided'`. For `'2-sided'`, on each resample, the per-patient treatment assignments are randomized, and null values for the test statistics area calculated. The final p-value represents the proportion of resamples on which the null test statistics were as or more extreme than observed. For `pval_type = '1-sided'`, the treatment assignments are not randomized; instead, the p-value is calculated as the proportion of resamples on which the sign of the bootstrapped difference in areas disagrees with the observed sign. 
+* `ci_type` is either `'ETI'` for an equi-tailed interval, or `'HDI'` for the highest density interval.
+* `pval_type` is either `'perm'` or `'boot'`. For `'perm'`, treatment assignments are permuted on each iteration, and the p-value is the proportion of the *null* statistics that are as or more extreme than the *observed* statistics. For `'boot'`, the p-value is twice the proportion of bootstrap replicates on which the sign of the difference is areas is reversed. 
 

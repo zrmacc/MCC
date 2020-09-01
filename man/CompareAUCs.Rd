@@ -13,7 +13,8 @@ CompareAUCs(
   strata = NULL,
   reps = 2000,
   alpha = 0.05,
-  pval_type = "2-sided"
+  ci_type = "ETI",
+  pval_type = "perm"
 )
 }
 \arguments{
@@ -35,7 +36,9 @@ remain at risk throughout the observation period.}
 
 \item{alpha}{Alpha level.}
 
-\item{pval_type}{Either '2-sided' or '1-sided'.}
+\item{ci_type}{Either 'ETI' for equi-tailed or 'HDI' for highest-density.}
+
+\item{pval_type}{Either 'perm' for permutation or 'boot' bootstrap.}
 }
 \value{
 Data.frame containing these columns:
@@ -56,10 +59,10 @@ the mean cumulative count curves, comparing treatment (arm = 1) with
 reference (arm = 0).
 }
 \details{
-Two methods of p-value calculation are available. For '2-sided', treatment 
-assignments are permuted on each bootstrap iteration, and the p-value is the
-proportion of the *null* test statistics that are as or more extreme than
-the *observed* test statistics. For '1-sided', the p-value is the proportion
+Two methods of p-value calculation are available. For 'perm', treatment 
+assignments are permuted on each iteration, and the p-value is the
+proportion of the *null* statistics that are as or more extreme than
+the *observed* statistics. For 'boot', the p-value is twice the proportion
 of bootstrap replicates on which the sign of the difference is areas is 
 reversed.
 }
@@ -76,7 +79,8 @@ aucs <- CompareAUCs(
   strata = mcc_data$strata,
   reps = 100,
   alpha = 0.05,
-  pval_type = '2-sided'
+  ci_type = 'ETI',
+  pval_type = 'perm'
 )
 show(aucs)
 }
