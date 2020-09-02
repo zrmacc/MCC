@@ -1,14 +1,3 @@
----
-title: "README"
-author: "Zachary McCaw"
-date: "2020-09-01"
-output: 
-  html_document: 
-    keep_md: TRUE
---- 
-
-
-
 # Description
 
 This package provides functions for inference on the difference and ratio in areas under mean cumulative count (MCC) curves, comparing two treatment arms. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. 
