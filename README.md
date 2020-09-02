@@ -1,3 +1,14 @@
+---
+title: "README"
+author: "Zachary McCaw"
+date: "2020-09-01"
+output: 
+  html_document: 
+    keep_md: TRUE
+--- 
+
+
+
 # Description
 
 This package provides functions for inference on the difference and ratio in areas under mean cumulative count (MCC) curves, comparing two treatment arms. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. 
@@ -62,15 +73,15 @@ show(aucs)
 ```
 ## Areas:
 ##    N0    Area0  N1    Area1
-## 1 184 17.61869 143 14.79571
+## 1 184 52.85607 143 44.38712
 ## 
 ## 
 ## CIs:
-##            Method Contrast   Observed      Lower       Upper Lower_alpha
-## 1       Equi-tail    A1-A0 -2.8229848 -5.8755215  0.28357670     0.02500
-## 2 Highest-density    A1-A0 -2.8229848 -6.0697516 -0.05520067     0.01012
-## 3       Equi-tail    A1/A0  0.8397733  0.6901222  1.01650562     0.02500
-## 4 Highest-density    A1/A0  0.8397733  0.7072868  1.03006533     0.03988
+##            Method Contrast   Observed       Lower      Upper Lower_alpha
+## 1       Equi-tail    A1-A0 -8.4689544 -17.6265646  0.8507301     0.02500
+## 2 Highest-density    A1-A0 -8.4689544 -18.2092548 -0.1656020     0.01012
+## 3       Equi-tail    A1/A0  0.8397733   0.6901222  1.0165056     0.02500
+## 4 Highest-density    A1/A0  0.8397733   0.7072868  1.0300653     0.03988
 ##   Upper_alpha
 ## 1     0.02500
 ## 2     0.03988
@@ -108,7 +119,7 @@ aucs@Areas
 
 ```
 ##    N0    Area0  N1    Area1
-## 1 184 17.61869 143 14.79571
+## 1 184 52.85607 143 44.38712
 ```
 
 * `@CIs` containing the observed difference and ratio with confidence intervals:
@@ -119,11 +130,11 @@ aucs@CIs
 ```
 
 ```
-##            Method Contrast   Observed      Lower       Upper Lower_alpha
-## 1       Equi-tail    A1-A0 -2.8229848 -5.8755215  0.28357670     0.02500
-## 2 Highest-density    A1-A0 -2.8229848 -6.0697516 -0.05520067     0.01012
-## 3       Equi-tail    A1/A0  0.8397733  0.6901222  1.01650562     0.02500
-## 4 Highest-density    A1/A0  0.8397733  0.7072868  1.03006533     0.03988
+##            Method Contrast   Observed       Lower      Upper Lower_alpha
+## 1       Equi-tail    A1-A0 -8.4689544 -17.6265646  0.8507301     0.02500
+## 2 Highest-density    A1-A0 -8.4689544 -18.2092548 -0.1656020     0.01012
+## 3       Equi-tail    A1/A0  0.8397733   0.6901222  1.0165056     0.02500
+## 4 Highest-density    A1/A0  0.8397733   0.7072868  1.0300653     0.03988
 ##   Upper_alpha
 ## 1     0.02500
 ## 2     0.03988
@@ -174,12 +185,12 @@ head(aucs@Reps)
 
 ```
 ##       boot_diff boot_ratio  perm_diff perm_ratio
-## [1,] -3.2083067  0.8295516  1.5749908  1.1012635
-## [2,] -1.4661234  0.9237945 -0.2833097  0.9828161
-## [3,] -2.4171223  0.8646791  0.6115070  1.0380623
-## [4,] -1.8367062  0.8846476 -0.7210144  0.9567278
-## [5,] -0.9420859  0.9445555  0.1193121  1.0073297
-## [6,] -4.3356346  0.7749201  1.2256497  1.0775559
+## [1,]  -9.624920  0.8295516  4.7249723  1.1012635
+## [2,]  -4.398370  0.9237945 -0.8499290  0.9828161
+## [3,]  -7.251367  0.8646791  1.8345211  1.0380623
+## [4,]  -5.510119  0.8846476 -2.1630433  0.9567278
+## [5,]  -2.826258  0.9445555  0.3579362  1.0073297
+## [6,] -13.006904  0.7749201  3.6769490  1.0775559
 ```
 
 * `@Weights` containing the per-stratum weights and AUCs.

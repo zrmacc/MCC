@@ -64,7 +64,6 @@ AUC.Area <- function(
 #' @param data1 Data.frame containing `time`, `status`, `idx`, `strata` for arm 1.
 #' @param tau Truncation time.
 #' @param return_areas Return the AUCs?
-#' @importFrom stats weighted.mean
 #' @return If `return_areas = TRUE`, list containing:
 #' \itemize{
 #'   \item `areas` under the mean cumulative count curve for each arm.
@@ -104,8 +103,8 @@ AUC.Stats <- function(data1, data0, tau, return_areas = FALSE) {
   mcf <- rbind(data0_mcf, data1_mcf)
   
   # Final areas.
-  a1 <- mean(data1_areas * weights)
-  a0 <- mean(data0_areas * weights)
+  a1 <- sum(data1_areas * weights)
+  a0 <- sum(data0_areas * weights)
   areas <- data.frame(
     'N0' = sum(data0_sizes), 
     'Area0' = a0, 
