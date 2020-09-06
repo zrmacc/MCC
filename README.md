@@ -1,15 +1,23 @@
-# Description
+# Compare Mean Cumulative Count Curves
 
-This package provides functions for inference on the difference and ratio in areas under mean cumulative count (MCC) curves, comparing two treatment arms. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. 
+Zachary McCaw <br>
+Updated: 20-09-06
 
-# Installation
+
+### Description
+
+This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. Also see [CICs](https://github.com/zrmacc/CICs) for comparing cumulative incidence curves. 
+
+## Installation
 
 
 ```r
 devtools::install_github(repo = 'zrmacc/MCC')
 ```
 
-# Examples
+## Examples
+
+### Data
 
 Synthetic example data in the format expected by this package may be loaded via:
 
@@ -40,7 +48,7 @@ Here:
 
 For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up. 
 
-## Difference and Ratio of AUCs
+### AUCs
 
 To compare the areas under the mean cumulative count curves up to time $\tau = 60$: 
 
@@ -95,7 +103,7 @@ Here:
 * `reps` is the number of bootstrap replicates. The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable. 
 * `alpha` is 1 minus the desired confidence interval (CI) coverage. 
 
-### Outputs
+#### Outputs
 
 The output of `CompareAUCs` is an object of class `compAUCs` with these slots.
 

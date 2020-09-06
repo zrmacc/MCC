@@ -11,7 +11,7 @@
 
 <meta name="author" content="Zachary McCaw" />
 
-<meta name="date" content="2020-09-01" />
+<meta name="date" content="2020-09-06" />
 
 <title>README</title>
 
@@ -365,21 +365,26 @@ summary {
 
 <h1 class="title toc-ignore">README</h1>
 <h4 class="author">Zachary McCaw</h4>
-<h4 class="date">2020-09-01</h4>
+<h4 class="date">2020-09-06</h4>
 
 </div>
 
 
-<div id="description" class="section level1">
-<h1>Description</h1>
-<p>This package provides functions for inference on the difference and ratio in areas under mean cumulative count (MCC) curves, comparing two treatment arms. The MCC curves are estimated using the method of <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x">Ghosh and Lin (2000)</a>, which allows for the occurrence of terminal events such as death.</p>
+<div id="compare-mean-cumulative-count-curves" class="section level1">
+<h1>Compare Mean Cumulative Count Curves</h1>
+<p>Zachary McCaw <br> Updated: 20-09-06</p>
+<div id="description" class="section level3">
+<h3>Description</h3>
+<p>This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using the method of <a href="https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x">Ghosh and Lin (2000)</a>, which allows for the occurrence of terminal events such as death. Also see <a href="https://github.com/zrmacc/CICs">CICs</a> for comparing cumulative incidence curves.</p>
 </div>
-<div id="installation" class="section level1">
-<h1>Installation</h1>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
 <pre class="r"><code>devtools::install_github(repo = &#39;zrmacc/MCC&#39;)</code></pre>
 </div>
-<div id="examples" class="section level1">
-<h1>Examples</h1>
+<div id="examples" class="section level2">
+<h2>Examples</h2>
+<div id="data" class="section level3">
+<h3>Data</h3>
 <p>Synthetic example data in the format expected by this package may be loaded via:</p>
 <pre class="r"><code>library(MCC)
 data(mcc_data)
@@ -400,8 +405,9 @@ head(mcc_data)</code></pre>
 <li><code>strata</code> is a 3-level stratification factor.</li>
 </ul>
 <p>For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up.</p>
-<div id="difference-and-ratio-of-aucs" class="section level2">
-<h2>Difference and Ratio of AUCs</h2>
+</div>
+<div id="aucs" class="section level3">
+<h3>AUCs</h3>
 <p>To compare the areas under the mean cumulative count curves up to time <span class="math inline">\(\tau = 60\)</span>:</p>
 <pre class="r"><code>set.seed(100)
 aucs &lt;- CompareAUCs(
@@ -448,8 +454,8 @@ show(aucs)</code></pre>
 <li><code>reps</code> is the number of bootstrap replicates. The bootstrap is grouped by <code>idx</code>, and stratified by <code>strata</code>, if applicable.</li>
 <li><code>alpha</code> is 1 minus the desired confidence interval (CI) coverage.</li>
 </ul>
-<div id="outputs" class="section level3">
-<h3>Outputs</h3>
+<div id="outputs" class="section level4">
+<h4>Outputs</h4>
 <p>The output of <code>CompareAUCs</code> is an object of class <code>compAUCs</code> with these slots.</p>
 <ul>
 <li><code>@Areas</code> containing the overall sample size and AUCs for each arm:</li>
@@ -512,6 +518,7 @@ show(aucs)</code></pre>
 ## 1       1      0.3211009 57 51.27138 48 34.58627
 ## 2       2      0.3302752 61 52.15020 47 54.58371
 ## 3       3      0.3486239 66 54.98438 48 43.75429</code></pre>
+</div>
 </div>
 </div>
 </div>
