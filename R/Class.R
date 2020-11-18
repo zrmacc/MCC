@@ -2,12 +2,13 @@
 #'
 #' Defines the object class returned by \code{\link{CompareAUCs}}.
 #'
-#' @slot Areas Overall sample sizes and AUCs for each arm.
-#' @slot CIs Equi-tailed and highest density confidence intervals.
-#' @slot Curves Mean cumulative function for each treatment arm, averaged across
+#' @slot StratumAreas Stratum-specific areas for each arm.
+#' @slot MargAreas Areas for each arm, marginalized across strata.
+#' @slot CIs Confidence intervals.
+#' @slot MCF Mean cumulative function for each treatment arm, averaged across
 #'   strata.
-#' @slot Pvals Bootstrap and permutation p-values.
-#' @slot Reps Bootstrap and permutation statistics. 
+#' @slot Pvals P-values.
+#' @slot Reps List of data.frame containing the bootstrap/permutation replicates.
 #' @slot Weights Per-stratum weights and areas. 
 #' @name compAUCs-class
 #' @rdname compAUCs-class
@@ -16,11 +17,12 @@
 setClass(
   Class = "compAUCs",
   representation = representation(
-   Areas = "data.frame",
+   StratumAreas = "data.frame",
+   MargAreas = "data.frame",
    CIs = "data.frame",
-   Curves = "data.frame",
+   MCF = "data.frame",
    Pvals = "data.frame",
-   Reps = "matrix",
+   Reps = "list",
    Weights = "data.frame"
   )
 )
@@ -39,19 +41,34 @@ setClass(
 
 print.compAUCs <- function (x, ...) {
   
+  disp <- function(y) {
+    if (is.numeric(y)) {
+      out <- signif(y, digits = 3)
+    } else {
+      out <- y
+    }
+    return(out)
+  }
+  
   # Areas.
-  cat('Areas:\n')
-  show(x@Areas)
+  cat('Marginal Areas:\n')
+  areas <- x@MargAreas
+  areas[, ] <- lapply(areas, disp)
+  show(areas)
   cat('\n\n')
   
   # CIs.
   cat('CIs:\n')
-  show(x@CIs)
+  cis <- x@CIs
+  cis[, ] <- lapply(cis, disp)
+  show(cis)
   cat('\n\n')
   
   # P-values.
   cat('P-values:\n')
-  show(x@Pvals)
+  pvals <- x@Pvals
+  pvals[, ] <- lapply(pvals, disp)
+  show(pvals)
   cat('\n\n')
 
 }

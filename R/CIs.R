@@ -1,5 +1,3 @@
-# -----------------------------------------------------------------------------
-
 #' Highest Density Confidence Interval
 #' 
 #' @param x Bootstrap replicates.
@@ -34,10 +32,10 @@ HighDensCI <- function(
   
   # Output.
   out <- c(
-    "L" = as.numeric(lower[key]),
-    "U" = as.numeric(upper[key]),
-    "alpha_L" = lower_probs[key],
-    "alpha_U" = 1 - upper_probs[key]
+    "lower" = as.numeric(lower[key]),
+    "upper" = as.numeric(upper[key]),
+    "alpha_lower" = lower_probs[key],
+    "alpha_upper" = 1 - upper_probs[key]
   )
   return(out)
 }

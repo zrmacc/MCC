@@ -4,7 +4,7 @@
 \alias{AUC.Stats}
 \title{Calculate Test Statistics}
 \usage{
-AUC.Stats(data1, data0, tau, return_areas = FALSE)
+AUC.Stats(data1, data0, tau, alpha, return_areas = FALSE)
 }
 \arguments{
 \item{data1}{Data.frame containing `time`, `status`, `idx`, `strata` for arm 1.}
@@ -13,15 +13,20 @@ AUC.Stats(data1, data0, tau, return_areas = FALSE)
 
 \item{tau}{Truncation time.}
 
+\item{alpha}{Type I error.}
+
 \item{return_areas}{Return the AUCs?}
 }
 \value{
-If `return_areas = TRUE`, list containing:
+If `return_areas`, list containing:
 \itemize{
-  \item `areas` under the mean cumulative count curve for each arm.
-  \item `stats`, including the difference and ratio of areas.
+  \item 'avg_mcf', average MCF across strata.
+  \item 'contrasts', including the difference and ratio of areas.
+  \item 'marg_areas', the marginal areas for each arm.
+  \item 'stratum_areas', the per-stratum and per-arm areas.
+  \item 'weights', the weights of each stratum.
 }
- If `return_areas = FALSE`, only `stats` is returned.
+ Else, only 'contrasts' is returned.
 }
 \description{
 Calculate Test Statistics

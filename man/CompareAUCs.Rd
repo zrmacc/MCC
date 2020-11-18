@@ -11,8 +11,11 @@ CompareAUCs(
   idx,
   tau,
   strata = NULL,
+  alpha = 0.05,
+  boot = FALSE,
+  perm = FALSE,
   reps = 2000,
-  alpha = 0.05
+  seed = 100
 )
 }
 \arguments{
@@ -30,9 +33,15 @@ remain at risk throughout the observation period.}
 
 \item{strata}{Optional stratification factor.}
 
-\item{reps}{Bootstrap replicates.}
-
 \item{alpha}{Alpha level.}
+
+\item{boot}{Logical, construct bootstrap confidence intervals?}
+
+\item{perm}{Logical, perform permutation test?}
+
+\item{reps}{Replicates for bootstrap/permutation inference.}
+
+\item{seed}{Seed for bootstrap/permutation inference.}
 }
 \value{
 Object of class compAUCs with these slots:
@@ -61,15 +70,36 @@ reversed.
 }
 \examples{
 \donttest{
-data(mcc_data)
-set.seed(100)
+# Simulate data set.
+data1 <- GenData(
+  n = 100,
+  censoring_rate = 0.25,
+  event_rate = 1,
+  death_rate = 0.25,
+  tau = 10
+)
+data1$arm <- 1
+
+data0 <- GenData(
+  n = 100,
+  censoring_rate = 0.25,
+  event_rate = 2,
+  death_rate = 0.25,
+  tau = 10
+)
+data0$arm <- 0
+data0$idx <- data0$idx + 100
+
+data <- rbind(data1, data0)
+
 aucs <- CompareAUCs(
-  time = mcc_data$time,
-  status = mcc_data$status,
-  arm = mcc_data$arm,
-  idx = mcc_data$idx,
-  tau = 60,
-  strata = mcc_data$strata,
+  time = data$time,
+  status = data$status,
+  arm = data$arm,
+  idx = data$idx,
+  tau = 2,
+  boot = TRUE,
+  perm = TRUE,
   reps = 100,
   alpha = 0.05
 )

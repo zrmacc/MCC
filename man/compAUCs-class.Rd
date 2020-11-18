@@ -10,16 +10,18 @@ Defines the object class returned by \code{\link{CompareAUCs}}.
 \section{Slots}{
 
 \describe{
-\item{\code{Areas}}{Overall sample sizes and AUCs for each arm.}
+\item{\code{StratumAreas}}{Stratum-specific areas for each arm.}
 
-\item{\code{CIs}}{Equi-tailed and highest density confidence intervals.}
+\item{\code{MargAreas}}{Areas for each arm, marginalized across strata.}
 
-\item{\code{Curves}}{Mean cumulative function for each treatment arm, averaged across
+\item{\code{CIs}}{Confidence intervals.}
+
+\item{\code{MCF}}{Mean cumulative function for each treatment arm, averaged across
 strata.}
 
-\item{\code{Pvals}}{Bootstrap and permutation p-values.}
+\item{\code{Pvals}}{P-values.}
 
-\item{\code{Reps}}{Bootstrap and permutation statistics.}
+\item{\code{Reps}}{List of data.frame containing the bootstrap/permutation replicates.}
 
 \item{\code{Weights}}{Per-stratum weights and areas.}
 }}

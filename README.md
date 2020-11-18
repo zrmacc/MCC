@@ -1,12 +1,13 @@
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 20-09-06
+Updated: 20-11-18
 
 
 ### Description
 
-This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. Also see [CICs](https://github.com/zrmacc/CICs) for comparing cumulative incidence curves. 
+This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. Also see:
+* [CICs](https://github.com/zrmacc/CICs) for comparing cumulative incidence curves. 
 
 ## Installation
 
@@ -29,13 +30,13 @@ head(mcc_data)
 ```
 
 ```
-##   idx time status arm strata
-## 1   1    3      1   0      1
-## 2   1   15      1   0      3
-## 3   1   46      1   0      1
-## 4   1   51      1   0      2
-## 5   1   53      1   0      2
-## 6   2   29      1   0      1
+##   idx       time status arm
+## 1   1 0.37908421      1   1
+## 2   1 0.88876029      2   1
+## 3   2 1.25659316      0   1
+## 4   3 0.09017335      1   1
+## 5   3 0.50027480      1   1
+## 6   3 1.13766337      2   1
 ```
 
 Here: 
@@ -44,82 +45,104 @@ Here:
 * `time` is the observation time. 
 * `status` is coded 0 for censoring, 1 for an event, 2 for death.
 * `arm` is the treatment arm, coded as 1 for treatment, 0 for reference. 
-* `strata` is a 3-level stratification factor. 
 
-For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up. 
+For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up. See `? mcc_data` for details of the data generating process.
 
 ### AUCs
 
-To compare the areas under the mean cumulative count curves up to time $\tau = 60$: 
+To compare the areas under the mean cumulative count curves up to time $\tau = 4$: 
 
 ```r
-set.seed(100)
 aucs <- CompareAUCs(
   time = mcc_data$time,
   status = mcc_data$status,
   arm = mcc_data$arm,
   idx = mcc_data$idx,
-  tau = 60,
-  strata = mcc_data$strata,
+  tau = 4,
   reps = 100,
-  alpha = 0.05
+  boot = TRUE,
+  perm = TRUE,
+  alpha = 0.05,
+  seed = 100
 )
 show(aucs)
 ```
 
 ```
-## Areas:
-##    N0    Area0  N1    Area1
-## 1 184 52.85607 143 44.38712
+## Marginal Areas:
+##   arm   n tau area se_area
+## 1   0 100   4 7.95   0.813
+## 2   1 100   4 5.80   0.602
 ## 
 ## 
 ## CIs:
-##            Method Contrast   Observed       Lower      Upper Lower_alpha
-## 1       Equi-tail    A1-A0 -8.4689544 -17.6265646  0.8507301     0.02500
-## 2 Highest-density    A1-A0 -8.4689544 -18.2092548 -0.1656020     0.01012
-## 3       Equi-tail    A1/A0  0.8397733   0.6901222  1.0165056     0.02500
-## 4 Highest-density    A1/A0  0.8397733   0.7072868  1.0300653     0.03988
+##      Method            Type Contrast Observed  Lower  Upper Lower_alpha
+## 1     Asymp      Equitailed    A1-A0    -2.15 -4.130 -0.164      0.0250
+## 2     Asymp      Equitailed    A1/A0     0.73  0.549  0.971      0.0250
+## 3 Bootstrap      Equitailed    A1-A0    -2.15 -3.180 -0.438      0.0250
+## 4 Bootstrap Highest-density    A1-A0    -2.15 -3.220 -0.730      0.0100
+## 5 Bootstrap      Equitailed    A1/A0     0.73  0.534  0.911      0.0250
+## 6 Bootstrap Highest-density    A1/A0     0.73  0.532  0.863      0.0101
 ##   Upper_alpha
-## 1     0.02500
-## 2     0.03988
-## 3     0.02500
-## 4     0.01012
+## 1      0.0250
+## 2      0.0250
+## 3      0.0250
+## 4      0.0400
+## 5      0.0250
+## 6      0.0399
 ## 
 ## 
 ## P-values:
-##   Method Sides Contrast    P
-## 1   Boot     1    A1-A0 0.04
-## 2   Boot     1    A1/A0 0.04
-## 3   Perm     1    A1-A0 0.07
-## 4   Perm     2    A1-A0 0.11
-## 5   Perm     1    A1/A0 0.06
-## 6   Perm     2    A1/A0 0.09
+##      Method Sides Contrast Observed      P
+## 1     Asymp     2    A1-A0    -2.15 0.0338
+## 2     Asymp     2    A1/A0     0.73 0.0307
+## 3 Bootstrap     1    A1-A0    -2.15 0.0000
+## 4 Bootstrap     1    A1/A0     0.73 0.0000
+## 5      Perm     1    A1-A0    -2.15 0.0100
+## 6      Perm     2    A1-A0    -2.15 0.0100
+## 7      Perm     1    A1/A0     0.73 0.0100
+## 8      Perm     2    A1/A0     0.73 0.0100
 ```
 
 Here:
 
 * `tau` is the truncation time, or the time up to which the AUC is calculated. 
-* The stratification factor `strata` is optional, and may be omitted. No strata should be empty in either arm.
-* `reps` is the number of bootstrap replicates. The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable. 
-* `alpha` is 1 minus the desired confidence interval (CI) coverage. 
+* `boot` indicates to construct bootstrap confidence intervals. 
+* `perm` indicates to perform permutation tests for the difference and ratio of AUCs.
+* `reps` is the number of simulation replicates. 
+  - The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable. 
+* `alpha` is 1 minus the desired coverage for confidence intervals. 
 
 #### Outputs
 
 The output of `CompareAUCs` is an object of class `compAUCs` with these slots.
 
-* `@Areas` containing the overall sample size and AUCs for each arm:
+* `@StratumAreas` containing the stratum-specific AUCs for each arm.
+
+```r
+aucs@StratumAreas
+```
+
+```
+##   arm stratum   n tau     area var_area   se_area
+## 1   1       1 100   4 5.802334 36.18870 0.6015704
+## 2   0       1 100   4 7.948094 66.05757 0.8127581
+```
+
+* `@MargAreas` containing the AUCs for each arm, marginalized over any strata. 
 
 
 ```r
-aucs@Areas
+aucs@MargAreas
 ```
 
 ```
-##    N0    Area0  N1    Area1
-## 1 184 52.85607 143 44.38712
+##   arm   n tau     area   se_area
+## 1   0 100   4 7.948094 0.8127581
+## 2   1 100   4 5.802334 0.6015704
 ```
 
-* `@CIs` containing the observed difference and ratio with confidence intervals:
+* `@CIs` containing confindence intervals for the difference and ratio of AUCs.
 
 
 ```r
@@ -127,33 +150,37 @@ aucs@CIs
 ```
 
 ```
-##            Method Contrast   Observed       Lower      Upper Lower_alpha
-## 1       Equi-tail    A1-A0 -8.4689544 -17.6265646  0.8507301     0.02500
-## 2 Highest-density    A1-A0 -8.4689544 -18.2092548 -0.1656020     0.01012
-## 3       Equi-tail    A1/A0  0.8397733   0.6901222  1.0165056     0.02500
-## 4 Highest-density    A1/A0  0.8397733   0.7072868  1.0300653     0.03988
-##   Upper_alpha
-## 1     0.02500
-## 2     0.03988
-## 3     0.02500
-## 4     0.01012
+##      Method            Type Contrast   Observed      Lower      Upper
+## 1     Asymp      Equitailed    A1-A0 -2.1457602 -4.1276150 -0.1639054
+## 2     Asymp      Equitailed    A1/A0  0.7300283  0.5487647  0.9711656
+## 3 Bootstrap      Equitailed    A1-A0 -2.1457602 -3.1801687 -0.4380015
+## 4 Bootstrap Highest-density    A1-A0 -2.1457602 -3.2199011 -0.7299726
+## 5 Bootstrap      Equitailed    A1/A0  0.7300283  0.5344165  0.9113646
+## 6 Bootstrap Highest-density    A1/A0  0.7300283  0.5316845  0.8626085
+##   Lower_alpha Upper_alpha
+## 1     0.02500     0.02500
+## 2     0.02500     0.02500
+## 3     0.02500     0.02500
+## 4     0.01000     0.04000
+## 5     0.02500     0.02500
+## 6     0.01009     0.03991
 ```
 
-* `@Curves` containing the per arm mean cumulative count curve, averaged across strata if applicable.
+* `@MCF` containing the per arm mean cumulative count curve, averaged across strata.
 
 
 ```r
-head(aucs@Curves)
+head(aucs@MCF)
 ```
 
 ```
-##   Time        MCF Arm
-## 1    1 0.00000000   0
-## 2    2 0.01760531   0
-## 3    3 0.07808519   0
-## 4    5 0.18608331   0
-## 5    6 0.22229281   0
-## 6    7 0.25892352   0
+##          time        mcf    var_mcf    se_mcf Arm
+## 1 0.001342556 0.00000000 0.00000000 0.0000000   0
+## 2 0.014901890 0.01010101 0.01009998 0.1004987   0
+## 3 0.016177535 0.02020202 0.01999384 0.1413996   0
+## 4 0.018204774 0.03030303 0.02968157 0.1722834   0
+## 5 0.019051486 0.04040404 0.05956927 0.2440682   0
+## 6 0.019795095 0.05050505 0.06884476 0.2623828   0
 ```
 
 * `@Pvals` containing the bootstrap and permutation p-values.
@@ -164,31 +191,18 @@ aucs@Pvals
 ```
 
 ```
-##   Method Sides Contrast    P
-## 1   Boot     1    A1-A0 0.04
-## 2   Boot     1    A1/A0 0.04
-## 3   Perm     1    A1-A0 0.07
-## 4   Perm     2    A1-A0 0.11
-## 5   Perm     1    A1/A0 0.06
-## 6   Perm     2    A1/A0 0.09
+##      Method Sides Contrast   Observed          P
+## 1     Asymp     2    A1-A0 -2.1457602 0.03383279
+## 2     Asymp     2    A1/A0  0.7300283 0.03070434
+## 3 Bootstrap     1    A1-A0 -2.1457602 0.00000000
+## 4 Bootstrap     1    A1/A0  0.7300283 0.00000000
+## 5      Perm     1    A1-A0 -2.1457602 0.01000000
+## 6      Perm     2    A1-A0 -2.1457602 0.01000000
+## 7      Perm     1    A1/A0  0.7300283 0.01000000
+## 8      Perm     2    A1/A0  0.7300283 0.01000000
 ```
 
-* `@Reps` containing the bootstrap and permutation test statistics.
-
-
-```r
-head(aucs@Reps)
-```
-
-```
-##       boot_diff boot_ratio  perm_diff perm_ratio
-## [1,]  -9.624920  0.8295516  4.7249723  1.1012635
-## [2,]  -4.398370  0.9237945 -0.8499290  0.9828161
-## [3,]  -7.251367  0.8646791  1.8345211  1.0380623
-## [4,]  -5.510119  0.8846476 -2.1630433  0.9567278
-## [5,]  -2.826258  0.9445555  0.3579362  1.0073297
-## [6,] -13.006904  0.7749201  3.6769490  1.0775559
-```
+* `@Reps` is a list containing the bootstrap and permutation test statistics.
 
 * `@Weights` containing the per-stratum weights and AUCs.
 
@@ -198,8 +212,6 @@ aucs@Weights
 ```
 
 ```
-##   Stratum Stratum_weight N0    Area0 N1    Area1
-## 1       1      0.3211009 57 51.27138 48 34.58627
-## 2       2      0.3302752 61 52.15020 47 54.58371
-## 3       3      0.3486239 66 54.98438 48 43.75429
+##   stratum weight   n  n0  n1
+## 1       1      1 200 100 100
 ```

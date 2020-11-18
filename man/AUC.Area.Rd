@@ -2,7 +2,7 @@
 % Please edit documentation in R/AUC.R
 \name{AUC.Area}
 \alias{AUC.Area}
-\title{Calculate MCF and Find Area}
+\title{Calculate AUC}
 \usage{
 AUC.Area(time, status, idx, tau)
 }
@@ -18,8 +18,12 @@ remain at risk throughout the observation period.}
 \item{tau}{Truncation time.}
 }
 \value{
-Numeric AUC.
+Data.frame containing:
+\itemize{
+  \item Truncation time 'tau'.
+  \item Estimated 'area', its variance 'var_area' and standard error 'se_area'.
+}
 }
 \description{
-Calculate MCF and Find Area
+Used to find the AU MCF for each stratum.
 }

@@ -10,7 +10,7 @@ output:
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 20-09-06
+Updated: 20-11-18
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE)
@@ -18,7 +18,8 @@ knitr::opts_chunk$set(cache = TRUE)
 
 ### Description
 
-This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. Also see [CICs](https://github.com/zrmacc/CICs) for comparing cumulative incidence curves. 
+This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. Also see:
+* [CICs](https://github.com/zrmacc/CICs) for comparing cumulative incidence curves. 
 
 ## Installation
 
@@ -44,24 +45,24 @@ Here:
 * `time` is the observation time. 
 * `status` is coded 0 for censoring, 1 for an event, 2 for death.
 * `arm` is the treatment arm, coded as 1 for treatment, 0 for reference. 
-* `strata` is a 3-level stratification factor. 
 
-For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up. 
+For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up. See `? mcc_data` for details of the data generating process.
 
 ### AUCs
 
-To compare the areas under the mean cumulative count curves up to time $\tau = 60$: 
+To compare the areas under the mean cumulative count curves up to time $\tau = 4$: 
 ```{r}
-set.seed(100)
 aucs <- CompareAUCs(
   time = mcc_data$time,
   status = mcc_data$status,
   arm = mcc_data$arm,
   idx = mcc_data$idx,
-  tau = 60,
-  strata = mcc_data$strata,
+  tau = 4,
   reps = 100,
-  alpha = 0.05
+  boot = TRUE,
+  perm = TRUE,
+  alpha = 0.05,
+  seed = 100
 )
 show(aucs)
 ```
@@ -69,30 +70,37 @@ show(aucs)
 Here:
 
 * `tau` is the truncation time, or the time up to which the AUC is calculated. 
-* The stratification factor `strata` is optional, and may be omitted. No strata should be empty in either arm.
-* `reps` is the number of bootstrap replicates. The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable. 
-* `alpha` is 1 minus the desired confidence interval (CI) coverage. 
+* `boot` indicates to construct bootstrap confidence intervals. 
+* `perm` indicates to perform permutation tests for the difference and ratio of AUCs.
+* `reps` is the number of simulation replicates. 
+  - The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable. 
+* `alpha` is 1 minus the desired coverage for confidence intervals. 
 
 #### Outputs
 
 The output of `CompareAUCs` is an object of class `compAUCs` with these slots.
 
-* `@Areas` containing the overall sample size and AUCs for each arm:
-
+* `@StratumAreas` containing the stratum-specific AUCs for each arm.
 ```{r}
-aucs@Areas
+aucs@StratumAreas
 ```
 
-* `@CIs` containing the observed difference and ratio with confidence intervals:
+* `@MargAreas` containing the AUCs for each arm, marginalized over any strata. 
+
+```{r}
+aucs@MargAreas
+```
+
+* `@CIs` containing confindence intervals for the difference and ratio of AUCs.
 
 ```{r}
 aucs@CIs
 ```
 
-* `@Curves` containing the per arm mean cumulative count curve, averaged across strata if applicable.
+* `@MCF` containing the per arm mean cumulative count curve, averaged across strata.
 
 ```{r}
-head(aucs@Curves)
+head(aucs@MCF)
 ```
 
 * `@Pvals` containing the bootstrap and permutation p-values.
@@ -101,11 +109,7 @@ head(aucs@Curves)
 aucs@Pvals
 ```
 
-* `@Reps` containing the bootstrap and permutation test statistics.
-
-```{r}
-head(aucs@Reps)
-```
+* `@Reps` is a list containing the bootstrap and permutation test statistics.
 
 * `@Weights` containing the per-stratum weights and AUCs.
 

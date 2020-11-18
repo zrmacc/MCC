@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -16,5 +16,6 @@ Encoding: UTF-8
 LazyData: true
 Imports:
   methods,
+  stats,
   survival
 RoxygenNote: 7.1.1
