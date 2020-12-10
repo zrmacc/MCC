@@ -70,7 +70,7 @@ StratGroupBoot <- function (data, idx_offset = 0) {
 
 #' Permute Treatment Assignments.
 #'
-#' @param data Data.frame.
+#' @param data Data.frame containing 'arm' and 'idx'.
 #' @importFrom stats rbinom
 #' @return Bootstrapped data.frame.
 

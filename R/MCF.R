@@ -174,7 +174,7 @@ CalcMartigales.i <- function(
   }
   
   # Subject specific at risk.
-  out$nar <- sapply(out$time, FUN = function(time){
+  out$nar <- sapply(out$time, FUN = function(time) {
     return(1 - sum(death_times < time) - sum(censor_times < time))
   })
   
@@ -258,7 +258,7 @@ CalcVarMCF <- function(
 
 #' Calculate Average MCF Curve
 #' 
-#' Calculates the weighted average of MCF curves.
+#' Calculates the weighted average of MCF curves for a stratified analysis. 
 #' 
 #' @param curve_list List of tabulated MCFs as returned by \code{\link{CalcMCF}}.
 #' @param weights Numeric vector of weights.
@@ -271,7 +271,7 @@ AvgMCF <- function (curve_list, weights) {
   time <- do.call(c, time)
   time <- sort(unique(time))
   
-  # Extract mcfs evaluated on time.
+  # Extract MCFs evaluated on times.
   aux <- function(x){
     g <- stepfun(x$time, c(0, x$mcf), right = FALSE)
     return(g(time))

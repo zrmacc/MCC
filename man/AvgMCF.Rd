@@ -15,5 +15,5 @@ AvgMCF(curve_list, weights)
 Data.frame containing `Time` and the average MCF `Avg_MCF`.
 }
 \description{
-Calculates the weighted average of MCF curves.
+Calculates the weighted average of MCF curves for a stratified analysis.
 }

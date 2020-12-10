@@ -6,6 +6,8 @@
 #' @param event_rate Rate of events.
 #' @param death_rate Rate of terminal events. 
 #' @param tau Truncation time.
+#' @importFrom stats rexp
+#' @return Recurrent event data for a single subject.
 
 SimSubj <- function(
   idx,
@@ -53,70 +55,96 @@ SimSubj <- function(
 #' Simulate Recurrent Events Data
 #' 
 #' Simulate recurrent events data using exponential censoring, gap, and death 
-#' times. Status is coded as 0 for censoring, 1 for event, 2 for death.
-#' 
-#' @param n Numbers of subjects.
-#' @param censoring_rate Rate of censoring. 
-#' @param event_rate Rate of events.
-#' @param death_rate Rate of terminal events. 
+#' times. Status is coded as 0 for censoring, 1 for event, 2 for death. 
+#'
+#' @param n1 Subjects in the treatment arm.
+#' @param n0 Subjects in the reference arm.
+#' @param censoring_rate Arrival rate for the censoring time.
+#' @param base_event_rate Baseline arrival rate for recurrent events.
+#' @param death_rate Arrival rate for the terminal event.
+#' @param treatment_effect Log rate ratio for treatment.
+#' @param pi Probability of membership to the high-risk stratum.
+#' @param risk_effect Log rate ratio for membership to the high risk stratum.
+#' @param covar_effect Log rate ratio for the covariate, which follows a 
+#'   standard normal distribution.
+#' @param min_event_rate Minimum subject-specific event rate. Most be positive.
 #' @param tau Truncation time.
-#' @importFrom stats rexp
+#' @param seed Data generation seed.
+#' @import dplyr
+#' @importFrom stats rnorm
 #' @export
-#' @return Data.frame containing:
+#' @return Data.frame, containing:
 #' \itemize{
-#'   \item Subject 'idx'.
-#'   \item Observation 'time'.
-#'   \item Observation 'status', 0 for censoring, 1 for event, 2 for death.
+#'   \item Subject 'idx', treatment 'arm', a baseline covariate 'covar', 
+#'     an indicator 'strat' of membership to the high-risk stratum, and the
+#'     subject's true underlying event rate.
+#'   \item 'time' and 'status' of the event: 0 for censoring, 1 for an 
+#'     event, 2 for death.
 #' }
 
 GenData <- function(
-  n, 
-  censoring_rate, 
-  event_rate, 
-  death_rate, 
-  tau
-) {
+  n1 = 100,
+  n0 = 100,
+  censoring_rate = 0.25,
+  base_event_rate = 1.0,
+  death_rate = 0.25,
+  treatment_effect = log(0.5),
+  pi = 0.2,
+  risk_effect = log(1.25),
+  covar_effect = log(1.25),
+  min_event_rate = 0.05,
+  tau = 4,
+  seed = 101
+){
   
-  # Wrap per-subject data generation.
-  aux <- function(i) {
-    SimSubj(
-      idx = i,
-      censoring_rate = censoring_rate,
-      event_rate = event_rate,
-      death_rate = death_rate,
-      tau = tau
-    )
+  # Set seed.
+  if (!is.null(seed)) {
+    set.seed(seed)
   }
   
-  # Generate data.
-  data <- lapply(
-    seq_len(n),
-    aux
-  )
-  data <- do.call(rbind, data)
+  # Total subjects.
+  n <- n1 + n0
   
-  # Return.
+  # Generate covariate data.
+  covar <- data.frame(
+    "idx" = seq_len(n),
+    "arm" = c(rep(1, n1), rep(0, n0)),
+    "covar" = rnorm(n),
+    "strat" = rbinom(n = n, size = 1, prob = pi)
+  )
+  
+  # Calculate subject-specific event rate:
+  covar$true_event_rate <- base_event_rate * 
+    exp(
+      covar$arm * treatment_effect + 
+        covar$strat * risk_effect +
+        covar$covar * covar_effect 
+      )
+  covar$true_event_rate <- sapply(
+    covar$true_event_rate, 
+    function(x) {max(x, min_event_rate)}
+  )
+  
+  # Generate event-date.
+  idx <- true_event_rate <- NULL
+  data <- covar %>%
+    dplyr::group_by(idx) %>%
+    dplyr::summarise(
+      SimSubj(
+        idx = idx, 
+        censoring_rate = censoring_rate, 
+        event_rate = true_event_rate, 
+        death_rate = death_rate, 
+        tau = tau
+      ),
+      .groups = "drop"
+    ) %>% as.data.frame
+  
+  # Merge in covariates.
+  data <- merge(
+    x = data,
+    y = covar,
+    by = "idx"
+  )
   return(data)
 }
-
-
-# -----------------------------------------------------------------------------
-
-#' Sample Recurrent Event Data
-#'
-#' Sample recurrent events data. Events occurred in the treatment arm according
-#' to a Poisson process with rate 1.00, and in the reference arm according to a
-#' Poisson process with rate 1.35. Data were truncated at time 10. Death and
-#' censoring occurred independently according to an exponential distribution
-#' with rate 0.25 in each arm. The number of subjects in each arm is 100.
-#'
-#' @docType data
-#' @usage data(mcc_data)
-#' @format A data.frame containing three fields:
-#' \describe{
-#'   \item{idx}{Unique subject identifier.}
-#'   \item{time}{Observation time between 0 and 10.}
-#'   \item{arm}{Treatment arm, 0 for reference, 1 for treatment.}
-#'   \item{status}{Status indicator, 0 for censoring, 1 for an event, 2 for death.}
-#' }
-"mcc_data"

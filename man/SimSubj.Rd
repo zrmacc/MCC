@@ -17,6 +17,9 @@ SimSubj(idx, censoring_rate, event_rate, death_rate, tau)
 
 \item{tau}{Truncation time.}
 }
+\value{
+Recurrent event data for a single subject.
+}
 \description{
 Simulate Data for a Single Subject.
 }

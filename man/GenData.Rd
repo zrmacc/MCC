@@ -4,25 +4,55 @@
 \alias{GenData}
 \title{Simulate Recurrent Events Data}
 \usage{
-GenData(n, censoring_rate, event_rate, death_rate, tau)
+GenData(
+  n1 = 100,
+  n0 = 100,
+  censoring_rate = 0.25,
+  base_event_rate = 1,
+  death_rate = 0.25,
+  treatment_effect = log(0.5),
+  pi = 0.2,
+  risk_effect = log(1.25),
+  covar_effect = log(1.25),
+  min_event_rate = 0.05,
+  tau = 4,
+  seed = 101
+)
 }
 \arguments{
-\item{n}{Numbers of subjects.}
+\item{n1}{Subjects in the treatment arm.}
 
-\item{censoring_rate}{Rate of censoring.}
+\item{n0}{Subjects in the reference arm.}
 
-\item{event_rate}{Rate of events.}
+\item{censoring_rate}{Arrival rate for the censoring time.}
 
-\item{death_rate}{Rate of terminal events.}
+\item{base_event_rate}{Baseline arrival rate for recurrent events.}
+
+\item{death_rate}{Arrival rate for the terminal event.}
+
+\item{treatment_effect}{Log rate ratio for treatment.}
+
+\item{pi}{Probability of membership to the high-risk stratum.}
+
+\item{risk_effect}{Log rate ratio for membership to the high risk stratum.}
+
+\item{covar_effect}{Log rate ratio for the covariate, which follows a 
+standard normal distribution.}
+
+\item{min_event_rate}{Minimum subject-specific event rate. Most be positive.}
 
 \item{tau}{Truncation time.}
+
+\item{seed}{Data generation seed.}
 }
 \value{
-Data.frame containing:
+Data.frame, containing:
 \itemize{
-  \item Subject 'idx'.
-  \item Observation 'time'.
-  \item Observation 'status', 0 for censoring, 1 for event, 2 for death.
+  \item Subject 'idx', treatment 'arm', a baseline covariate 'covar', 
+    an indicator 'strat' of membership to the high-risk stratum, and the
+    subject's true underlying event rate.
+  \item 'time' and 'status' of the event: 0 for censoring, 1 for an 
+    event, 2 for death.
 }
 }
 \description{
