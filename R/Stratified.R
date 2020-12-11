@@ -95,6 +95,7 @@ ContrastAreas <- function(
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
 #' @import dplyr
+#' @export 
 #' @return If `return_areas`, list containing:
 #' \itemize{
 #'   \item 'avg_mcf', average MCF across strata.

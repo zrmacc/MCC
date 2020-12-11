@@ -42,7 +42,7 @@ GroupBoot <- function (data, idx_offset = 0) {
 #' @param idx_offset Index offset.
 #' @return Bootstrapped data.frame.
 
-StratGroupBoot <- function (data, idx_offset = 0) {
+StratGroupBoot <- function(data, idx_offset = 0) {
   
   # Partition by strata.
   data_strata <- split(data, data$strata, drop = TRUE)
