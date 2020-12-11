@@ -10,7 +10,7 @@ Authors@R:
 Description: Provides functions for estimation of the mean cumulative count curve, using the method of
 	Ghosh and Lin (2000) <doi:10.1111/j.0006-341X.2000.00554.x>, and for inference on the difference and
 	ratio of areas under the curve, comparing two treatment arms.
-Depends: R (>= 3.5.0)
+Depends: R (>= 3.4.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
