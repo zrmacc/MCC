@@ -65,7 +65,7 @@ The example data also include:
 To compare the areas under the mean cumulative count curves up to time $\tau = 4$: 
 
 ```r
-aucs <- CompareAUCs(
+aucs <- MCC::CompareAUCs(
   time = data$time,
   status = data$status,
   arm = data$arm,
@@ -224,7 +224,7 @@ The previous estimator allows for stratification, but a different approach is ne
 
 
 ```r
-aucs <- CompareAUCs(
+aucs <- MCC::CompareAUCs(
   time = data$time,
   status = data$status,
   arm = data$arm,

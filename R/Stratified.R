@@ -112,7 +112,8 @@ ContrastAreas <- function(
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
-#' @import dplyr
+#' @importFrom dplyr "%>%" filter group_by group_split inner_join select
+#'   summarise
 #' @export 
 #' @return If `return_areas`, list containing:
 #' \itemize{
@@ -165,7 +166,7 @@ AUC.Stats.Strat <- function(
     as.data.frame
   
   # Marginal areas.
-  area <- se_area <- stratum_weight <- NULL
+  area <- n <- se_area <- stratum_weight <- NULL
   marg_areas <- stratum_areas %>%
     dplyr::group_by(arm) %>%
     dplyr::summarise(
@@ -533,7 +534,7 @@ CompAUCs.Perm.Strat <- function(
 #' @param seed Seed for bootstrap/permutation inference.
 #' @importFrom stats quantile
 #' @importFrom methods new
-#' @import dplyr 
+#' @importFrom dplyr "%>%" select
 #' @return Object of class compAUCs with these slots:
 #' \itemize{
 #'   \item `@Areas`: The AUC for each arm.

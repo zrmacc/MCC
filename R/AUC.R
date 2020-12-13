@@ -69,7 +69,7 @@ CalcPsi.AUC.i <- function(
 #' @param status Status indicators.
 #' @param idx Unique subject index. 
 #' @param tau Truncation time.
-#' @import dplyr
+#' @importFrom dplyr "%>%" group_by select summarise
 #' @return Numeric influence function contributions of each subject.
 
 CalcPsi.AUC <- function(

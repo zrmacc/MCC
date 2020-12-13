@@ -70,7 +70,7 @@ SimSubj <- function(
 #' @param min_event_rate Minimum subject-specific event rate. Most be positive.
 #' @param tau Truncation time.
 #' @param seed Data generation seed.
-#' @import dplyr
+#' @importFrom dplyr "%>%" group_by summarise
 #' @importFrom stats rnorm
 #' @export
 #' @return Data.frame, containing:

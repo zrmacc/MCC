@@ -106,7 +106,7 @@ AUC.Area.Aug <- function(
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
-#' @import dplyr
+#' @importFrom dplyr "%>%" group_by select summarise summarise_all
 #' @importFrom MASS ginv
 #' @return If `return_areas`, list containing:
 #' \itemize{
@@ -489,7 +489,7 @@ CompAUCs.Perm.Aug <- function(
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
 #' @param seed Seed for bootstrap/permutation inference.
-#' @import dplyr
+#' @importFrom dplyr "%>%" select
 #' @importFrom stats quantile
 #' @importFrom methods new
 #' @return Object of class CompareAugAUCs with these slots:
