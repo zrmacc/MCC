@@ -4,12 +4,10 @@
 \alias{GroupBoot}
 \title{Grouped Bootstrap.}
 \usage{
-GroupBoot(data, idx_offset = 0)
+GroupBoot(data)
 }
 \arguments{
 \item{data}{Data.frame containing `idx`.}
-
-\item{idx_offset}{Index offset.}
 }
 \value{
 Bootstrapped data.frame.

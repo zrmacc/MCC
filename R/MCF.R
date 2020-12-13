@@ -2,63 +2,6 @@
 
 # -----------------------------------------------------------------------------
 
-#' Calculate Mean Cumulative Function
-#' 
-#' Tabulates the mean cumulative function. See equation 2.1 of 
-#' <doi:10.1111/j.0006-341X.2000.00554.x>.
-#' 
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
-#' @param idx Unique subject index. 
-#' @export 
-#' @return Data.frame with these columns:
-#' \itemize{
-#'   \item `times`, distinct observation times.
-#'   \item `censor`, number of censorings.
-#'   \item `death`, number of deaths.
-#'   \item `event`, number of events.
-#'   \item `haz`, instantaneous hazard (of death).
-#'   \item `surv`, survival probability.
-#'   \item `event_rate`, instantaneous event rate.
-#'   \item `mcf`, mean cumulative function. 
-#' }
-
-CalcMCF <- function(
-  time,
-  status,
-  idx
-) {
-  
-  # Format data.
-  mcf <- TabulateEvents(time, status, idx)
-  
-  # Kaplan-Meier estimator.
-  mcf$haz <- mcf$death / mcf$nar
-  mcf$surv <- cumprod(1 - mcf$haz)
-  
-  # Nelson-Aalen estimator of event rate.
-  mcf$event_rate <- mcf$event / mcf$nar
-  
-  # Estimate marginal cumulative function.
-  mcf$mcf <- cumsum(mcf$surv * mcf$event_rate)
-  
-  # Calculate standard error.
-  n <- length(unique(idx))
-  mcf$var_mcf <- CalcVarMCF(
-    mcf = mcf,
-    time = time,
-    status = status,
-    idx = idx
-  )
-  mcf$se_mcf <- sqrt(mcf$var_mcf / n)
-  
-  # Output.
-  return(mcf)
-}
-
-
-# -----------------------------------------------------------------------------
-
 #' Tabulate Events
 #' 
 #' Tabulate the number at risk and the number of events at each unique
@@ -77,17 +20,21 @@ CalcMCF <- function(
 
 TabulateEvents <- function(time, status, idx){
   
+  # Split time by status.
+  split_time <- split(x = time, f = status)
+  
   # Censoring times.
-  censor_times <- sort(time[status == 0])
+  censor_times <- sort(split_time[["0"]])
   
   # Event times.
-  event_times <- sort(time[status == 1])
+  event_times  <- sort(split_time[["1"]])
   
   # Death times.
-  death_times <- sort(time[status == 2])
+  death_times  <- sort(split_time[["2"]])
   
   # Unique observation times.
   out <- data.frame("time" = sort(unique(time)))
+  n_time <- nrow(out)
   
   # Number initially at risk. 
   init_nar <- length(unique(idx))
@@ -111,9 +58,10 @@ TabulateEvents <- function(time, status, idx){
   }
   
   # Number at risk.
-  out$nar <- sapply(out$time, FUN = function(time) {
-    return(init_nar - sum(death_times < time) - sum(censor_times < time))
-  })
+  cum_removed <- cumsum(out$censor + out$death)
+  cum_removed <- ifelse(n_time > 1, c(0, cum_removed[1:(n_time - 1)]), 0)
+    
+  out$nar <- init_nar - cum_removed
   out$prop_at_risk <- out$nar / init_nar
   
   # Output.
@@ -143,17 +91,21 @@ CalcMartigales.i <- function(
   status
 ) {
   
-  # Censoring time.
-  censor_times <- time[status == 0]
+  # Split time by status.
+  split_time <- split(x = time, f = status)
+  
+  # Censoring times.
+  censor_times <- sort(split_time[["0"]])
   
   # Event times.
-  event_times <- sort(time[status == 1])
+  event_times  <- sort(split_time[["1"]])
   
   # Death times.
-  death_times <- sort(time[status == 2])
+  death_times  <- sort(split_time[["2"]])
   
   # Subject specific events.
   out <- data.frame("time" = mcf$time)
+  n_time <- nrow(out)
   
   # Censoring indicator.
   out$censor <- 0
@@ -174,9 +126,9 @@ CalcMartigales.i <- function(
   }
   
   # Subject specific at risk.
-  out$nar <- sapply(out$time, FUN = function(time) {
-    return(1 - sum(death_times < time) - sum(censor_times < time))
-  })
+  cum_removed <- cumsum(out$censor + out$death)
+  cum_removed <- ifelse(n_time > 1, c(0, cum_removed[1:(n_time - 1)]), 0)
+  out$nar <- 1 - cum_removed
   
   # Calculate martingale differences
   out$dM_event <- out$event - out$nar * mcf$event_rate
@@ -188,7 +140,7 @@ CalcMartigales.i <- function(
 
 # -----------------------------------------------------------------------------
 
-#' Calculate MCF Variance Contribution for a Single Subject
+#' Calculate MCF Influence Function Contribution.
 #' 
 #' @param mcf Tabulated MCF as returned by \code{\link{CalcMCF}}.
 #' @param time Observation times for a single subject.
@@ -196,7 +148,7 @@ CalcMartigales.i <- function(
 #' @return Numeric vector containing the squared influence function for a single
 #'   subject at each distinct event event.
 
-CalcVarMCF.i <- function(
+CalcPsi.MCF.i <- function(
   mcf,
   time,
   status
@@ -209,14 +161,12 @@ CalcVarMCF.i <- function(
     status = status
   )
   
-  # Calculate squared influence function.
   # Integrals correspond to those in Ghosh and Lin (2.2).
   out$int_1 <- cumsum(mcf$surv / mcf$prop_at_risk * out$dM_event)
   out$int_2 <- mcf$mcf * cumsum(out$dM_death / mcf$prop_at_risk)
   out$int_3 <- cumsum(mcf$mcf * out$dM_death / mcf$prop_at_risk)
   out$psi <- out$int_1 - out$int_2 + out$int_3
-  out$psi2 <- (out$psi)^2
-  return(out$psi2)
+  return(out$psi)
 }
 
 
@@ -246,12 +196,74 @@ CalcVarMCF <- function(
   
   # Calculate psi squared; Ghosh and Lin (2.2).
   psi2 <- lapply(subj_split, FUN = function(df) {
-    return(CalcVarMCF.i(mcf = mcf, time = df$time, status = df$status))
+    psi <- CalcPsi.MCF.i(mcf = mcf, time = df$time, status = df$status)
+    return(psi^2)
   })
   var <- Reduce("+", psi2) / length(psi2)
   
   # Output.
   return(var)
+}
+
+
+# -----------------------------------------------------------------------------
+
+#' Calculate Mean Cumulative Function
+#' 
+#' Tabulates the mean cumulative function. See equation 2.1 of 
+#' <doi:10.1111/j.0006-341X.2000.00554.x>.
+#' 
+#' @param time Observation time.
+#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
+#' @param idx Unique subject index. 
+#' @param calc_var Calculate variance of the MCF?
+#' @export 
+#' @return Data.frame with these columns:
+#' \itemize{
+#'   \item `times`, distinct observation times.
+#'   \item `censor`, number of censorings.
+#'   \item `death`, number of deaths.
+#'   \item `event`, number of events.
+#'   \item `haz`, instantaneous hazard (of death).
+#'   \item `surv`, survival probability.
+#'   \item `event_rate`, instantaneous event rate.
+#'   \item `mcf`, mean cumulative function. 
+#' }
+
+CalcMCF <- function(
+  time,
+  status,
+  idx,
+  calc_var = TRUE
+) {
+  
+  # Format data.
+  mcf <- TabulateEvents(time, status, idx)
+  
+  # Kaplan-Meier estimator.
+  mcf$haz <- mcf$death / mcf$nar
+  mcf$surv <- cumprod(1 - mcf$haz)
+  
+  # Nelson-Aalen estimator of event rate.
+  mcf$event_rate <- mcf$event / mcf$nar
+  
+  # Estimate marginal cumulative function.
+  mcf$mcf <- cumsum(mcf$surv * mcf$event_rate)
+  
+  # Calculate standard error.
+  if (calc_var) {
+    n <- length(unique(idx))
+    mcf$var_mcf <- CalcVarMCF(
+      mcf = mcf,
+      time = time,
+      status = status,
+      idx = idx
+    )
+    mcf$se_mcf <- sqrt(mcf$var_mcf / n)
+  }
+
+  # Output.
+  return(mcf)
 }
 
 # -----------------------------------------------------------------------------

@@ -12,6 +12,7 @@
 #'   covariates only.
 #' @param mu Grand mean.
 #' @param tau Truncation time. 
+#' @param calc_var Calculate analytical variance?
 #' @return List containing:
 #' \itemize{
 #'   \item Tabulated mean cumulative function 'mcf'.
@@ -27,14 +28,16 @@ AUC.Area.Aug <- function(
   idx,
   subj_covars,
   mu,
-  tau
+  tau,
+  calc_var = TRUE
 ) { 
   
   # Fit MCF.
   fit <- CalcMCF(
     time = time,
     status = status,
-    idx = idx
+    idx = idx,
+    calc_var = calc_var
   )
   
   # Find Area.
@@ -45,7 +48,8 @@ AUC.Area.Aug <- function(
   )
   
   # Calculate influence contributions.
-  psi <- CalcPsi(
+  # Note that psi is needed to calculate the argumentation estimator. 
+  psi <- CalcPsi.AUC(
     mcf = fit,
     time = time,
     status = status,
@@ -152,7 +156,8 @@ AUC.Stats.Aug <- function(
     idx = data1$idx,
     subj_covars = subj_covars1,
     mu = mu,
-    tau = tau
+    tau = tau,
+    calc_var = return_areas
   )
   a0 <- AUC.Area.Aug(
     time = data0$time,
@@ -160,7 +165,8 @@ AUC.Stats.Aug <- function(
     idx = data0$idx,
     subj_covars = subj_covars0,
     mu = mu,
-    tau = tau
+    tau = tau,
+    calc_var = return_areas
   )
   
   # Augmentation difference.
@@ -179,12 +185,12 @@ AUC.Stats.Aug <- function(
   # Contrast data.frame.
   crit <- qnorm(p = 1 - alpha / 2)
   contrasts <- data.frame(
-    "Contrast" = "A1-A0",
-    "Observed" = delta,
-    "SE" = se_delta,
-    "Lower" = delta - crit * se_delta,
-    "Upper" = delta + crit * se_delta,
-    "P" = 2 * pnorm(q = abs(delta) / se_delta, lower.tail = FALSE)
+    "contrast" = "A1-A0",
+    "observed" = delta,
+    "se" = se_delta,
+    "lower" = delta - crit * se_delta,
+    "upper" = delta + crit * se_delta,
+    "p" = 2 * pnorm(q = abs(delta) / se_delta, lower.tail = FALSE)
   )
   
   # Output
@@ -192,11 +198,11 @@ AUC.Stats.Aug <- function(
     
     # Areas.
     marg_areas <- data.frame(
-      "Arm" = c(0, 1),
-      "N" = c(a0$n, a1$n),
-      "Tau" = tau,
-      "Area" = c(a0$area, a1$area),
-      "SE" = c(sqrt(a0$var_area / a0$n), sqrt(a1$var_area / a1$n))
+      "arm" = c(0, 1),
+      "n" = c(a0$n, a1$n),
+      "tau" = tau,
+      "area" = c(a0$area, a1$area),
+      "se" = c(sqrt(a0$var_area / a0$n), sqrt(a1$var_area / a1$n))
     )
     
     # MCF.
@@ -258,7 +264,11 @@ Boot.Sim.Aug <- function(
   reps,
   seed
 ) {
-  set.seed(seed)
+  
+  # Simulation seed.
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
   
   # Partition data.
   data <- data.frame(
@@ -276,8 +286,8 @@ Boot.Sim.Aug <- function(
   loop <- function(b) {
     
     # Bootstrap data sets.
-    boot0 <- GroupBoot(data0, idx_offset = 0)
-    boot1 <- GroupBoot(data1, idx_offset = n0)
+    boot0 <- GroupBoot(data0)
+    boot1 <- GroupBoot(data1)
     boot <- rbind(boot1, boot0)
     
     # Bootstrap statistics.
@@ -290,15 +300,15 @@ Boot.Sim.Aug <- function(
       tau = tau,
       alpha = alpha
     )
-    names(boot_stats) <- paste0("Boot_", names(boot_stats))
+    names(boot_stats) <- paste0("boot_", names(boot_stats))
     
     # Bootstrap p-value indicators.
     # Indicator is 1 if the sign of the difference in areas is opposite that observed.
-    is_diff_sign <- sign(boot_stats$Boot_Observed[1]) != sign(obs_stats$Observed[1])
+    is_diff_sign <- sign(boot_stats$boot_observed[1]) != sign(obs_stats$observed[1])
     
     # Results
     out <- c(
-      boot_stats$Boot_Observed,
+      boot_stats$boot_observed,
       is_diff_sign
     )
     return(out)
@@ -350,24 +360,17 @@ Boot.CIs.Aug <- function(
     )
   )
   rownames(cis) <- NULL
-  cis$Method <- "Bootstrap"
-  cis$Type <- rep(c("Equitailed", "Highest-density"))
-  cis$Contrast <- rep(c("A1-A0"), times = 2)
-  cis$Observed <- rep(obs_stats$Observed)
-  cis$SE <- rep(sd(sim$boot_diff))
-  col_order <- c(
-    "Method", 
-    "Type", 
-    "Contrast", 
-    "Observed", 
-    "SE",
-    "Lower",
-    "Upper", 
-    "Alpha_Lower", 
-    "Alpha_Upper"
+  
+  # Output.
+  out <- data.frame(
+    method = "bootstrap",
+    type = c("equitailed", "highest-density"),
+    contrast = rep(c("A1-A0"), times = 2),
+    observed = obs_stats$observed,
+    se = sd(sim$boot_diff),
+    cis
   )
-  cis <- cis[, col_order]
-  return(cis)
+  return(out)
 }
 
 # -----------------------------------------------------------------------------
@@ -406,7 +409,13 @@ CompAUCs.Perm.Aug <- function(
   reps,
   seed
 ) {
-  set.seed(seed)
+  
+  # Simulation seed.
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  
+  # Format data.
   data <- data.frame(
     time = time,
     status = status,
@@ -431,24 +440,24 @@ CompAUCs.Perm.Aug <- function(
       tau = tau,
       alpha = alpha
     )
-    names(perm_stats) <- paste0("Perm_", names(perm_stats))
+    names(perm_stats) <- paste0("perm_", names(perm_stats))
     
     # Permutation indicators.
-    perm_diff <- perm_stats$Perm_Observed[1]
-    obs_diff <- obs_stats$Observed[1]
+    perm_diff <- perm_stats$perm_observed[1]
+    obs_diff <- obs_stats$observed[1]
     
     is_diff_sign <- sign(perm_diff) != sign(obs_diff)
     is_more_extreme <- abs(perm_diff) >= abs(obs_diff)
     
     # Results
     out <- c(
-      perm_stats$Perm_Observed,
+      perm_stats$perm_observed,
       "perm_1sided" = is_diff_sign * is_more_extreme
     )
     return(out)
   }
   
-  sim <- lapply(seq(1:reps), loop)
+  sim <- lapply(seq_len(reps), loop)
   sim <- data.frame(do.call(rbind, sim))
   colnames(sim) <- c(
     "perm_diff",
@@ -480,9 +489,9 @@ CompAUCs.Perm.Aug <- function(
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
 #' @param seed Seed for bootstrap/permutation inference.
+#' @import dplyr
 #' @importFrom stats quantile
 #' @importFrom methods new
-#' @export
 #' @return Object of class CompareAugAUCs with these slots:
 #' \itemize{
 #'   \item `@Areas`: Marginal AUC for each arm.
@@ -496,7 +505,7 @@ CompAUCs.Perm.Aug <- function(
 #' # Simulate data set.
 #' data <- GenData()
 #'
-#' aucs <- CompareAugAUCs(
+#' aucs <- CompareAUCs(
 #'   time = data$time,
 #'   status = data$status,
 #'   arm = data$arm,
@@ -522,7 +531,7 @@ CompareAugAUCs <- function(
   boot = FALSE,
   perm = FALSE,
   reps = 2000,
-  seed = 100
+  seed = NULL
 ) {
   
   if (is.null(covars)) {
@@ -543,19 +552,19 @@ CompareAugAUCs <- function(
   obs_stats <- obs$contrasts
   
   # CIs.
-  cis <- obs_stats[, c("Contrast", "Observed", "SE", "Lower", "Upper")]
+  cis <- obs_stats %>% select(-c("p"))
   cis <- data.frame(
-    "Method" = "Asymp",
-    "Type" = "Equitailed",
+    "method" = "asymptotic",
+    "type" = "equitailed",
     cis,
-    "Alpha_Lower" = alpha / 2,
-    "Alpha_Upper" = alpha / 2
+    "alpha_lower" = alpha / 2,
+    "alpha_upper" = alpha / 2
   )
   
   # P-values.
-  pvals <- obs_stats[, c("Contrast", "Observed", "P")]
+  pvals <- obs_stats %>% select(c("contrast", "observed", "p"))
   pvals <- cbind(
-    "Method" = "Asymp",
+    "method" = "asymptotic",
     pvals
   )
   
@@ -592,14 +601,14 @@ CompareAugAUCs <- function(
       cis,
       boot_cis
     )
-    cis <- cis[order(cis$Contrast), ]
+    cis <- cis[order(cis$contrast), ]
     
     # P-value.
     boot_p <- min(2  * mean(c(1, boot_sim$is_diff_sign)), 1)
     boot_pvals <- data.frame(
-      "Method" = "Bootstrap",
-      pvals[, c("Contrast", "Observed")],
-      "P" = boot_p
+      "method" = "bootstrap",
+      pvals %>% select("contrast", "observed"),
+      "p" = boot_p
     )
     pvals <- rbind(
       pvals,
@@ -630,10 +639,10 @@ CompareAugAUCs <- function(
     # Permutation p-values.
     perm_pval <- min(2 * mean(c(1, perm_sim$perm_1sided)), 1)
     perm_pvals <- data.frame(
-      "Method" = "Perm",
-      "Contrast" = "A1-A0",
-      "Observed" = obs_stats$Observed[1],
-      "P" = perm_pval
+      "method" = "permutation",
+      "contrast" = "A1-A0",
+      "observed" = obs_stats$observed[1],
+      "p" = perm_pval
     )
     pvals <- rbind(
       pvals,
@@ -652,5 +661,4 @@ CompareAugAUCs <- function(
     Reps = sim_reps,
     Pvals = pvals
   )
-  
 }

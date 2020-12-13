@@ -1,0 +1,109 @@
+# Main Function.
+# Updated: 2020-12-12
+
+#' Inference on the Area Under the Cumulative Count Curve
+#'
+#' Confidence intervals and p-values for the difference and ratio of areas under
+#' the mean cumulative count curves, comparing treatment (arm = 1) with
+#' reference (arm = 0).
+#'
+#' @param time Observation time.
+#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
+#'   Note that subjects who are neither censored nor die are assumed to
+#'   remain at risk throughout the observation period.
+#' @param arm Arm, coded as 1 for treatment, 0 for reference.
+#' @param idx Unique subject index.
+#' @param tau Truncation time.
+#' @param covars Optional covariate matrix. Rows should correspond with the
+#'   subject index `idx`. Factor and interaction terms should be expanded.
+#' @param strata Optional stratification factor.
+#' @param alpha Alpha level.
+#' @param boot Logical, construct bootstrap confidence intervals?
+#' @param perm Logical, perform permutation test?
+#' @param reps Replicates for bootstrap/permutation inference.
+#' @param seed Seed for bootstrap/permutation inference.
+#' @export
+#' @return Object of class compAUCs with these slots:
+#' \itemize{
+#'   \item `@Areas`: The AUC for each arm.
+#'   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.
+#'   \item `@Curves`: Mean cumulative count curve for each arm; averaged across strata
+#'     if present.
+#'   \item `@Pvals`: Bootstrap and permutation p-values.
+#'   \item `@Reps`: Bootstrap and permutation realizations of the test statistics.
+#'   \item `@Weights`: Per-stratum weights and AUCs.
+#' }
+#' @examples
+#' \donttest{
+#' # Simulate data set.
+#' data <- GenData()
+#'
+#' aucs <- CompareAUCs(
+#'   time = data$time,
+#'   status = data$status,
+#'   arm = data$arm,
+#'   idx = data$idx,
+#'   tau = 2,
+#'   boot = TRUE,
+#'   perm = TRUE,
+#'   reps = 25,
+#'   alpha = 0.05
+#' )
+#' show(aucs)
+#' }
+
+CompareAUCs <- function(
+  time,
+  status,
+  arm,
+  idx,
+  tau,
+  covars = NULL,
+  strata = NULL,
+  alpha = 0.05,
+  boot = FALSE,
+  perm = FALSE,
+  reps = 2000,
+  seed = NULL
+) {
+  
+  if (!is.null(covars) & !is.null(strata)) {
+    msg <- paste0(
+      "If adjustment for both strata and covariates is needed,\n",
+      "include strata indicators within the covariates.")
+    stop(msg)
+  }
+  
+  if (!is.null(covars)) {
+    out <- CompareAugAUCs(
+      time = time,
+      status = status,
+      arm = arm,
+      idx = idx,
+      tau = tau,
+      covars = covars,
+      alpha = alpha,
+      boot = boot,
+      perm = perm,
+      reps = reps,
+      seed = seed
+    )
+  } else {
+    out <- CompareStratAUCs(
+      time = time,
+      status = status,
+      arm = arm,
+      idx = idx,
+      tau = tau,
+      strata = strata,
+      alpha = alpha,
+      boot = boot,
+      perm = perm,
+      reps = reps,
+      seed = seed
+    )
+  }
+  
+  return(out)
+}
+

@@ -15,7 +15,7 @@ CompareStratAUCs(
   boot = FALSE,
   perm = FALSE,
   reps = 2000,
-  seed = 100
+  seed = NULL
 )
 }
 \arguments{
@@ -73,7 +73,7 @@ reversed.
 # Simulate data set.
 data <- GenData()
 
-aucs <- CompareStratAUCs(
+aucs <- CompareAUCs(
   time = data$time,
   status = data$status,
   arm = data$arm,

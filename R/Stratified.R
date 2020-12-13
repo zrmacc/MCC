@@ -20,11 +20,18 @@ MargAUC <- function(
   weights,
   n
 ) {
+  
+  # Output.
   out <- data.frame(
-    "N" = sum(n),
-    "Area" = sum(weights * areas),
-    "SE" = sqrt(sum(weights^2 * ses^2))
+    "n" = sum(n),
+    "area" = sum(weights * areas)
   )
+  
+  # Add standard error, if provided.
+  if (!is.null(ses)) {
+    out$se <- sqrt(sum(weights^2 * ses^2))
+  }
+  
   return(out)
 }
 
@@ -53,31 +60,42 @@ ContrastAreas <- function(
   se0,
   alpha 
 ) {
-  crit <- qnorm(p = 1 - alpha / 2)
   
   # Difference.
   delta <- area1 - area0
-  se_diff <- sqrt(se1^2 + se0^2)
-  delta_lower <- delta - crit * se_diff
-  delta_upper <- delta + crit * se_diff
-  delta_p <- 2 * pnorm(q = abs(delta) / se_diff, lower.tail = FALSE)
-  
-  # Ratio.
-  rho <- area1 / area0 
-  se_rho_log <- sqrt(se1^2 / area1^2 + se0^2 / area0^2)
-  rho_lower <- rho * exp(- crit * se_rho_log)
-  rho_upper <- rho * exp(+ crit * se_rho_log)
-  rho_p <- 2 * pnorm(q = abs(log(rho)) / se_rho_log, lower.tail = FALSE)
+  rho <- area1 / area0
   
   # Output.
   out <- data.frame(
-    "Contrast" = c("A1-A0", "A1/A0"),
-    "Observed" = c(delta, rho),
-    "SE" = c(se_diff, rho * se_rho_log),
-    "Lower" = c(delta_lower, rho_lower),
-    "Upper" = c(delta_upper, rho_upper),
-    "P" = c(delta_p, rho_p)
+    "contrast" = c("A1-A0", "A1/A0"),
+    "observed" = c(delta, rho)
   )
+  
+  if (!is.null(se1) & !is.null(se0)) {
+    
+    # Critical value.
+    crit <- qnorm(p = 1 - alpha / 2)
+    
+    # Inference for delta.
+    se_diff <- sqrt(se1^2 + se0^2)
+    delta_lower <- delta - crit * se_diff
+    delta_upper <- delta + crit * se_diff
+    delta_p <- 2 * pnorm(q = abs(delta) / se_diff, lower.tail = FALSE)
+    
+    # Inference for rho.
+    rho <- area1 / area0 
+    se_rho_log <- sqrt(se1^2 / area1^2 + se0^2 / area0^2)
+    rho_lower <- rho * exp(- crit * se_rho_log)
+    rho_upper <- rho * exp(+ crit * se_rho_log)
+    rho_p <- 2 * pnorm(q = abs(log(rho)) / se_rho_log, lower.tail = FALSE)
+    
+    # Output.
+    out$se <- c(se_diff, rho * se_rho_log)
+    out$lower <- c(delta_lower, rho_lower)
+    out$upper <- c(delta_upper, rho_upper)
+    out$p <- c(delta_p, rho_p)
+  }
+  
   return(out)
 }
 
@@ -137,7 +155,7 @@ AUC.Stats.Strat <- function(
   stratum_areas <- data %>%
     dplyr::group_by(arm, strata) %>%
     dplyr::summarise(
-      AUC.Area(time, status, idx, tau = tau),
+      AUC.Area(time, status, idx, tau = tau, calc_var = return_areas),
       .groups = "drop"
     ) %>% 
     dplyr::inner_join(
@@ -155,23 +173,14 @@ AUC.Stats.Strat <- function(
       .groups = "drop"
     ) %>%
     as.data.frame
-  marg_areas$Tau <- tau
-  colnames(marg_areas)[1] <- "Arm"
-  col_order <- c(
-    "Arm",
-    "N",
-    "Tau",
-    "Area",
-    "SE"
-  )
-  marg_areas <- marg_areas[, col_order]
+  marg_areas$tau <- tau
   
   # Difference and ratio.
   contrasts <- ContrastAreas(
-    area1 = marg_areas$Area[marg_areas$Arm == 1],
-    se1 = marg_areas$SE[marg_areas$Arm == 1],
-    area0 = marg_areas$Area[marg_areas$Arm == 0],
-    se0 = marg_areas$SE[marg_areas$Arm == 0],
+    area1 = marg_areas$area[marg_areas$arm == 1],
+    se1 = marg_areas$se[marg_areas$arm == 1],
+    area0 = marg_areas$area[marg_areas$arm == 0],
+    se0 = marg_areas$se[marg_areas$arm == 0],
     alpha = alpha
   )
   
@@ -256,7 +265,12 @@ Boot.Sim.Strat <- function(
   reps,
   seed
 ) {
-  set.seed(seed)
+  
+  # Simulation seed.
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  
   data <- data.frame(
     time = time,
     status = status,
@@ -272,8 +286,8 @@ Boot.Sim.Strat <- function(
   loop <- function(b) {
 
     # Bootstrap data sets.
-    boot0 <- StratGroupBoot(data0, idx_offset = 0)
-    boot1 <- StratGroupBoot(data1, idx_offset = n0)
+    boot0 <- StratGroupBoot(data0)
+    boot1 <- StratGroupBoot(data1)
     boot <- rbind(boot0, boot1)
 
     # Bootstrap statistics.
@@ -284,23 +298,24 @@ Boot.Sim.Strat <- function(
       idx = boot$idx,
       strata = boot$strata,
       tau = tau,
-      alpha = alpha
+      alpha = alpha,
+      return_areas = FALSE
     )
-    names(boot_stats) <- paste0("Boot_", names(boot_stats))
+    names(boot_stats) <- paste0("boot_", names(boot_stats))
 
     # Bootstrap p-value indicators.
     # Indicator is 1 if the sign of the difference in areas is opposite that observed.
-    is_diff_sign <- sign(boot_stats$Boot_Observed[1]) != sign(obs_stats$Observed[1])
+    is_diff_sign <- sign(boot_stats$boot_observed[1]) != sign(obs_stats$observed[1])
 
     # Results
     out <- c(
-      boot_stats$Boot_Observed,
+      boot_stats$boot_observed,
       is_diff_sign
     )
     return(out)
   }
 
-  sim <- lapply(seq(1:reps), loop)
+  sim <- lapply(seq_len(reps), loop)
   sim <- data.frame(do.call(rbind, sim))
   colnames(sim) <- c("boot_diff", "boot_ratio", "is_diff_sign")
   return(sim)
@@ -330,8 +345,10 @@ Boot.CIs.Strat <- function(
   )
 
   # Equi-tailed CI for ratio.
+  finite_log_ratios <- log(sim$boot_ratio)
+  finite_log_ratios <- finite_log_ratios[is.finite(finite_log_ratios)]
   eti_ratio <- HighDensCI(
-    x = log(sim$boot_ratio),
+    x = finite_log_ratios,
     min_tail_prob = alpha / 2,
     intervals = 0
   )
@@ -348,7 +365,7 @@ Boot.CIs.Strat <- function(
 
   # HDI for ratio.
   hdi_ratio <- HighDensCI(
-    x = log(sim$boot_ratio),
+    x = finite_log_ratios,
     alpha = alpha,
     min_tail_prob = 1 / reps,
     intervals = 1e3
@@ -364,28 +381,23 @@ Boot.CIs.Strat <- function(
       hdi_ratio
     )
   )
-  se_diff <- sd(sim$boot_diff)
-  sim$log_boot_ratio <- log(sim$boot_ratio)
-  se_ratio <- exp(mean(sim$log_boot_ratio)) * sd(sim$log_boot_ratio)
   rownames(cis) <- NULL
-  cis$Method <- "Bootstrap"
-  cis$Type <- rep(c("Equitailed", "Highest-density"), times = 2)
-  cis$Contrast <- rep(c("A1-A0", "A1/A0"), each = 2)
-  cis$Observed <- rep(obs_stats$Observed, each = 2)
-  cis$SE <- rep(c(se_diff, se_ratio), each = 2)
-  col_order <- c(
-    "Method", 
-    "Type", 
-    "Contrast", 
-    "Observed",
-    "SE",
-    "Lower", 
-    "Upper", 
-    "Alpha_Lower", 
-    "Alpha_Upper"
+  
+  # Standard errors.
+  se_diff <- sd(sim$boot_diff)
+  se_ratio <- exp(mean(finite_log_ratios)) * sd(finite_log_ratios)
+  
+  # Output
+  out <- data.frame(
+    method = "bootstrap",
+    type = rep(c("equitailed", "highest-density"), times = 2),
+    contrast = rep(c("A1-A0", "A1/A0"), each = 2),
+    observed = rep(obs_stats$observed, each = 2),
+    se = rep(c(se_diff, se_ratio), each = 2),
+    cis
   )
-  cis <- cis[, col_order]
-  return(cis)
+  
+  return(out)
 }
 
 
@@ -424,7 +436,12 @@ CompAUCs.Perm.Strat <- function(
   reps,
   seed
 ) {
-  set.seed(seed)
+  
+  # Simulation seed.
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  
   data <- data.frame(
     time = time,
     status = status,
@@ -449,13 +466,13 @@ CompAUCs.Perm.Strat <- function(
       tau = tau,
       alpha = alpha
     )
-    names(perm_stats) <- paste0("Perm_", names(perm_stats))
+    names(perm_stats) <- paste0("perm_", names(perm_stats))
 
     # Permutation indicators.
-    perm_diff <- perm_stats$Perm_Observed[1]
-    obs_diff <- obs_stats$Observed[1]
-    perm_ratio <- perm_stats$Perm_Observed[2]
-    obs_ratio <- obs_stats$Observed[2]
+    perm_diff <- perm_stats$perm_observed[1]
+    obs_diff <- obs_stats$observed[1]
+    perm_ratio <- perm_stats$perm_observed[2]
+    obs_ratio <- obs_stats$observed[2]
 
     is_diff_sign <- (sign(perm_diff) != sign(obs_diff))
     is_diff_more_extreme <- abs(perm_diff) >= abs(obs_diff)
@@ -465,7 +482,7 @@ CompAUCs.Perm.Strat <- function(
 
     # Results
     out <- c(
-      perm_stats$Perm_Observed,
+      perm_stats$perm_observed,
       "perm_diff_1sided" = perm_diff_1sided,
       "perm_ratio_1sided" = perm_ratio_1sided
     )
@@ -516,7 +533,7 @@ CompAUCs.Perm.Strat <- function(
 #' @param seed Seed for bootstrap/permutation inference.
 #' @importFrom stats quantile
 #' @importFrom methods new
-#' @export
+#' @import dplyr 
 #' @return Object of class compAUCs with these slots:
 #' \itemize{
 #'   \item `@Areas`: The AUC for each arm.
@@ -532,7 +549,7 @@ CompAUCs.Perm.Strat <- function(
 #' # Simulate data set.
 #' data <- GenData()
 #'
-#' aucs <- CompareStratAUCs(
+#' aucs <- CompareAUCs(
 #'   time = data$time,
 #'   status = data$status,
 #'   arm = data$arm,
@@ -558,7 +575,7 @@ CompareStratAUCs <- function(
   boot = FALSE,
   perm = FALSE,
   reps = 2000,
-  seed = 100
+  seed = NULL
 ) {
 
   # Create single stratum if no strata are provided.
@@ -580,19 +597,19 @@ CompareStratAUCs <- function(
   obs_stats <- obs$contrasts
 
   # CIs.
-  cis <- obs_stats[, c("Contrast", "Observed", "SE", "Lower", "Upper")]
+  cis <- obs_stats %>% select(-c("p"))
   cis <- data.frame(
-    "Method" = "Asymp",
-    "Type" = "Equitailed",
+    "method" = "asymptotic",
+    "type" = "equitailed",
     cis,
-    "Alpha_Lower" = alpha / 2,
-    "Alpha_Upper" = alpha / 2
+    "alpha_lower" = alpha / 2,
+    "alpha_upper" = alpha / 2
   )
 
   # P-values.
-  pvals <- obs_stats[, c("Contrast", "Observed", "P")]
+  pvals <- obs_stats %>% select(c("contrast", "observed", "p"))
   pvals <- data.frame(
-    "Method" = "Asymp",
+    "method" = "asymptotic",
     pvals
   )
 
@@ -629,14 +646,14 @@ CompareStratAUCs <- function(
       cis,
       boot_cis
     )
-    cis <- cis[order(cis$Contrast), ]
+    cis <- cis[order(cis$contrast), ]
 
     # P-value.
     boot_p <- min(2 * mean(c(1, boot_sim$is_diff_sign)), 1)
     boot_pvals <- cbind(
-      "Method" = "Bootstrap",
-      pvals[, c("Contrast", "Observed")],
-      "P" = boot_p
+      "method" = "bootstrap",
+      pvals[, c("contrast", "observed")],
+      "p" = boot_p
     )
     pvals <- rbind(
       pvals,
@@ -669,17 +686,17 @@ CompareStratAUCs <- function(
       return(min(2 * mean(c(1, x)), 1))
     })
     perm_pvals <- data.frame(
-      "Method" = "Perm",
-      "Contrast" = c("A1-A0", "A1/A0"),
-      "Observed" = obs_stats$Observed,
-      "P" = perm_pvals
+      "method" = "permutation",
+      "contrast" = c("A1-A0", "A1/A0"),
+      "observed" = obs_stats$observed,
+      "p" = perm_pvals
     )
     rownames(perm_pvals) <- NULL
     pvals <- rbind(
       pvals,
       perm_pvals
     )
-    pvals <- pvals[order(pvals$Observed), ]
+    pvals <- pvals[order(pvals$observed), ]
   }
 
   # -------------------------------------------------------

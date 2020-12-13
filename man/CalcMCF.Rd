@@ -4,7 +4,7 @@
 \alias{CalcMCF}
 \title{Calculate Mean Cumulative Function}
 \usage{
-CalcMCF(time, status, idx)
+CalcMCF(time, status, idx, calc_var = TRUE)
 }
 \arguments{
 \item{time}{Observation time.}
@@ -12,6 +12,8 @@ CalcMCF(time, status, idx)
 \item{status}{Status, coded as 0 for censoring, 1 for event, 2 for death.}
 
 \item{idx}{Unique subject index.}
+
+\item{calc_var}{Calculate variance of the MCF?}
 }
 \value{
 Data.frame with these columns:

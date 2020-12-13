@@ -23,70 +23,6 @@ FindAUC <- function(times, values, tau) {
 }
 
 # -----------------------------------------------------------------------------
-
-#' Calculate AUC
-#' 
-#' Used to find the AU MCF for each stratum.
-#' 
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
-#'   Note that subjects who are neither censored nor die are assumed to
-#'   remain at risk throughout the observation period. 
-#' @param idx Unique subject index. 
-#' @param tau Truncation time. 
-#' @return Data.frame containing:
-#' \itemize{
-#'   \item Truncation time 'tau'.
-#'   \item Estimated 'area', its variance 'var_area' and standard error 'se_area'.
-#' }
-
-AUC.Area <- function(
-  time, 
-  status,
-  idx,
-  tau
-) { 
-  
-  # Fit MCF.
-  fit <- CalcMCF(
-    time = time,
-    status = status,
-    idx = idx
-  )
-  
-  # Find Area.
-  area <- FindAUC(
-    times = fit$time,
-    values = fit$mcf,
-    tau = tau
-  )
-  
-  # Calculate influence contributions.
-  psi <- CalcPsi(
-    mcf = fit,
-    time = time,
-    status = status,
-    idx = idx,
-    tau = tau
-  )
-  psi <- as.numeric(psi$psi)
-  n <- length(psi)
-  
-  # Find variance of area.
-  var_area <- mean(psi^2)
-  
-  # Output.
-  out <- data.frame(
-    "n" = n,
-    "tau" = tau,
-    "area" = area,
-    "var_area" = var_area,
-    "se_area" = sqrt(var_area / n)
-  )
-  return(out)
-}
-
-# -----------------------------------------------------------------------------
 # Variance calculation for area under the mean cumulative function.
 # -----------------------------------------------------------------------------
 
@@ -98,7 +34,7 @@ AUC.Area <- function(
 #' @param tau Truncation time.
 #' @return Numeric influence function for a single observation.
 
-CalcPsi.i <- function(
+CalcPsi.AUC.i <- function(
   mcf,
   time,
   status,
@@ -133,10 +69,10 @@ CalcPsi.i <- function(
 #' @param status Status indicators.
 #' @param idx Unique subject index. 
 #' @param tau Truncation time.
-#' @importFrom dplyr group_by summarise
+#' @import dplyr
 #' @return Numeric influence function contributions of each subject.
 
-CalcPsi <- function(
+CalcPsi.AUC <- function(
   mcf,
   time,
   status,
@@ -154,7 +90,7 @@ CalcPsi <- function(
   out <- subj %>%
     dplyr::group_by(idx) %>%
     dplyr::summarise(
-      "psi" = CalcPsi.i(mcf = mcf, time = time, status = status, tau = tau),
+      "psi" = CalcPsi.AUC.i(mcf = mcf, time = time, status = status, tau = tau),
       .groups = "drop" ) %>%
     as.data.frame
 
@@ -162,3 +98,71 @@ CalcPsi <- function(
   return(out)
 }
 
+# -----------------------------------------------------------------------------
+
+#' Calculate AUC
+#' 
+#' Used to find the AU MCF for each stratum.
+#' 
+#' @param time Observation time.
+#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
+#'   Note that subjects who are neither censored nor die are assumed to
+#'   remain at risk throughout the observation period. 
+#' @param idx Unique subject index. 
+#' @param tau Truncation time. 
+#' @param calc_var Calculate analytical variance? 
+#' @return Data.frame containing:
+#' \itemize{
+#'   \item Truncation time 'tau' and estimated 'area'.
+#'   \item Variance 'var_area' and standard error 'se_area', if requested.
+#' }
+
+AUC.Area <- function(
+  time, 
+  status,
+  idx,
+  tau,
+  calc_var = TRUE
+) { 
+  
+  # Fit MCF.
+  fit <- CalcMCF(
+    time = time,
+    status = status,
+    idx = idx,
+    calc_var = calc_var
+  )
+  
+  # Find Area.
+  area <- FindAUC(
+    times = fit$time,
+    values = fit$mcf,
+    tau = tau
+  )
+  
+  # Output.
+  n <- length(unique(idx))
+  out <- data.frame(
+    "n" = n,
+    "tau" = tau,
+    "area" = area
+  )
+  
+  if (calc_var) {
+    
+    # Calculate influence contributions.
+    psi <- CalcPsi.AUC(
+      mcf = fit,
+      time = time,
+      status = status,
+      idx = idx,
+      tau = tau
+    )
+    
+    # Find variance of area.
+    out$var_area <- mean(psi$psi^2)
+    out$se_area <- sqrt(out$var_area / n)
+  }
+  
+  return(out)
+}

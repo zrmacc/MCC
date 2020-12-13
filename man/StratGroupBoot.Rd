@@ -4,12 +4,10 @@
 \alias{StratGroupBoot}
 \title{Stratified, Grouped Bootstrap.}
 \usage{
-StratGroupBoot(data, idx_offset = 0)
+StratGroupBoot(data)
 }
 \arguments{
 \item{data}{Data.frame containing `idx` and `strata`.}
-
-\item{idx_offset}{Index offset.}
 }
 \value{
 Bootstrapped data.frame.

@@ -32,10 +32,10 @@ HighDensCI <- function(
   
   # Output.
   out <- c(
-    "Lower" = as.numeric(lower[key]),
-    "Upper" = as.numeric(upper[key]),
-    "Alpha_Lower" = lower_probs[key],
-    "Alpha_Upper" = 1 - upper_probs[key]
+    "lower" = as.numeric(lower[key]),
+    "upper" = as.numeric(upper[key]),
+    "alpha_lower" = lower_probs[key],
+    "alpha_upper" = 1 - upper_probs[key]
   )
   return(out)
 }

@@ -4,7 +4,7 @@
 \alias{AUC.Area}
 \title{Calculate AUC}
 \usage{
-AUC.Area(time, status, idx, tau)
+AUC.Area(time, status, idx, tau, calc_var = TRUE)
 }
 \arguments{
 \item{time}{Observation time.}
@@ -16,12 +16,14 @@ remain at risk throughout the observation period.}
 \item{idx}{Unique subject index.}
 
 \item{tau}{Truncation time.}
+
+\item{calc_var}{Calculate analytical variance?}
 }
 \value{
 Data.frame containing:
 \itemize{
-  \item Truncation time 'tau'.
-  \item Estimated 'area', its variance 'var_area' and standard error 'se_area'.
+  \item Truncation time 'tau' and estimated 'area'.
+  \item Variance 'var_area' and standard error 'se_area', if requested.
 }
 }
 \description{

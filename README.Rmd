@@ -10,7 +10,7 @@ output:
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 2020-12-09
+Updated: 2020-12-12
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE)
@@ -55,7 +55,7 @@ For analyses of other data sets, arm and status should have the same coding. Eac
 
 The example data also include:
 
-* `covar`, a standard normal covariate that increases the recurrent event rate.
+* `covar`, a standard normal covariate that decreases the event rate. 
 * `strat`, a two-level stratification factor that increases the event rate.
 * `true_event_rate`, the patient-specific recurrent event rate.
 
@@ -63,7 +63,7 @@ The example data also include:
 
 To compare the areas under the mean cumulative count curves up to time $\tau = 4$: 
 ```{r}
-aucs <- CompareStratAUCs(
+aucs <- CompareAUCs(
   time = data$time,
   status = data$status,
   arm = data$arm,
@@ -93,7 +93,7 @@ Note that the `strata` argument may be omitted for unstratified data.
 
 #### Outputs
 
-The output of `CompareStratAUCs` is an object with these slots.
+The output of `CompareAUCs` is an object with these slots.
 
 * `@StratumAreas` containing the stratum-specific AUCs for each arm.
 ```{r}
@@ -128,10 +128,10 @@ aucs@Pvals
 
 ### Adjusted AUCs
 
-The previous estimator allows for stratification, but a different approach is needed to accommodate for continuous covariates. The function `CompareAugAUCs` uses an augmentation estimator to adjusted for differences in 1 or more baseline covariates. 
+The previous estimator allows for stratification, but a different approach is needed to accommodate for continuous covariates. If covariates are provided, `CompareAUCs` uses an augmentation estimator to adjust for covariate differences.
 
 ```{r}
-aucs <- CompareAugAUCs(
+aucs <- CompareAUCs(
   time = data$time,
   status = data$status,
   arm = data$arm,

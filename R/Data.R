@@ -76,7 +76,7 @@ SimSubj <- function(
 #' @return Data.frame, containing:
 #' \itemize{
 #'   \item Subject 'idx', treatment 'arm', a baseline covariate 'covar', 
-#'     an indicator 'strat' of membership to the high-risk stratum, and the
+#'     an indicator 'strata' of membership to the high-risk stratum, and the
 #'     subject's true underlying event rate.
 #'   \item 'time' and 'status' of the event: 0 for censoring, 1 for an 
 #'     event, 2 for death.
@@ -110,7 +110,7 @@ GenData <- function(
     "idx" = seq_len(n),
     "arm" = c(rep(1, n1), rep(0, n0)),
     "covar" = rnorm(n),
-    "strat" = rbinom(n = n, size = 1, prob = pi)
+    "strata" = rbinom(n = n, size = 1, prob = pi)
   )
   
   # Calculate subject-specific event rate:

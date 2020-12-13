@@ -4,7 +4,7 @@
 \alias{AUC.Area.Aug}
 \title{AUC Calculation for Augmentation Estimator.}
 \usage{
-AUC.Area.Aug(time, status, idx, subj_covars, mu, tau)
+AUC.Area.Aug(time, status, idx, subj_covars, mu, tau, calc_var = TRUE)
 }
 \arguments{
 \item{time}{Observation time.}
@@ -21,6 +21,8 @@ covariates only.}
 \item{mu}{Grand mean.}
 
 \item{tau}{Truncation time.}
+
+\item{calc_var}{Calculate analytical variance?}
 }
 \value{
 List containing:

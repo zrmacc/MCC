@@ -1,7 +1,7 @@
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 2020-12-09
+Updated: 2020-12-12
 
 
 
@@ -36,13 +36,13 @@ head(data)
 ```
 
 ```
-##   idx      time status arm      covar strat true_event_rate
-## 1   1 0.6227499      2   1 -0.3260365     0       0.7438644
-## 2   2 2.4232557      1   1  0.5524619     1       1.1311992
-## 3   2 2.9472829      2   1  0.5524619     1       1.1311992
-## 4   3 0.2746966      1   1 -0.6749438     0       0.6881469
-## 5   3 0.9209057      0   1 -0.6749438     0       0.6881469
-## 6   4 1.9251304      2   1  0.2143595     1       1.0489954
+##   idx      time status arm      covar strata true_event_rate
+## 1   1 0.6227499      2   1 -0.3260365      0       0.7438644
+## 2   2 2.4232557      1   1  0.5524619      1       1.1311992
+## 3   2 2.9472829      2   1  0.5524619      1       1.1311992
+## 4   3 0.2746966      1   1 -0.6749438      0       0.6881469
+## 5   3 0.9209057      0   1 -0.6749438      0       0.6881469
+## 6   4 1.9251304      2   1  0.2143595      1       1.0489954
 ```
 
 The essential data are:
@@ -56,7 +56,7 @@ For analyses of other data sets, arm and status should have the same coding. Eac
 
 The example data also include:
 
-* `covar`, a standard normal covariate that increases the recurrent event rate.
+* `covar`, a standard normal covariate that decreases the event rate. 
 * `strat`, a two-level stratification factor that increases the event rate.
 * `true_event_rate`, the patient-specific recurrent event rate.
 
@@ -65,7 +65,7 @@ The example data also include:
 To compare the areas under the mean cumulative count curves up to time $\tau = 4$: 
 
 ```r
-aucs <- CompareStratAUCs(
+aucs <- CompareAUCs(
   time = data$time,
   status = data$status,
   arm = data$arm,
@@ -83,36 +83,36 @@ show(aucs)
 
 ```
 ## Marginal Areas:
-##   Arm   N Tau Area    SE
-## 1   0 100   4 6.23 0.686
-## 2   1 100   4 5.09 0.551
+##   arm   n area    se tau
+## 1   0 100 3.81 0.402   4
+## 2   1 100 3.41 0.337   4
 ## 
 ## 
 ## CIs:
-##      Method            Type Contrast Observed     SE  Lower    Upper
-## 1     Asymp      Equitailed    A1-A0   -1.140 0.8800 -2.870 0.582000
-## 3 Bootstrap      Equitailed    A1-A0   -1.140 0.4830 -1.810 0.000763
-## 4 Bootstrap Highest-density    A1-A0   -1.140 0.4830 -1.720 0.015000
-## 2     Asymp      Equitailed    A1/A0    0.817 0.1260  0.603 1.110000
-## 5 Bootstrap      Equitailed    A1/A0    0.817 0.0954  0.634 1.000000
-## 6 Bootstrap Highest-density    A1/A0    0.817 0.0954  0.641 1.000000
-##   Alpha_Lower Alpha_Upper
-## 1      0.0250      0.0250
-## 3      0.0250      0.0250
-## 4      0.0303      0.0197
-## 2      0.0250      0.0250
-## 5      0.0250      0.0250
-## 6      0.0298      0.0202
+##       method            type contrast observed    se  lower upper alpha_lower
+## 1 asymptotic      equitailed    A1-A0   -0.393 0.525 -1.420 0.635      0.0250
+## 3  bootstrap      equitailed    A1-A0   -0.393 0.312 -0.874 0.219      0.0250
+## 4  bootstrap highest-density    A1-A0   -0.393 0.312 -0.869 0.221      0.0298
+## 2 asymptotic      equitailed    A1/A0    0.897 0.130  0.675 1.190      0.0250
+## 5  bootstrap      equitailed    A1/A0    0.897 0.112  0.701 1.100      0.0250
+## 6  bootstrap highest-density    A1/A0    0.897 0.112  0.703 1.100      0.0298
+##   alpha_upper
+## 1      0.0250
+## 3      0.0250
+## 4      0.0202
+## 2      0.0250
+## 5      0.0250
+## 6      0.0202
 ## 
 ## 
 ## P-values:
-##      Method Contrast Observed      P
-## 1     Asymp    A1-A0   -1.140 0.1940
-## 3 Bootstrap    A1-A0   -1.140 0.0792
-## 5      Perm    A1-A0   -1.140 0.1580
-## 2     Asymp    A1/A0    0.817 0.1890
-## 4 Bootstrap    A1/A0    0.817 0.0792
-## 6      Perm    A1/A0    0.817 0.1580
+##        method contrast observed     p
+## 1  asymptotic    A1-A0   -0.393 0.454
+## 3   bootstrap    A1-A0   -0.393 0.297
+## 5 permutation    A1-A0   -0.393 0.535
+## 2  asymptotic    A1/A0    0.897 0.451
+## 4   bootstrap    A1/A0    0.897 0.297
+## 6 permutation    A1/A0    0.897 0.535
 ```
 
 Here:
@@ -129,7 +129,7 @@ Note that the `strata` argument may be omitted for unstratified data.
 
 #### Outputs
 
-The output of `CompareStratAUCs` is an object with these slots.
+The output of `CompareAUCs` is an object with these slots.
 
 * `@StratumAreas` containing the stratum-specific AUCs for each arm.
 
@@ -138,9 +138,11 @@ aucs@StratumAreas
 ```
 
 ```
-##   arm strata   n tau     area var_area   se_area stratum_weight
-## 1   0      1 100   4 6.231144 47.12374 0.6864673              1
-## 2   1      1 100   4 5.087900 30.33698 0.5507901              1
+##   arm strata  n tau     area  var_area   se_area stratum_weight
+## 1   0      0 85   4 4.023612 16.501195 0.4406038          0.825
+## 2   0      1 15   4 2.775884 14.534342 0.9843557          0.175
+## 3   1      0 80   4 3.485717 11.898402 0.3856553          0.825
+## 4   1      1 20   4 3.064176  8.115189 0.6369925          0.175
 ```
 
 * `@MargAreas` containing the AUCs for each arm, marginalized over any strata. 
@@ -151,9 +153,9 @@ aucs@MargAreas
 ```
 
 ```
-##   Arm   N Tau     Area        SE
-## 1   0 100   4 6.231144 0.6864673
-## 2   1 100   4 5.087900 0.5507901
+##   arm   n     area        se tau
+## 1   0 100 3.805259 0.4022501   4
+## 2   1 100 3.411947 0.3371287   4
 ```
 
 * `@CIs` containing confindence intervals for the difference and ratio of AUCs.
@@ -164,20 +166,20 @@ aucs@CIs
 ```
 
 ```
-##      Method            Type Contrast   Observed        SE      Lower
-## 1     Asymp      Equitailed    A1-A0 -1.1432439 0.8801177 -2.8682429
-## 3 Bootstrap      Equitailed    A1-A0 -1.1432439 0.4832584 -1.8075964
-## 4 Bootstrap Highest-density    A1-A0 -1.1432439 0.4832584 -1.7201362
-## 2     Asymp      Equitailed    A1/A0  0.8165274 0.1261156  0.6032532
-## 5 Bootstrap      Equitailed    A1/A0  0.8165274 0.0953840  0.6335705
-## 6 Bootstrap Highest-density    A1/A0  0.8165274 0.0953840  0.6413695
-##          Upper Alpha_Lower Alpha_Upper
-## 1 0.5817550597     0.02500     0.02500
-## 3 0.0007625306     0.02500     0.02500
-## 4 0.0149642365     0.03028     0.01972
-## 2 1.1052027376     0.02500     0.02500
-## 5 1.0001237979     0.02500     0.02500
-## 6 1.0020909306     0.02980     0.02020
+##       method            type contrast   observed        se      lower     upper
+## 1 asymptotic      equitailed    A1-A0 -0.3933124 0.5248437 -1.4219872 0.6353624
+## 3  bootstrap      equitailed    A1-A0 -0.3933124 0.3116947 -0.8735538 0.2185036
+## 4  bootstrap highest-density    A1-A0 -0.3933124 0.3116947 -0.8693152 0.2209075
+## 2 asymptotic      equitailed    A1/A0  0.8966398 0.1297419  0.6752288 1.1906526
+## 5  bootstrap      equitailed    A1/A0  0.8966398 0.1124192  0.7009945 1.0959922
+## 6  bootstrap highest-density    A1/A0  0.8966398 0.1124192  0.7033427 1.0974199
+##   alpha_lower alpha_upper
+## 1      0.0250      0.0250
+## 3      0.0250      0.0250
+## 4      0.0298      0.0202
+## 2      0.0250      0.0250
+## 5      0.0250      0.0250
+## 6      0.0298      0.0202
 ```
 
 * `@MCF` containing the per arm mean cumulative count curve, averaged across strata.
@@ -188,13 +190,13 @@ head(aucs@MCF)
 ```
 
 ```
-##          time  mcf    var_mcf     se_mcf arm
-## 1 0.001628056 0.01 0.00990000 0.09949874   1
-## 2 0.011964590 0.02 0.01960000 0.14000000   1
-## 3 0.019609591 0.03 0.02910000 0.17058722   1
-## 4 0.047584250 0.03 0.02910000 0.17058722   1
-## 5 0.060451115 0.04 0.03839992 0.19595897   1
-## 6 0.075976616 0.05 0.06749980 0.25980723   1
+##          time        mcf     var_mcf    se_mcf arm
+## 1 0.001628056 0.01031250 0.008401465 0.0916595   1
+## 2 0.011964590 0.02062500 0.016590234 0.1288031   1
+## 3 0.019609591 0.03093750 0.024566309 0.1567364   1
+## 4 0.047584250 0.03093750 0.024566309 0.1567364   1
+## 5 0.060451115 0.04112109 0.032140689 0.1792782   1
+## 6 0.075976616 0.05130469 0.056318333 0.2373148   1
 ```
 
 * `@Pvals` containing the bootstrap and permutation p-values.
@@ -205,24 +207,24 @@ aucs@Pvals
 ```
 
 ```
-##      Method Contrast   Observed          P
-## 1     Asymp    A1-A0 -1.1432439 0.19395522
-## 3 Bootstrap    A1-A0 -1.1432439 0.07920792
-## 5      Perm    A1-A0 -1.1432439 0.15841584
-## 2     Asymp    A1/A0  0.8165274 0.18940745
-## 4 Bootstrap    A1/A0  0.8165274 0.07920792
-## 6      Perm    A1/A0  0.8165274 0.15841584
+##        method contrast   observed         p
+## 1  asymptotic    A1-A0 -0.3933124 0.4536224
+## 3   bootstrap    A1-A0 -0.3933124 0.2970297
+## 5 permutation    A1-A0 -0.3933124 0.5346535
+## 2  asymptotic    A1/A0  0.8966398 0.4508539
+## 4   bootstrap    A1/A0  0.8966398 0.2970297
+## 6 permutation    A1/A0  0.8966398 0.5346535
 ```
 
 * `@Reps` is a list containing the bootstrap and permutation test statistics.
 
 ### Adjusted AUCs
 
-The previous estimator allows for stratification, but a different approach is needed to accommodate for continuous covariates. The function `CompareAugAUCs` uses an augmentation estimator to adjusted for differences in 1 or more baseline covariates. 
+The previous estimator allows for stratification, but a different approach is needed to accommodate for continuous covariates. If covariates are provided, `CompareAUCs` uses an augmentation estimator to adjust for covariate differences.
 
 
 ```r
-aucs <- CompareAugAUCs(
+aucs <- CompareAUCs(
   time = data$time,
   status = data$status,
   arm = data$arm,
@@ -240,25 +242,25 @@ show(aucs)
 
 ```
 ## Marginal Areas:
-##   Arm   N Tau Area    SE
-## 1   0 100   4 6.23 0.686
-## 2   1 100   4 5.09 0.551
+##   arm   n tau area    se
+## 1   0 100   4 3.82 0.404
+## 2   1 100   4 3.40 0.333
 ## 
 ## 
 ## CIs:
-##      Method            Type Contrast Observed    SE Lower   Upper Alpha_Lower
-## 1     Asymp      Equitailed    A1-A0    -1.15 0.877 -2.86  0.5720      0.0250
-## 2 Bootstrap      Equitailed    A1-A0    -1.15 0.492 -1.84 -0.0882      0.0250
-## 3 Bootstrap Highest-density    A1-A0    -1.15 0.492 -1.67  0.0195      0.0399
-##   Alpha_Upper
-## 1      0.0250
-## 2      0.0250
-## 3      0.0101
+##       method            type contrast observed    se lower upper alpha_lower
+## 1 asymptotic      equitailed    A1-A0   -0.419 0.520 -1.44 0.601       0.025
+## 2  bootstrap      equitailed    A1-A0   -0.419 0.313 -1.08 0.249       0.025
+## 3  bootstrap highest-density    A1-A0   -0.419 0.313 -0.83 0.302       0.040
+##   alpha_upper
+## 1       0.025
+## 2       0.025
+## 3       0.010
 ## 
 ## 
 ## P-values:
-##      Method Contrast Observed      P
-## 1     Asymp    A1-A0    -1.15 0.1910
-## 2 Bootstrap    A1-A0    -1.15 0.0594
-## 3      Perm    A1-A0    -1.15 0.1780
+##        method contrast observed     p
+## 1  asymptotic    A1-A0   -0.419 0.421
+## 2   bootstrap    A1-A0   -0.419 0.376
+## 3 permutation    A1-A0   -0.419 0.495
 ```
