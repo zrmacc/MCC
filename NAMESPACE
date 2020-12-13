@@ -2,6 +2,7 @@
 
 S3method(print,CompAugAUCs)
 S3method(print,CompStratAUCs)
+export(AUC.Stats.Aug)
 export(AUC.Stats.Strat)
 export(CalcMCF)
 export(CompareAUCs)

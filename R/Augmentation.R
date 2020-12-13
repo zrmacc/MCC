@@ -94,7 +94,9 @@ AUC.Area.Aug <- function(
 
 # -----------------------------------------------------------------------------
 
-#' Calculate Test Statistics for Augmentation estimator.
+#' Calculate Test Statistics for Augmentation Estimator.
+#' 
+#' Calculate test statistics for augmentation estimator.
 #'
 #' @param time Observation time.
 #' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
@@ -108,6 +110,7 @@ AUC.Area.Aug <- function(
 #' @param return_areas Return the AUCs?
 #' @importFrom dplyr "%>%" group_by select summarise summarise_all
 #' @importFrom MASS ginv
+#' @export 
 #' @return If `return_areas`, list containing:
 #' \itemize{
 #'   \item 'marg_area', marginal area for each arm.

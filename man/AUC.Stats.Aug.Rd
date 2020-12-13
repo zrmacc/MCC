@@ -2,7 +2,7 @@
 % Please edit documentation in R/Augmentation.R
 \name{AUC.Stats.Aug}
 \alias{AUC.Stats.Aug}
-\title{Calculate Test Statistics for Augmentation estimator.}
+\title{Calculate Test Statistics for Augmentation Estimator.}
 \usage{
 AUC.Stats.Aug(time, status, arm, idx, covars, tau, alpha, return_areas = FALSE)
 }
@@ -35,5 +35,5 @@ If `return_areas`, list containing:
  Else, only 'contrasts' is returned.
 }
 \description{
-Calculate Test Statistics for Augmentation estimator.
+Calculate test statistics for augmentation estimator.
 }

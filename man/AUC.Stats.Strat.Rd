@@ -2,7 +2,7 @@
 % Please edit documentation in R/Stratified.R
 \name{AUC.Stats.Strat}
 \alias{AUC.Stats.Strat}
-\title{Calculate Test Statistics}
+\title{Calculate Test Statistics for Stratified Estimator.}
 \usage{
 AUC.Stats.Strat(
   time,
@@ -46,5 +46,5 @@ If `return_areas`, list containing:
  Else, only 'contrasts' is returned.
 }
 \description{
-Calculate Test Statistics
+Calculate test statistics for stratified estimator.
 }

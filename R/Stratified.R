@@ -100,7 +100,9 @@ ContrastAreas <- function(
 }
 
 
-#' Calculate Test Statistics
+#' Calculate Test Statistics for Stratified Estimator.
+#' 
+#' Calculate test statistics for stratified estimator.
 #'
 #' @param time Observation time.
 #' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
