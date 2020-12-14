@@ -18,26 +18,30 @@ SimSubj <- function(
 ) {
   
   # Censoring and death times.
-  censor <- rexp(n = 1, rate = censoring_rate)
-  death <- rexp(n = 1, rate = death_rate)
-  min_censor_death <- min(censor, death)
-  final_status <- ifelse(min_censor_death == death, 2, 0)
-  
-  # Add truncation.
-  min_censor_death_tau <- min(min_censor_death, tau)
-  final_status <- ifelse(min_censor_death_tau == tau, 0, final_status)
+  censor <- ifelse(
+    censoring_rate > 0,
+    min(rexp(n = 1, rate = censoring_rate), tau),
+    tau
+  )
+  death <- ifelse(
+    death_rate > 0,
+    rexp(n = 1, rate = death_rate),
+    Inf
+  )
+  final_status <- ifelse(death <= censor, 2, 0)
+  obs_time <- min(censor, death)
   
   # Simulate event times.
   events <- c()
   follow_up <- 0
-  while (follow_up < min_censor_death) {
+  while (follow_up < obs_time) {
     
     gap <- rexp(n = 1, rate = event_rate)
     follow_up <- follow_up + gap
     
     # If follow-up at event does not exceed minimum of censoring and death,
     # then append the event.
-    if (follow_up < min_censor_death_tau) {
+    if (follow_up < obs_time) {
       events <- c(events, follow_up)
     }
   }
@@ -45,7 +49,7 @@ SimSubj <- function(
   # Data.
   out <- data.frame(
     "idx" = idx,
-    "time" = c(events, min_censor_death_tau),
+    "time" = c(events, obs_time),
     "status" = c(rep(1, length(events)), final_status)
   )
   return(out)
@@ -71,7 +75,7 @@ SimSubj <- function(
 #' @param tau Truncation time.
 #' @param seed Data generation seed.
 #' @importFrom dplyr "%>%" group_by summarise
-#' @importFrom stats rnorm
+#' @importFrom stats rbinom rnorm
 #' @export
 #' @return Data.frame, containing:
 #' \itemize{
@@ -109,9 +113,13 @@ GenData <- function(
   covar <- data.frame(
     "idx" = seq_len(n),
     "arm" = c(rep(1, n1), rep(0, n0)),
-    "covar" = rnorm(n),
-    "strata" = rbinom(n = n, size = 1, prob = pi)
+    "covar" = rnorm(n)
   )
+  
+  # Strata.
+  if (pi > 0) {
+    covar$strata <- rbinom(n = n, size = 1, prob = pi)
+  } 
   
   # Calculate subject-specific event rate:
   covar$true_event_rate <- base_event_rate * 
