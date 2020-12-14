@@ -13,8 +13,7 @@ CompAUCs.Perm.Strat(
   obs_stats,
   tau,
   alpha,
-  reps,
-  seed
+  reps
 )
 }
 \arguments{
@@ -37,8 +36,6 @@ remain at risk throughout the observation period.}
 \item{alpha}{Type I error.}
 
 \item{reps}{Simulations replicates.}
-
-\item{seed}{Simulation seed.}
 }
 \value{
 Data.frame containing:

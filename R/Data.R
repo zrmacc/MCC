@@ -73,7 +73,6 @@ SimSubj <- function(
 #'   standard normal distribution.
 #' @param min_event_rate Minimum subject-specific event rate. Most be positive.
 #' @param tau Truncation time.
-#' @param seed Data generation seed.
 #' @importFrom dplyr "%>%" group_by summarise
 #' @importFrom stats rbinom rnorm
 #' @export
@@ -97,14 +96,8 @@ GenData <- function(
   risk_effect = log(1.25),
   covar_effect = log(1.25),
   min_event_rate = 0.05,
-  tau = 4,
-  seed = 101
+  tau = 4
 ){
-  
-  # Set seed.
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
   
   # Total subjects.
   n <- n1 + n0

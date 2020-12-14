@@ -4,18 +4,7 @@
 \alias{CompAUCs.Perm.Aug}
 \title{Permutation Inference}
 \usage{
-CompAUCs.Perm.Aug(
-  time,
-  status,
-  arm,
-  idx,
-  covars,
-  obs_stats,
-  tau,
-  alpha,
-  reps,
-  seed
-)
+CompAUCs.Perm.Aug(time, status, arm, idx, covars, obs_stats, tau, alpha, reps)
 }
 \arguments{
 \item{time}{Observation time.}
@@ -38,8 +27,6 @@ subject index `idx`. Factor and interaction terms should be expanded.}
 \item{alpha}{Type I error.}
 
 \item{reps}{Simulations replicates.}
-
-\item{seed}{Simulation seed.}
 }
 \value{
 Data.frame containing:

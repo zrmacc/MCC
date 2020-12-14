@@ -4,7 +4,7 @@
 \alias{Boot.Sim.Aug}
 \title{Bootstrap Inference}
 \usage{
-Boot.Sim.Aug(time, status, arm, idx, covars, obs_stats, tau, alpha, reps, seed)
+Boot.Sim.Aug(time, status, arm, idx, covars, obs_stats, tau, alpha, reps)
 }
 \arguments{
 \item{time}{Observation time.}
@@ -27,8 +27,6 @@ subject index `idx`. Factor and interaction terms should be expanded.}
 \item{alpha}{Type I error.}
 
 \item{reps}{Simulations replicates.}
-
-\item{seed}{Simulation seed.}
 }
 \value{
 Data.frame containing:

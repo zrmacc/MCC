@@ -4,18 +4,7 @@
 \alias{Boot.Sim.Strat}
 \title{Bootstrap Inference}
 \usage{
-Boot.Sim.Strat(
-  time,
-  status,
-  arm,
-  idx,
-  strata,
-  obs_stats,
-  tau,
-  alpha,
-  reps,
-  seed
-)
+Boot.Sim.Strat(time, status, arm, idx, strata, obs_stats, tau, alpha, reps)
 }
 \arguments{
 \item{time}{Observation time.}
@@ -37,8 +26,6 @@ remain at risk throughout the observation period.}
 \item{alpha}{Type I error.}
 
 \item{reps}{Simulations replicates.}
-
-\item{seed}{Simulation seed.}
 }
 \value{
 Data.frame containing:

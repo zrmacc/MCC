@@ -21,7 +21,6 @@
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
-#' @param seed Seed for bootstrap/permutation inference.
 #' @export
 #' @return Object of class compAUCs with these slots:
 #' \itemize{
@@ -63,8 +62,7 @@ CompareAUCs <- function(
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
-  reps = 2000,
-  seed = NULL
+  reps = 2000
 ) {
   
   if (!is.null(covars) & !is.null(strata)) {
@@ -85,8 +83,7 @@ CompareAUCs <- function(
       alpha = alpha,
       boot = boot,
       perm = perm,
-      reps = reps,
-      seed = seed
+      reps = reps
     )
   } else {
     out <- CompareStratAUCs(
@@ -99,8 +96,7 @@ CompareAUCs <- function(
       alpha = alpha,
       boot = boot,
       perm = perm,
-      reps = reps,
-      seed = seed
+      reps = reps
     )
   }
   

@@ -14,8 +14,7 @@ CompareAugAUCs(
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
-  reps = 2000,
-  seed = NULL
+  reps = 2000
 )
 }
 \arguments{
@@ -41,8 +40,6 @@ subject index `idx`. Factor and interaction terms should be expanded.}
 \item{perm}{Logical, perform permutation test?}
 
 \item{reps}{Replicates for bootstrap/permutation inference.}
-
-\item{seed}{Seed for bootstrap/permutation inference.}
 }
 \value{
 Object of class CompareAugAUCs with these slots:

@@ -14,8 +14,7 @@ CompareStratAUCs(
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
-  reps = 2000,
-  seed = NULL
+  reps = 2000
 )
 }
 \arguments{
@@ -40,8 +39,6 @@ remain at risk throughout the observation period.}
 \item{perm}{Logical, perform permutation test?}
 
 \item{reps}{Replicates for bootstrap/permutation inference.}
-
-\item{seed}{Seed for bootstrap/permutation inference.}
 }
 \value{
 Object of class compAUCs with these slots:

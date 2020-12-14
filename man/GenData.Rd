@@ -15,8 +15,7 @@ GenData(
   risk_effect = log(1.25),
   covar_effect = log(1.25),
   min_event_rate = 0.05,
-  tau = 4,
-  seed = 101
+  tau = 4
 )
 }
 \arguments{
@@ -42,8 +41,6 @@ standard normal distribution.}
 \item{min_event_rate}{Minimum subject-specific event rate. Most be positive.}
 
 \item{tau}{Truncation time.}
-
-\item{seed}{Data generation seed.}
 }
 \value{
 Data.frame, containing:

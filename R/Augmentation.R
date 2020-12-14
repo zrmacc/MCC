@@ -247,7 +247,6 @@ AUC.Stats.Aug <- function(
 #' @param obs_stats Observed contrasts.
 #' @param alpha Type I error.
 #' @param reps Simulations replicates.
-#' @param seed Simulation seed.
 #' @return Data.frame containing:
 #' \itemize{
 #'   \item Bootstrap difference 'boot_diff' and ratio 'boot_ratio' of areas.
@@ -264,14 +263,8 @@ Boot.Sim.Aug <- function(
   obs_stats,
   tau,
   alpha,
-  reps,
-  seed
+  reps
 ) {
-  
-  # Simulation seed.
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
   
   # Partition data.
   data <- data.frame(
@@ -392,7 +385,6 @@ Boot.CIs.Aug <- function(
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param reps Simulations replicates.
-#' @param seed Simulation seed.
 #' @return Data.frame containing:
 #' \itemize{
 #'   \item Permutation difference 'perm_diff' and ratio 'perm_ratio' of areas.
@@ -409,14 +401,8 @@ CompAUCs.Perm.Aug <- function(
   obs_stats,
   tau,
   alpha,
-  reps,
-  seed
+  reps
 ) {
-  
-  # Simulation seed.
-  if (!is.null(seed)) {
-    set.seed(seed)
-  }
   
   # Format data.
   data <- data.frame(
@@ -491,7 +477,6 @@ CompAUCs.Perm.Aug <- function(
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
-#' @param seed Seed for bootstrap/permutation inference.
 #' @importFrom dplyr "%>%" select
 #' @importFrom stats quantile
 #' @importFrom methods new
@@ -533,8 +518,7 @@ CompareAugAUCs <- function(
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
-  reps = 2000,
-  seed = NULL
+  reps = 2000
 ) {
   
   if (is.null(covars)) {
@@ -589,8 +573,7 @@ CompareAugAUCs <- function(
       obs_stats = obs_stats,
       tau = tau,
       alpha = alpha,
-      reps = reps,
-      seed = seed
+      reps = reps
     )
     sim_reps$boot_sim <- boot_sim
     
@@ -634,8 +617,7 @@ CompareAugAUCs <- function(
       obs_stats = obs_stats,
       tau = tau,
       alpha = alpha,
-      reps = reps,
-      seed = seed
+      reps = reps
     )
     sim_reps$perm_sim <- perm_sim
     
