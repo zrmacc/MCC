@@ -59,7 +59,11 @@ TabulateEvents <- function(time, status, idx){
   
   # Number at risk.
   cum_removed <- cumsum(out$censor + out$death)
-  cum_removed <- ifelse(n_time > 1, c(0, cum_removed[1:(n_time - 1)]), 0)
+  if (n_time > 1) {
+    cum_removed <- c(0, cum_removed[1:(n_time - 1)])
+  } else {
+    cum_removed <- 0
+  }
     
   out$nar <- init_nar - cum_removed
   out$prop_at_risk <- out$nar / init_nar
@@ -127,7 +131,11 @@ CalcMartigales.i <- function(
   
   # Subject specific at risk.
   cum_removed <- cumsum(out$censor + out$death)
-  cum_removed <- ifelse(n_time > 1, c(0, cum_removed[1:(n_time - 1)]), 0)
+  if (n_time > 1) {
+    cum_removed <- c(0, cum_removed[1:(n_time - 1)])
+  } else {
+    cum_removed <- 0
+  }
   out$nar <- 1 - cum_removed
   
   # Calculate martingale differences
