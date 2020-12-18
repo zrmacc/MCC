@@ -34,37 +34,39 @@ setClass(
 #' @param ... Unused.
 #' @export
 
-print.CompAugAUCs <- function (x, ...) {
+print.CompAugAUCs <- function(x, ...) {
   
   disp <- function(y) {
+    out <- y
     if (is.numeric(y)) {
-      out <- signif(y, digits = 3)
-    } else {
-      out <- y
+      dec_part <- (y %% 1)
+      if (max(dec_part) > 0) {
+        out <- signif(y, digits = 3)
+      }
     }
     return(out)
   }
-  
+
   # Areas.
-  cat('Marginal Areas:\n')
+  cat("Marginal Areas:\n")
   areas <- x@Areas
   areas[, ] <- lapply(areas, disp)
   show(areas)
-  cat('\n\n')
-  
+  cat("\n\n")
+
   # CIs.
-  cat('CIs:\n')
+  cat("CIs:\n")
   cis <- x@CIs
   cis[, ] <- lapply(cis, disp)
   show(cis)
-  cat('\n\n')
-  
+  cat("\n\n")
+
   # P-values.
-  cat('P-values:\n')
+  cat("P-values:\n")
   pvals <- x@Pvals
   pvals[, ] <- lapply(pvals, disp)
   show(pvals)
-  cat('\n\n')
+  cat("\n\n")
 }
 
 # -----------------------------------------------------------------------------
@@ -80,7 +82,9 @@ print.CompAugAUCs <- function (x, ...) {
 setMethod(
   f = "show",
   signature = c(object = "CompAugAUCs"),
-  definition = function (object) {print.CompAugAUCs(x = object)}
+  definition = function(object) {
+    print.CompAugAUCs(x = object)
+  }
 )
 
 
@@ -106,12 +110,12 @@ setMethod(
 setClass(
   Class = "CompStratAUCs",
   representation = representation(
-   StratumAreas = "data.frame",
-   MargAreas = "data.frame",
-   CIs = "data.frame",
-   MCF = "data.frame",
-   Pvals = "data.frame",
-   Reps = "list"
+    StratumAreas = "data.frame",
+    MargAreas = "data.frame",
+    CIs = "data.frame",
+    MCF = "data.frame",
+    Pvals = "data.frame",
+    Reps = "list"
   )
 )
 
@@ -127,38 +131,39 @@ setClass(
 #' @param ... Unused.
 #' @export
 
-print.CompStratAUCs <- function (x, ...) {
+print.CompStratAUCs <- function(x, ...) {
   
   disp <- function(y) {
+    out <- y
     if (is.numeric(y)) {
-      out <- signif(y, digits = 3)
-    } else {
-      out <- y
-    }
+      dec_part <- (y %% 1)
+      if (max(dec_part) > 0) {
+        out <- signif(y, digits = 3)
+      }
+      }
     return(out)
   }
-  
+
   # Areas.
-  cat('Marginal Areas:\n')
+  cat("Marginal Areas:\n")
   areas <- x@MargAreas
   areas[, ] <- lapply(areas, disp)
   show(areas)
-  cat('\n\n')
-  
+  cat("\n\n")
+
   # CIs.
-  cat('CIs:\n')
+  cat("CIs:\n")
   cis <- x@CIs
   cis[, ] <- lapply(cis, disp)
   show(cis)
-  cat('\n\n')
-  
+  cat("\n\n")
+
   # P-values.
-  cat('P-values:\n')
+  cat("P-values:\n")
   pvals <- x@Pvals
   pvals[, ] <- lapply(pvals, disp)
   show(pvals)
-  cat('\n\n')
-
+  cat("\n\n")
 }
 
 # -----------------------------------------------------------------------------
@@ -174,6 +179,7 @@ print.CompStratAUCs <- function (x, ...) {
 setMethod(
   f = "show",
   signature = c(object = "CompStratAUCs"),
-  definition = function (object) {print.CompStratAUCs(x = object)}
+  definition = function(object) {
+    print.CompStratAUCs(x = object)
+  }
 )
-
