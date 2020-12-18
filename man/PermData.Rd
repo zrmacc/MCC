@@ -7,10 +7,10 @@
 PermData(data)
 }
 \arguments{
-\item{data}{Data.frame containing 'arm' and 'idx'.}
+\item{data}{Data.frame containing: arm and idx.}
 }
 \value{
-Bootstrapped data.frame.
+Data.frame with permuted treatment arm.
 }
 \description{
 Permute Treatment Assignments.

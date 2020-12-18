@@ -13,6 +13,5 @@ GroupBoot(data)
 Bootstrapped data.frame.
 }
 \description{
-Bootstrap observations grouped by an index. The index `idx` is relabeled
-in the returned data.frame so that each resampled group has a distinct value.
+Bootstrap observations grouped by an index.
 }

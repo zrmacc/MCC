@@ -10,7 +10,7 @@ output:
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 2020-12-12
+Updated: 2020-12-17
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE)
@@ -73,8 +73,7 @@ aucs <- MCC::CompareAUCs(
   boot = TRUE,
   perm = TRUE,
   reps = 100,
-  alpha = 0.05,
-  seed = 100
+  alpha = 0.05
 )
 show(aucs)
 ```
@@ -141,8 +140,7 @@ aucs <- MCC::CompareAUCs(
   boot = TRUE,
   perm = TRUE,
   reps = 100,
-  alpha = 0.05,
-  seed = 100
+  alpha = 0.05
 )
 show(aucs)
 ```

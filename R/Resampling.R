@@ -1,7 +1,13 @@
+# Purpose: Functions for resampling.
+# Updated: 2020-12-17
+
+# -----------------------------------------------------------------------------
+# Bootstrap.
+# -----------------------------------------------------------------------------
+
 #' Grouped Bootstrap.
 #'
-#' Bootstrap observations grouped by an index. The index `idx` is relabeled
-#' in the returned data.frame so that each resampled group has a distinct value.  
+#' Bootstrap observations grouped by an index.  
 #'
 #' @param data Data.frame containing `idx`.
 #' @return Bootstrapped data.frame.
@@ -32,8 +38,6 @@ GroupBoot <- function (data) {
 }
 
 
-# -----------------------------------------------------------------------------
-
 #' Stratified, Grouped Bootstrap.
 #' 
 #' Perform grouped bootstrap within levels of a stratification factor.
@@ -49,12 +53,13 @@ StratGroupBoot <- function(data) {
 
 
 # -----------------------------------------------------------------------------
+# Permutation.
+# -----------------------------------------------------------------------------
 
 #' Permute Treatment Assignments.
 #'
-#' @param data Data.frame containing 'arm' and 'idx'.
-#' @importFrom stats rbinom
-#' @return Bootstrapped data.frame.
+#' @param data Data.frame containing: arm and idx.
+#' @return Data.frame with permuted treatment arm.
 
 PermData <- function(data) {
   

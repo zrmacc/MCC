@@ -1,8 +1,193 @@
+# Purpose: Stratified estimation of AUC.
+# Updated: 2020-12-17
+
 # -----------------------------------------------------------------------------
-# AUCs.
+# Calculate Stratified AUC.
+# -----------------------------------------------------------------------------
+
+#' Calculate Test Statistics for Stratified Estimator.
+#'
+#' @param data Data.frame containing: idx, time, status, arm, strata.
+#' @param tau Truncation time.
+#' @param alpha Type I error.
+#' @param return_areas Return the AUCs?
+#' @importFrom dplyr "%>%" filter group_by group_split inner_join select
+#'   summarise
+#' @export 
+#' @return If `return_areas`, list containing:
+#' \itemize{
+#'   \item 'avg_mcf', average MCF across strata.
+#'   \item 'contrasts', including the difference and ratio of areas.
+#'   \item 'marg_areas', the marginal areas for each arm.
+#'   \item 'stratum_areas', the per-stratum and per-arm areas.
+#'   \item 'weights', the weights of each stratum.
+#' }
+#'  Else, only 'contrasts' is returned. 
+
+CalcStratAUC <- function(
+  data,
+  tau,
+  alpha,
+  return_areas = FALSE
+) {
+  
+  # Stratum sizes.
+  idx <- time <- status <- arm <- strata <- NULL
+  stratum_sizes <- data %>%
+    dplyr::group_by(strata) %>%
+    dplyr::summarise("n" = length(unique(idx)), .groups = "drop") %>%
+    as.data.frame
+  stratum_sizes$weight <- stratum_sizes$n / sum(stratum_sizes$n)
+  
+  # Stratum areas.
+  stratum_areas <- data %>%
+    dplyr::group_by(arm, strata) %>%
+    dplyr::summarise(
+      StratumAUC(time, status, idx, tau = tau, calc_var = return_areas),
+      .groups = "drop"
+    ) %>% 
+    dplyr::inner_join(
+      stratum_sizes[, c("strata", "weight")], 
+      by = "strata"
+    ) %>%
+    as.data.frame
+  
+  # Marginal areas.
+  area <- n <- se_area <- weight <- NULL
+  marg_areas <- stratum_areas %>%
+    dplyr::group_by(arm) %>%
+    dplyr::summarise(
+      MargAUC(areas = area, ses = se_area, weights = weight, n = n),
+      .groups = "drop"
+    ) %>%
+    as.data.frame
+  marg_areas$tau <- tau
+  
+  # Difference and ratio.
+  contrasts <- ContrastAreas(
+    marg_areas = marg_areas,
+    alpha = alpha
+  )
+  
+  # Output
+  if(return_areas){
+    
+    # Marginal MCF for arm 1.
+    mcf1 <- data %>%
+      dplyr::filter(arm == 1) %>%
+      dplyr::group_by(strata) %>%
+      dplyr::summarise(
+        CalcMCF(time, status, idx),
+        .groups = "keep"
+      ) %>%
+      dplyr::group_split()
+    avg_mcf1 <- AvgMCF(mcf1, weights = stratum_sizes$weight)
+    avg_mcf1$arm <- 1
+    
+    # Marginal MCF for arm 0.
+    mcf0 <- data %>%
+      dplyr::filter(arm == 0) %>%
+      dplyr::group_by(strata) %>%
+      dplyr::summarise(
+        CalcMCF(time, status, idx),
+        .groups = "keep"
+      ) %>%
+      dplyr::group_split()
+    avg_mcf0 <- AvgMCF(mcf1, weights = stratum_sizes$weight)
+    avg_mcf0$arm <- 0
+    
+    avg_mcf <- rbind(avg_mcf1, avg_mcf0)
+    
+    # Outputs.
+    out <- list(
+      avg_mcf = avg_mcf,
+      contrasts = contrasts,
+      marg_areas = marg_areas,
+      stratum_areas = stratum_areas
+    )
+  } else {
+    out <- contrasts
+  }
+  return(out)
+}
+
+
+# -----------------------------------------------------------------------------
+
+#' Stratum AUC.
+#' 
+#' Calculates the AUC for a single stratum.
+#' 
+#' @param time Observation time.
+#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
+#' @param idx Unique subject index. 
+#' @param tau Truncation time. 
+#' @param calc_var Calculate analytical variance? 
+#' @return Data.frame containing:
+#' \itemize{
+#'   \item Truncation time 'tau' and estimated 'area'.
+#'   \item Variance 'var_area' and standard error 'se_area', if requested.
+#' }
+
+StratumAUC <- function(
+  time, 
+  status,
+  idx,
+  tau,
+  calc_var = TRUE
+) { 
+  
+  # Fit MCF.
+  fit <- CalcMCF(
+    time = time,
+    status = status,
+    idx = idx,
+    calc_var = calc_var
+  )
+  
+  # Find AUC.
+  area <- AUC(
+    times = fit$time,
+    values = fit$mcf,
+    tau = tau
+  )
+  
+  # Output.
+  n <- length(unique(idx))
+  out <- data.frame(
+    "n" = n,
+    "tau" = tau,
+    "area" = area
+  )
+  
+  if (calc_var) {
+    
+    # Calculate influence contributions.
+    psi <- data.frame(
+      time = time,
+      status = status,
+      idx = idx
+    ) %>%
+      dplyr::group_by(idx) %>%
+      dplyr::summarise(
+        "psi" = PsiAUCi(mcf = fit, time = time, status = status, tau = tau),
+        .groups = "drop" ) %>%
+      dplyr::pull(psi) 
+    
+    # Find variance of area.
+    out$var_area <- mean(psi^2)
+    out$se_area <- sqrt(out$var_area / n)
+  }
+  
+  return(out)
+}
+
+
 # -----------------------------------------------------------------------------
 
 #' Calculate Marginal Area
+#' 
+#' Calculates the marginal AUC across strata.
 #' 
 #' @param areas Estimated statistics.
 #' @param ses Standard errors.
@@ -36,462 +221,8 @@ MargAUC <- function(
 }
 
 
-#' Contrast Summary Statistics
-#' 
-#' Finds the difference and ratio of summary statistics, comparing two arms.
-#' 
-#' @param area1 Statistic for arm 1.
-#' @param area0 Statistic for arm 0.
-#' @param se1 Standard error for arm 1.
-#' @param se0 Standard error for arm 0.
-#' @param alpha Type I error.
-#' @importFrom stats pnorm qnorm
-#' @return Data.frame containing:
-#' \itemize{
-#'   \item 'Contrast' and estimate 'Est'.
-#'   \item Lower 'L' and upper 'U' confidence bounds.
-#'   \item 'P' value.
-#' }
-
-ContrastAreas <- function(
-  area1,
-  area0,
-  se1,
-  se0,
-  alpha 
-) {
-  
-  # Difference.
-  delta <- area1 - area0
-  rho <- area1 / area0
-  
-  # Output.
-  out <- data.frame(
-    "contrast" = c("A1-A0", "A1/A0"),
-    "observed" = c(delta, rho)
-  )
-  
-  if (!is.null(se1) & !is.null(se0)) {
-    
-    # Critical value.
-    crit <- qnorm(p = 1 - alpha / 2)
-    
-    # Inference for delta.
-    se_diff <- sqrt(se1^2 + se0^2)
-    delta_lower <- delta - crit * se_diff
-    delta_upper <- delta + crit * se_diff
-    delta_p <- 2 * pnorm(q = abs(delta) / se_diff, lower.tail = FALSE)
-    
-    # Inference for rho.
-    rho <- area1 / area0 
-    se_rho_log <- sqrt(se1^2 / area1^2 + se0^2 / area0^2)
-    rho_lower <- rho * exp(- crit * se_rho_log)
-    rho_upper <- rho * exp(+ crit * se_rho_log)
-    rho_p <- 2 * pnorm(q = abs(log(rho)) / se_rho_log, lower.tail = FALSE)
-    
-    # Output.
-    out$se <- c(se_diff, rho * se_rho_log)
-    out$lower <- c(delta_lower, rho_lower)
-    out$upper <- c(delta_upper, rho_upper)
-    out$p <- c(delta_p, rho_p)
-  }
-  
-  return(out)
-}
-
-
-#' Calculate Test Statistics for Stratified Estimator.
-#' 
-#' Calculate test statistics for stratified estimator.
-#'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to
-#'   remain at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
-#' @param strata Optional stratification factor.
-#' @param tau Truncation time.
-#' @param alpha Type I error.
-#' @param return_areas Return the AUCs?
-#' @importFrom dplyr "%>%" filter group_by group_split inner_join select
-#'   summarise
-#' @export 
-#' @return If `return_areas`, list containing:
-#' \itemize{
-#'   \item 'avg_mcf', average MCF across strata.
-#'   \item 'contrasts', including the difference and ratio of areas.
-#'   \item 'marg_areas', the marginal areas for each arm.
-#'   \item 'stratum_areas', the per-stratum and per-arm areas.
-#'   \item 'weights', the weights of each stratum.
-#' }
-#'  Else, only 'contrasts' is returned. 
-
-AUC.Stats.Strat <- function(
-  time,
-  status,
-  arm,
-  idx,
-  strata,
-  tau,
-  alpha,
-  return_areas = FALSE
-) {
-  
-  # Form data.frame.
-  data <- data.frame(
-    "time" = time,
-    "status" = status,
-    "arm" = arm,
-    "idx" = idx,
-    "strata" = strata
-  )
-  
-  # Stratum sizes.
-  stratum_sizes <- data %>%
-    dplyr::group_by(strata) %>%
-    dplyr::summarise("n" = length(unique(idx)), .groups = "drop") %>%
-    as.data.frame
-  stratum_sizes$stratum_weight <- stratum_sizes$n / sum(stratum_sizes$n)
-  
-  # Stratum areas.
-  stratum_areas <- data %>%
-    dplyr::group_by(arm, strata) %>%
-    dplyr::summarise(
-      AUC.Area(time, status, idx, tau = tau, calc_var = return_areas),
-      .groups = "drop"
-    ) %>% 
-    dplyr::inner_join(
-      stratum_sizes[, c("strata", "stratum_weight")], 
-      by = "strata"
-    ) %>%
-    as.data.frame
-  
-  # Marginal areas.
-  area <- n <- se_area <- stratum_weight <- NULL
-  marg_areas <- stratum_areas %>%
-    dplyr::group_by(arm) %>%
-    dplyr::summarise(
-      MargAUC(areas = area, ses = se_area, weights = stratum_weight, n = n),
-      .groups = "drop"
-    ) %>%
-    as.data.frame
-  marg_areas$tau <- tau
-  
-  # Difference and ratio.
-  contrasts <- ContrastAreas(
-    area1 = marg_areas$area[marg_areas$arm == 1],
-    se1 = marg_areas$se[marg_areas$arm == 1],
-    area0 = marg_areas$area[marg_areas$arm == 0],
-    se0 = marg_areas$se[marg_areas$arm == 0],
-    alpha = alpha
-  )
-  
-  # Output
-  if(return_areas){
-    
-    # Average curves.
-    mcf1 <- data %>%
-      dplyr::filter(arm == 1) %>%
-      dplyr::group_by(strata) %>%
-      dplyr::summarise(
-        CalcMCF(time, status, idx),
-        .groups = "keep"
-      ) %>%
-      dplyr::group_split()
-    avg_mcf1 <- AvgMCF(mcf1, weights = stratum_sizes$stratum_weight)
-    avg_mcf1$arm <- 1
-    
-    mcf0 <- data %>%
-      dplyr::filter(arm == 0) %>%
-      dplyr::group_by(strata) %>%
-      dplyr::summarise(
-        CalcMCF(time, status, idx),
-        .groups = "keep"
-      ) %>%
-      dplyr::group_split()
-    avg_mcf0 <- AvgMCF(mcf1, weights = stratum_sizes$stratum_weight)
-    avg_mcf0$arm <- 0
-    
-    avg_mcf <- rbind(avg_mcf1, avg_mcf0)
-    
-    # Outputs.
-    out <- list(
-      'avg_mcf' = avg_mcf,
-      'contrasts' = contrasts,
-      'marg_areas' = marg_areas,
-      'stratum_areas' = stratum_areas
-    )
-  } else {
-    out <- contrasts
-  }
-  return(out)
-}
-
-
 # -----------------------------------------------------------------------------
-# Bootstrap/permutation
-# -----------------------------------------------------------------------------
-
-#' Bootstrap Inference
-#'
-#' Constructs bootstrap confidence intervals.
-#'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to
-#'   remain at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
-#' @param strata Optional stratification factor.
-#' @param obs_stats Observed contrasts.
-#' @param tau Truncation time.
-#' @param alpha Type I error.
-#' @param reps Simulations replicates.
-#' @return Data.frame containing:
-#' \itemize{
-#'   \item Bootstrap difference 'boot_diff' and ratio 'boot_ratio' of areas.
-#'   \item An indicator that the bootstrap difference was of the opposite
-#'     sign, 'is_diff_sign'.
-#' }
-
-Boot.Sim.Strat <- function(
-  time, 
-  status,
-  arm,
-  idx,
-  strata,
-  obs_stats,
-  tau,
-  alpha,
-  reps
-) {
-  
-  data <- data.frame(
-    time = time,
-    status = status,
-    arm = arm,
-    idx = idx,
-    strata = strata
-  )
-  data1 <- subset(x = data, arm == 1)
-  data0 <- subset(x = data, arm == 0)
-  n0 <- nrow(data0)
-
-  # Bootstrap function.
-  loop <- function(b) {
-
-    # Bootstrap data sets.
-    boot0 <- StratGroupBoot(data0)
-    boot1 <- StratGroupBoot(data1)
-    boot <- rbind(boot0, boot1)
-
-    # Bootstrap statistics.
-    boot_stats <- AUC.Stats.Strat(
-      time = boot$time,
-      status = boot$status,
-      arm = boot$arm,
-      idx = boot$idx,
-      strata = boot$strata,
-      tau = tau,
-      alpha = alpha,
-      return_areas = FALSE
-    )
-    names(boot_stats) <- paste0("boot_", names(boot_stats))
-
-    # Bootstrap p-value indicators.
-    # Indicator is 1 if the sign of the difference in areas is opposite that observed.
-    is_diff_sign <- sign(boot_stats$boot_observed[1]) != sign(obs_stats$observed[1])
-
-    # Results
-    out <- c(
-      boot_stats$boot_observed,
-      is_diff_sign
-    )
-    return(out)
-  }
-
-  sim <- lapply(seq_len(reps), loop)
-  sim <- data.frame(do.call(rbind, sim))
-  colnames(sim) <- c("boot_diff", "boot_ratio", "is_diff_sign")
-  return(sim)
-}
-
-
-#' Bootstrap Confidence Intervals
-#'
-#' @param sim Bootstrap simulation results, as generated by \code{\link{Boot.Sim.Strat}}.
-#' @param obs_stats Observed contrasts.
-#' @param alpha Type I error.
-#' @importFrom stats sd
-#' @return Data.frame containing the equi-tailed and highest-density bootstrap
-#'   confidence intervals.
-
-Boot.CIs.Strat <- function(
-  sim,
-  obs_stats,
-  alpha
-) {
-
-  # Equi-tailed CI for difference.
-  eti_diff <- HighDensCI(
-    x = sim$boot_diff,
-    min_tail_prob = alpha / 2,
-    intervals = 0
-  )
-
-  # Equi-tailed CI for ratio.
-  finite_log_ratios <- log(sim$boot_ratio)
-  finite_log_ratios <- finite_log_ratios[is.finite(finite_log_ratios)]
-  eti_ratio <- HighDensCI(
-    x = finite_log_ratios,
-    min_tail_prob = alpha / 2,
-    intervals = 0
-  )
-  eti_ratio[1:2] <- exp(eti_ratio[1:2])
-
-  # HDI for difference.
-  reps <- nrow(sim)
-  hdi_diff <- HighDensCI(
-    x = sim$boot_diff,
-    alpha = alpha,
-    min_tail_prob = 1 / reps,
-    intervals = 1e3
-  )
-
-  # HDI for ratio.
-  hdi_ratio <- HighDensCI(
-    x = finite_log_ratios,
-    alpha = alpha,
-    min_tail_prob = 1 / reps,
-    intervals = 1e3
-  )
-  hdi_ratio[1:2] <- exp(hdi_ratio[1:2])
-
-  # Format confidence intervals.
-  cis <- data.frame(
-    rbind(
-      eti_diff,
-      hdi_diff,
-      eti_ratio,
-      hdi_ratio
-    )
-  )
-  rownames(cis) <- NULL
-  
-  # Standard errors.
-  se_diff <- sd(sim$boot_diff)
-  se_ratio <- exp(mean(finite_log_ratios)) * sd(finite_log_ratios)
-  
-  # Output
-  out <- data.frame(
-    method = "bootstrap",
-    type = rep(c("equitailed", "highest-density"), times = 2),
-    contrast = rep(c("A1-A0", "A1/A0"), each = 2),
-    observed = rep(obs_stats$observed, each = 2),
-    se = rep(c(se_diff, se_ratio), each = 2),
-    cis
-  )
-  
-  return(out)
-}
-
-
-# -----------------------------------------------------------------------------
-
-#' Permutation Inference
-#'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to
-#'   remain at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
-#' @param strata Optional stratification factor.
-#' @param obs_stats Observed contrasts.
-#' @param tau Truncation time.
-#' @param alpha Type I error.
-#' @param reps Simulations replicates.
-#' @return Data.frame containing:
-#' \itemize{
-#'   \item Permutation difference 'perm_diff' and ratio 'perm_ratio' of areas.
-#'   \item Indicators that the permutation difference or ratio was as or more extreme
-#'     than the observed difference or ratio.
-#' }
-
-CompAUCs.Perm.Strat <- function(
-  time,
-  status,
-  arm,
-  idx,
-  strata,
-  obs_stats,
-  tau,
-  alpha,
-  reps
-) {
-  
-  data <- data.frame(
-    time = time,
-    status = status,
-    arm = arm,
-    idx = idx,
-    strata = strata
-  )
-
-  # Permutation function.
-  loop <- function(b) {
-
-    # Permute data.
-    perm <- PermData(data)
-
-    # Permutation statistics
-    perm_stats <- AUC.Stats.Strat(
-      time = perm$time,
-      status = perm$status,
-      arm = perm$arm,
-      idx = perm$idx,
-      strata = perm$strata,
-      tau = tau,
-      alpha = alpha
-    )
-    names(perm_stats) <- paste0("perm_", names(perm_stats))
-
-    # Permutation indicators.
-    perm_diff <- perm_stats$perm_observed[1]
-    obs_diff <- obs_stats$observed[1]
-    perm_ratio <- perm_stats$perm_observed[2]
-    obs_ratio <- obs_stats$observed[2]
-
-    is_diff_sign <- (sign(perm_diff) != sign(obs_diff))
-    is_diff_more_extreme <- abs(perm_diff) >= abs(obs_diff)
-    is_ratio_more_extreme <- abs(log(perm_ratio)) >= abs(log(obs_ratio))
-    perm_diff_1sided <- is_diff_sign * is_diff_more_extreme
-    perm_ratio_1sided <- is_diff_sign * is_ratio_more_extreme
-
-    # Results
-    out <- c(
-      perm_stats$perm_observed,
-      "perm_diff_1sided" = perm_diff_1sided,
-      "perm_ratio_1sided" = perm_ratio_1sided
-    )
-    return(out)
-  }
-
-  sim <- lapply(seq(1:reps), loop)
-  sim <- data.frame(do.call(rbind, sim))
-  colnames(sim) <- c(
-    "perm_diff",
-    "perm_ratio",
-    "perm_diff_1sided",
-    "perm_ratio_1sided"
-  )
-  return(sim)
-}
-
-
-# -----------------------------------------------------------------------------
-# Main function
+# Main function for stratified estimator.
 # -----------------------------------------------------------------------------
 
 #' Inference on the Area Under the Cumulative Count Curve
@@ -499,13 +230,6 @@ CompAUCs.Perm.Strat <- function(
 #' Confidence intervals and p-values for the difference and ratio of areas under
 #' the mean cumulative count curves, comparing treatment (arm = 1) with
 #' reference (arm = 0).
-#'
-#' Two methods of p-value calculation are available. For 'perm', treatment
-#' assignments are permuted on each iteration, and the p-value is the
-#' proportion of the *null* statistics that are as or more extreme than
-#' the *observed* statistics. For 'boot', the p-value is twice the proportion
-#' of bootstrap replicates on which the sign of the difference is areas is
-#' reversed.
 #'
 #' @param time Observation time.
 #' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
@@ -557,44 +281,46 @@ CompareStratAUCs <- function(
   status,
   arm,
   idx,
-  tau,
   strata = NULL,
+  tau,
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
   reps = 2000
 ) {
-
+  
   # Create single stratum if no strata are provided.
   if (is.null(strata)) {
     strata <- rep(1, length(time))
   }
-
-  # Observed test stats.
-  obs <- AUC.Stats.Strat(
+  
+  # Create data.frame
+  data <- data.frame(
+    idx = idx,
     time = time,
     status = status,
     arm = arm,
-    idx = idx,
-    strata = strata,
-    tau = tau,
+    strata = strata
+  )
+
+  # Observed test stats.
+  obs <- CalcStratAUC(
+    data = data,
     alpha = alpha,
+    tau = tau,
     return_areas = TRUE
   )
   obs_stats <- obs$contrasts
 
   # CIs.
-  cis <- obs_stats %>% select(-c("p"))
+  cis <- obs_stats %>% dplyr::select(-c("p"))
   cis <- data.frame(
-    "method" = "asymptotic",
-    "type" = "equitailed",
-    cis,
-    "alpha_lower" = alpha / 2,
-    "alpha_upper" = alpha / 2
+    method = "asymptotic",
+    cis
   )
 
   # P-values.
-  pvals <- obs_stats %>% select(c("contrast", "observed", "p"))
+  pvals <- obs_stats %>% dplyr::select(c("contrast", "observed", "p"))
   pvals <- data.frame(
     "method" = "asymptotic",
     pvals
@@ -609,12 +335,8 @@ CompareStratAUCs <- function(
   if (boot) {
 
     # Simulate.
-    boot_sim <- Boot.Sim.Strat(
-      time = time,
-      status = status,
-      arm = arm,
-      idx = idx,
-      strata = strata,
+    boot_sim <- BootSimStrat(
+      data = data,
       obs_stats = obs_stats,
       tau = tau,
       alpha = alpha,
@@ -623,7 +345,7 @@ CompareStratAUCs <- function(
     sim_reps$boot_sim <- boot_sim
 
     # Confidence intervals.
-    boot_cis <- Boot.CIs.Strat(
+    boot_cis <- BootCIs(
       sim = boot_sim,
       obs_stats = obs_stats,
       alpha = alpha
@@ -635,10 +357,10 @@ CompareStratAUCs <- function(
     cis <- cis[order(cis$contrast), ]
 
     # P-value.
-    boot_p <- min(2 * mean(c(1, boot_sim$is_diff_sign)), 1)
+    boot_p <- CalcP(boot_sim$is_diff_sign)
     boot_pvals <- cbind(
       "method" = "bootstrap",
-      pvals[, c("contrast", "observed")],
+      pvals %>% dplyr::select(c("contrast", "observed")),
       "p" = boot_p
     )
     pvals <- rbind(
@@ -653,12 +375,8 @@ CompareStratAUCs <- function(
   if (perm) {
 
     # Simulate.
-    perm_sim <- CompAUCs.Perm.Strat(
-      time = time,
-      status = status,
-      arm = arm,
-      idx = idx,
-      strata = strata,
+    perm_sim <- PermSimStrat(
+      data = data,
       obs_stats = obs_stats,
       tau = tau,
       alpha = alpha,
@@ -667,9 +385,10 @@ CompareStratAUCs <- function(
     sim_reps$perm_sim <- perm_sim
 
     # Permutation p-values.
-    perm_pvals <- apply(perm_sim[, c(3:4)], 2, function(x) {
-      return(min(2 * mean(c(1, x)), 1))
-    })
+    perm_pvals <- perm_sim %>%
+      dplyr::select("perm_diff_1sided", "perm_ratio_1sided") %>%
+      dplyr::summarise_all(CalcP) %>% as.numeric
+      
     perm_pvals <- data.frame(
       "method" = "permutation",
       "contrast" = c("A1-A0", "A1/A0"),

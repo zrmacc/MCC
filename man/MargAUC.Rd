@@ -23,5 +23,5 @@ Data.frame containing:
 }
 }
 \description{
-Calculate Marginal Area
+Calculates the marginal AUC across strata.
 }

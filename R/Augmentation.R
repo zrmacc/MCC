@@ -1,117 +1,22 @@
-# Purpose: Augmentation estimator.
-# Updated: 2020-12-08
+# Purpose: Augmentation estimator of AUC.
+# Updated: 2020-12-17
 
-#' AUC Calculation for Augmentation Estimator.
-#'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to remain
-#'   at risk throughout the observation period.
-#' @param idx Unique subject index.
-#' @param subj_covars Per-subject covariate data. Should include `idx` and
-#'   covariates only.
-#' @param mu Grand mean.
-#' @param tau Truncation time. 
-#' @param calc_var Calculate analytical variance?
-#' @return List containing:
-#' \itemize{
-#'   \item Tabulated mean cumulative function 'mcf'.
-#'   \item Estimated 'area' and its variance 'var_area'.
-#'   \item 'sigma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\mu)(X_{i}-\mu)'}.
-#'   \item 'gamma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\mu)\xi_{i}}.
-#'   \item 'mean_resid', \eqn{\frac{1}{n}\sum_{i=1}^{n}(X_{i}-\mu)}.
-#' }
-
-AUC.Area.Aug <- function(
-  time, 
-  status,
-  idx,
-  subj_covars,
-  mu,
-  tau,
-  calc_var = TRUE
-) { 
-  
-  # Fit MCF.
-  fit <- CalcMCF(
-    time = time,
-    status = status,
-    idx = idx,
-    calc_var = calc_var
-  )
-  
-  # Find Area.
-  area <- FindAUC(
-    times = fit$time,
-    values = fit$mcf,
-    tau = tau
-  )
-  
-  # Calculate influence contributions.
-  # Note that psi is needed to calculate the argumentation estimator. 
-  psi <- CalcPsi.AUC(
-    mcf = fit,
-    time = time,
-    status = status,
-    idx = idx,
-    tau = tau
-  )
-  
-  # Covariates.
-  subj_covars_psi <- merge(
-    x = subj_covars,
-    y = psi,
-    by = "idx"
-  )
-  covars <- subj_covars_psi %>% select(-c("idx", "psi")) %>% data.matrix
-  
-  # Find variance of area.
-  var_area <- mean(subj_covars_psi$psi^2)
-  
-  # Resid matrix.
-  n <- nrow(psi)
-  center <- matrix(data = mu, nrow = n, ncol = length(mu), byrow = TRUE)
-  resid <- covars - center
-  
-  # Covariance.
-  sigma <- t(resid) %*% resid / (n^2)
-  gamma <- t(resid) %*% subj_covars_psi$psi / (n^2)
-  mean_resid <- t(resid) %*% rep(1, n) / n
-  
-  # Output.
-  out <- list(
-    "n" = n,
-    "mcf" = fit,
-    "area" = area,
-    "var_area" = var_area,
-    "sigma" = sigma,
-    "gamma" = gamma,
-    "mean_resid" = mean_resid
-  )
-  return(out)
-}
-
-
+# -----------------------------------------------------------------------------
+# Calculated Augmented AUC.
 # -----------------------------------------------------------------------------
 
 #' Calculate Test Statistics for Augmentation Estimator.
 #' 
 #' Calculate test statistics for augmentation estimator.
 #'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to remain
-#'   at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
-#' @param covars Per-subject covariate matrix.
+#' @param data Data.frame containing: idx, time, status, arm, and covars.
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
 #' @importFrom dplyr "%>%" group_by select summarise summarise_all
 #' @importFrom MASS ginv
 #' @export 
-#' @return If `return_areas`, list containing:
+#' @return If return_areas is TRUE, list containing:
 #' \itemize{
 #'   \item 'marg_area', marginal area for each arm.
 #'   \item 'mcf', mean cumulative function for each strata.
@@ -119,23 +24,17 @@ AUC.Area.Aug <- function(
 #' }
 #'  Else, only 'contrasts' is returned. 
 
-AUC.Stats.Aug <- function(
-  time,
-  status,
-  arm,
-  idx,
-  covars, 
+CalcAugAUC <- function(
+  data,
   tau, 
   alpha, 
   return_areas = FALSE
 ) {
   
-  # Form data.
-  data <- data.frame(time, status, arm, idx)
-  covars <- data.frame(arm, idx, covars)
-  
   # Summarize to per-subject covariate data.
-  subj_covars <- covars %>% 
+  arm <- idx <- NULL
+  subj_covars <- data %>% 
+    dplyr::select(-c("time", "status")) %>%
     dplyr::group_by(idx) %>%
     dplyr::summarise_all(.funs = mean, .groups = "drop") %>%
     as.data.frame
@@ -153,19 +52,15 @@ AUC.Stats.Aug <- function(
   subj_covars0 <- subset(x = subj_covars, arm == 0, select = -arm)
   
   # Areas. 
-  a1 <- AUC.Area.Aug(
-    time = data1$time,
-    status = data1$status,
-    idx = data1$idx,
+  a1 <- AugAUC(
+    data = data1,
     subj_covars = subj_covars1,
     mu = mu,
     tau = tau,
     calc_var = return_areas
   )
-  a0 <- AUC.Area.Aug(
-    time = data0$time,
-    status = data0$status,
-    idx = data0$idx,
+  a0 <- AugAUC(
+    data = data0,
     subj_covars = subj_covars0,
     mu = mu,
     tau = tau,
@@ -228,234 +123,88 @@ AUC.Stats.Aug <- function(
 
 
 # -----------------------------------------------------------------------------
-# Bootstrap/permutation
-# -----------------------------------------------------------------------------
 
-#' Bootstrap Inference
+#' AUC Calculation for a Single Arm.
 #'
-#' Constructs bootstrap confidence intervals.
-#'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to remain
-#'   at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
-#' @param tau Truncation time.
-#' @param covars Optional covariate matrix. Rows should correspond with the
-#'   subject index `idx`. Factor and interaction terms should be expanded.
-#' @param obs_stats Observed contrasts.
-#' @param alpha Type I error.
-#' @param reps Simulations replicates.
-#' @return Data.frame containing:
+#' @param data Data.frame including: time, status, idx.
+#' @param subj_covars Per-subject covariate data.
+#' @param mu Grand mean.
+#' @param tau Truncation time. 
+#' @param calc_var Calculate analytical variance?
+#' @return List containing:
 #' \itemize{
-#'   \item Bootstrap difference 'boot_diff' and ratio 'boot_ratio' of areas.
-#'   \item An indicator that the bootstrap difference was of the opposite
-#'     sign, '1side_boot_diff'.
+#'   \item Tabulated mean cumulative function 'mcf'.
+#'   \item Estimated 'area' and its variance 'var_area'.
+#'   \item 'sigma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\mu)(X_{i}-\mu)'}.
+#'   \item 'gamma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\mu)\xi_{i}}.
+#'   \item 'mean_resid', \eqn{\frac{1}{n}\sum_{i=1}^{n}(X_{i}-\mu)}.
 #' }
 
-Boot.Sim.Aug <- function(
-  time,
-  status,
-  arm,
-  idx,
-  covars,
-  obs_stats,
+AugAUC <- function(
+  data,
+  subj_covars,
+  mu,
   tau,
-  alpha,
-  reps
-) {
+  calc_var = TRUE
+) { 
   
-  # Partition data.
-  data <- data.frame(
-    time,
-    status,
-    arm,
-    idx,
-    covars
-  )
-  data1 <- subset(x = data, arm == 1)
-  data0 <- subset(x = data, arm == 0)
-  n0 <- nrow(data0)
-  
-  # Bootstrap function.
-  loop <- function(b) {
-    
-    # Bootstrap data sets.
-    boot0 <- GroupBoot(data0)
-    boot1 <- GroupBoot(data1)
-    boot <- rbind(boot1, boot0)
-    
-    # Bootstrap statistics.
-    boot_stats <- AUC.Stats.Aug(
-      time = boot$time,
-      status = boot$status,
-      arm = boot$arm,
-      idx = boot$idx,
-      covars = boot %>% select(-c("time", "status", "arm", "idx")),
-      tau = tau,
-      alpha = alpha
-    )
-    names(boot_stats) <- paste0("boot_", names(boot_stats))
-    
-    # Bootstrap p-value indicators.
-    # Indicator is 1 if the sign of the difference in areas is opposite that observed.
-    is_diff_sign <- sign(boot_stats$boot_observed[1]) != sign(obs_stats$observed[1])
-    
-    # Results
-    out <- c(
-      boot_stats$boot_observed,
-      is_diff_sign
-    )
-    return(out)
-  }
-  
-  sim <- lapply(seq_len(reps), loop)
-  sim <- data.frame(do.call(rbind, sim))
-  colnames(sim) <- c("boot_diff", "is_diff_sign")
-  return(sim)
-}
-
-
-#' Bootstrap Confidence Intervals for Augmentation Estimator.
-#'
-#' @param sim Bootstrap simulation results, as generated by \code{\link{Boot.Sim.Aug}}.
-#' @param obs_stats Observed contrasts.
-#' @param alpha Type I error.
-#' @importFrom stats sd
-#' @return Data.framne containing the equi-talied and highest-density bootstrap
-#'   confidence intervals.
-
-Boot.CIs.Aug <- function(
-  sim,
-  obs_stats,
-  alpha
-) {
-  
-  # Equi-tailed CI for difference.
-  eti_diff <- HighDensCI(
-    x = sim$boot_diff,
-    min_tail_prob = alpha / 2,
-    intervals = 0
+  # Fit MCF.
+  fit <- CalcMCF(
+    time = data$time,
+    status = data$status,
+    idx = data$idx,
+    calc_var = calc_var
   )
   
-  # HDI for difference.
-  reps <- nrow(sim)
-  hdi_diff <- HighDensCI(
-    x = sim$boot_diff,
-    alpha = alpha,
-    min_tail_prob = 1 / reps,
-    intervals = 1e3
+  # Find Area.
+  area <- AUC(
+    times = fit$time,
+    values = fit$mcf,
+    tau = tau
   )
   
-  # Format confidence intervals.
-  cis <- data.frame(
-    rbind(
-      eti_diff,
-      hdi_diff
-    )
-  )
-  rownames(cis) <- NULL
+  # Calculate influence contributions.
+  # Note that psi is needed to calculate the argumentation estimator. 
+  idx <- time <- status <- NULL
+  subj_covars_psi <- data %>%
+    dplyr::group_by(idx) %>%
+    dplyr::summarise(
+      "psi" = PsiAUCi(mcf = fit, time = time, status = status, tau = tau),
+      .groups = "drop" ) %>%
+    dplyr::inner_join(y = subj_covars, by = "idx")
+  
+  # Covariates.
+  covars <- subj_covars_psi %>% dplyr::select(-c("idx", "psi")) %>% data.matrix
+  
+  # Find variance of area.
+  var_area <- mean(subj_covars_psi$psi^2)
+  
+  # Resid matrix.
+  n <- nrow(subj_covars)
+  center <- matrix(data = mu, nrow = n, ncol = length(mu), byrow = TRUE)
+  resid <- covars - center
+  
+  # Covariance.
+  sigma <- t(resid) %*% resid / (n^2)
+  gamma <- t(resid) %*% subj_covars_psi$psi / (n^2)
+  mean_resid <- t(resid) %*% rep(1, n) / n
   
   # Output.
-  out <- data.frame(
-    method = "bootstrap",
-    type = c("equitailed", "highest-density"),
-    contrast = rep(c("A1-A0"), times = 2),
-    observed = obs_stats$observed,
-    se = sd(sim$boot_diff),
-    cis
+  out <- list(
+    "n" = n,
+    "mcf" = fit,
+    "area" = area,
+    "var_area" = var_area,
+    "sigma" = sigma,
+    "gamma" = gamma,
+    "mean_resid" = mean_resid
   )
   return(out)
 }
 
+
 # -----------------------------------------------------------------------------
-
-#' Permutation Inference
-#'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to remain
-#'   at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
-#' @param covars Optional covariate matrix. Rows should correspond with the
-#'   subject index `idx`. Factor and interaction terms should be expanded.
-#' @param obs_stats Observed contrasts.
-#' @param tau Truncation time.
-#' @param alpha Type I error.
-#' @param reps Simulations replicates.
-#' @return Data.frame containing:
-#' \itemize{
-#'   \item Permutation difference 'perm_diff' and ratio 'perm_ratio' of areas.
-#'   \item Indicators that the permutation difference or ratio was as or more extreme
-#'     than the observed difference or ratio.
-#' }
-
-CompAUCs.Perm.Aug <- function(
-  time,
-  status,
-  arm,
-  idx,
-  covars,
-  obs_stats,
-  tau,
-  alpha,
-  reps
-) {
-  
-  # Format data.
-  data <- data.frame(
-    time = time,
-    status = status,
-    arm = arm,
-    idx = idx,
-    covars = covars
-  )
-  
-  # Permutation function.
-  loop <- function(b) {
-    
-    # Permute data.
-    perm <- PermData(data)
-    
-    # Permutation statistics
-    perm_stats <- AUC.Stats.Aug(
-      time = perm$time,
-      status = perm$status,
-      arm = perm$arm,
-      idx = perm$idx,
-      covars = perm %>% select(-c("time", "status", "arm", "idx")),
-      tau = tau,
-      alpha = alpha
-    )
-    names(perm_stats) <- paste0("perm_", names(perm_stats))
-    
-    # Permutation indicators.
-    perm_diff <- perm_stats$perm_observed[1]
-    obs_diff <- obs_stats$observed[1]
-    
-    is_diff_sign <- sign(perm_diff) != sign(obs_diff)
-    is_more_extreme <- abs(perm_diff) >= abs(obs_diff)
-    
-    # Results
-    out <- c(
-      perm_stats$perm_observed,
-      "perm_1sided" = is_diff_sign * is_more_extreme
-    )
-    return(out)
-  }
-  
-  sim <- lapply(seq_len(reps), loop)
-  sim <- data.frame(do.call(rbind, sim))
-  colnames(sim) <- c(
-    "perm_diff",
-    "perm_1sided"
-  )
-  return(sim)
-}
-
-
+# Main function for aumentation estimator.
 # -----------------------------------------------------------------------------
 
 #' Inference on the Area Under the Cumulative Count Curve
@@ -525,13 +274,18 @@ CompareAugAUCs <- function(
     covars <- rep(1, length(idx))
   }
   
-  # Observed test stats.
-  obs <- AUC.Stats.Aug(
+  # Create data.frames.
+  data <- data.frame(
+    idx = idx,
     time = time,
     status = status,
     arm = arm,
-    idx = idx,
-    covars = covars,
+    covars
+  )
+  
+  # Observed test stats.
+  obs <- CalcAugAUC(
+    data = data,
     tau = tau,
     alpha = alpha,
     return_areas = TRUE
@@ -542,10 +296,7 @@ CompareAugAUCs <- function(
   cis <- obs_stats %>% select(-c("p"))
   cis <- data.frame(
     "method" = "asymptotic",
-    "type" = "equitailed",
-    cis,
-    "alpha_lower" = alpha / 2,
-    "alpha_upper" = alpha / 2
+    cis
   )
   
   # P-values.
@@ -564,12 +315,8 @@ CompareAugAUCs <- function(
   if (boot) {
     
     # Simulate.
-    boot_sim <- Boot.Sim.Aug(
-      time = time,
-      status = status,
-      arm = arm,
-      idx = idx,
-      covars = covars,
+    boot_sim <- BootSimAug(
+      data = data,
       obs_stats = obs_stats,
       tau = tau,
       alpha = alpha,
@@ -578,7 +325,7 @@ CompareAugAUCs <- function(
     sim_reps$boot_sim <- boot_sim
     
     # Confidence intervals.
-    boot_cis <- Boot.CIs.Aug(
+    boot_cis <- BootCIs(
       sim = boot_sim,
       obs_stats = obs_stats,
       alpha = alpha
@@ -590,10 +337,10 @@ CompareAugAUCs <- function(
     cis <- cis[order(cis$contrast), ]
     
     # P-value.
-    boot_p <- min(2  * mean(c(1, boot_sim$is_diff_sign)), 1)
+    boot_p <- CalcP(boot_sim$is_diff_sign)
     boot_pvals <- data.frame(
       "method" = "bootstrap",
-      pvals %>% select("contrast", "observed"),
+      pvals %>% dplyr::select("contrast", "observed"),
       "p" = boot_p
     )
     pvals <- rbind(
@@ -608,12 +355,8 @@ CompareAugAUCs <- function(
   if (perm) {
     
     # Simulate.
-    perm_sim <- CompAUCs.Perm.Aug(
-      time = time,
-      status = status,
-      arm = arm,
-      idx = idx,
-      covars = covars,
+    perm_sim <- PermSimAug(
+      data = data,
       obs_stats = obs_stats,
       tau = tau,
       alpha = alpha,
@@ -622,7 +365,7 @@ CompareAugAUCs <- function(
     sim_reps$perm_sim <- perm_sim
     
     # Permutation p-values.
-    perm_pval <- min(2 * mean(c(1, perm_sim$perm_1sided)), 1)
+    perm_pval <- CalcP(perm_sim$perm_1sided)
     perm_pvals <- data.frame(
       "method" = "permutation",
       "contrast" = "A1-A0",

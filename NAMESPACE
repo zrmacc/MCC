@@ -2,9 +2,9 @@
 
 S3method(print,CompAugAUCs)
 S3method(print,CompStratAUCs)
-export(AUC.Stats.Aug)
-export(AUC.Stats.Strat)
+export(CalcAugAUC)
 export(CalcMCF)
+export(CalcStratAUC)
 export(CompareAUCs)
 export(GenData)
 exportClasses(CompAugAUCs)

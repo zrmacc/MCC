@@ -1,4 +1,4 @@
-# Main Function.
+# Purpose: Main function for package.
 # Updated: 2020-12-12
 
 #' Inference on the Area Under the Cumulative Count Curve
@@ -6,6 +6,13 @@
 #' Confidence intervals and p-values for the difference and ratio of areas under
 #' the mean cumulative count curves, comparing treatment (arm = 1) with
 #' reference (arm = 0).
+#' 
+#' Two methods of p-value calculation are available. For 'perm', treatment
+#' assignments are permuted on each iteration, and the p-value is the
+#' proportion of the *null* statistics that are as or more extreme than
+#' the *observed* statistics. For 'boot', the p-value is twice the proportion
+#' of bootstrap replicates on which the sign of the difference is areas is
+#' reversed.
 #'
 #' @param time Observation time.
 #' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.

@@ -9,8 +9,8 @@ CompareStratAUCs(
   status,
   arm,
   idx,
-  tau,
   strata = NULL,
+  tau,
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
@@ -28,9 +28,9 @@ remain at risk throughout the observation period.}
 
 \item{idx}{Unique subject index.}
 
-\item{tau}{Truncation time.}
-
 \item{strata}{Optional stratification factor.}
+
+\item{tau}{Truncation time.}
 
 \item{alpha}{Alpha level.}
 
@@ -56,14 +56,6 @@ Object of class compAUCs with these slots:
 Confidence intervals and p-values for the difference and ratio of areas under
 the mean cumulative count curves, comparing treatment (arm = 1) with
 reference (arm = 0).
-}
-\details{
-Two methods of p-value calculation are available. For 'perm', treatment
-assignments are permuted on each iteration, and the p-value is the
-proportion of the *null* statistics that are as or more extreme than
-the *observed* statistics. For 'boot', the p-value is twice the proportion
-of bootstrap replicates on which the sign of the difference is areas is
-reversed.
 }
 \examples{
 \donttest{
