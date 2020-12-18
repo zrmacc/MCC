@@ -45,19 +45,19 @@ TabulateEvents <- function(time, status, idx){
   # Number of censorings.
   out$censor <- 0
   if (length(censor_times) > 0) {
-    out$censor[out$time %in% censor_times] <- 1
+    out$censor[out$time %in% censor_times] <- table(censor_times)
   }
   
   # Number of deaths.
   out$death <- 0
   if (length(death_times) > 0) {
-    out$death[out$time %in% death_times] <- 1
+    out$death[out$time %in% death_times] <- table(death_times)
   }
   
   # Number events.
   out$events <- 0
   if (length(event_times) > 0) {
-    out$events[out$time %in% event_times] <- 1
+    out$events[out$time %in% event_times] <- table(event_times)
   }
   
   # Number at risk.
