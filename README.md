@@ -75,7 +75,7 @@ aucs <- MCC::CompareAUCs(
   tau = 4,
   boot = TRUE,
   perm = TRUE,
-  reps = 250,
+  reps = 200,
   alpha = 0.05
 )
 show(aucs)
@@ -91,19 +91,19 @@ show(aucs)
 ## CIs:
 ##       method contrast observed     se  lower  upper
 ## 1 asymptotic    A1-A0   -2.000 0.7430 -3.450 -0.539
-## 3  bootstrap    A1-A0   -2.000 0.7700 -3.670 -0.713
+## 3  bootstrap    A1-A0   -2.000 0.7950 -3.880 -0.662
 ## 2 asymptotic    A1/A0    0.703 0.0919  0.544  0.908
-## 4  bootstrap    A1/A0    0.703 0.0947  0.519  0.887
+## 4  bootstrap    A1/A0    0.703 0.0973  0.519  0.890
 ## 
 ## 
 ## P-values:
 ##        method contrast observed       p
 ## 1  asymptotic    A1-A0   -2.000 0.00724
-## 3   bootstrap    A1-A0   -2.000 0.00797
-## 5 permutation    A1-A0   -2.000 0.01590
+## 3   bootstrap    A1-A0   -2.000 0.00995
+## 5 permutation    A1-A0   -2.000 0.01990
 ## 2  asymptotic    A1/A0    0.703 0.00699
-## 4   bootstrap    A1/A0    0.703 0.00797
-## 6 permutation    A1/A0    0.703 0.01590
+## 4   bootstrap    A1/A0    0.703 0.00995
+## 6 permutation    A1/A0    0.703 0.01990
 ```
 
 Here:
@@ -214,7 +214,7 @@ aucs <- MCC::CompareAUCs(
   tau = 4,
   boot = TRUE,
   perm = TRUE,
-  reps = 250,
+  reps = 200,
   alpha = 0.05
 )
 show(aucs)
@@ -230,12 +230,12 @@ show(aucs)
 ## CIs:
 ##       method contrast observed    se lower  upper
 ## 1 asymptotic    A1-A0    -1.62 0.706 -3.01 -0.241
-## 2  bootstrap    A1-A0    -1.62 0.710 -3.14 -0.217
+## 2  bootstrap    A1-A0    -1.62 0.701 -3.16 -0.438
 ## 
 ## 
 ## P-values:
 ##        method contrast observed      p
 ## 1  asymptotic    A1-A0    -1.62 0.0214
-## 2   bootstrap    A1-A0    -1.62 0.0319
-## 3 permutation    A1-A0    -1.62 0.0319
+## 2   bootstrap    A1-A0    -1.62 0.0299
+## 3 permutation    A1-A0    -1.62 0.0199
 ```

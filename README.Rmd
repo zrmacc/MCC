@@ -73,7 +73,7 @@ aucs <- MCC::CompareAUCs(
   tau = 4,
   boot = TRUE,
   perm = TRUE,
-  reps = 250,
+  reps = 200,
   alpha = 0.05
 )
 show(aucs)
@@ -139,7 +139,7 @@ aucs <- MCC::CompareAUCs(
   tau = 4,
   boot = TRUE,
   perm = TRUE,
-  reps = 250,
+  reps = 200,
   alpha = 0.05
 )
 show(aucs)
