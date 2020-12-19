@@ -10,7 +10,7 @@ output:
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 2020-12-17
+Updated: 2020-12-19
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE)
@@ -35,11 +35,12 @@ The function `GenData` simulates example data in the format expected by this pac
 
 ```{R}
 library(MCC)
+set.seed(2013)
 data <- MCC::GenData(
   n1 = 100,
   n0 = 100,
   treatment_effect = log(0.8),
-  tau = 10
+  tau = 4
 )
 head(data)
 ```
@@ -72,7 +73,7 @@ aucs <- MCC::CompareAUCs(
   tau = 4,
   boot = TRUE,
   perm = TRUE,
-  reps = 100,
+  reps = 250,
   alpha = 0.05
 )
 show(aucs)
@@ -86,7 +87,6 @@ Here:
 * `reps` is the number of simulation replicates. 
   - The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable.
 * `alpha` is 1 minus the desired coverage for confidence intervals. 
-* `seed` allows for reproducible bootstrap/permutation replicates.
 
 Note that the `strata` argument may be omitted for unstratified data. 
 
@@ -139,7 +139,7 @@ aucs <- MCC::CompareAUCs(
   tau = 4,
   boot = TRUE,
   perm = TRUE,
-  reps = 100,
+  reps = 250,
   alpha = 0.05
 )
 show(aucs)

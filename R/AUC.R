@@ -52,11 +52,17 @@ PsiAUCi <- function(
   out <- out[out$time <= tau, ]
   mcf <- mcf[mcf$time <= tau, ]
   
-  # Calculate variance.
+  # First integral.
   int_1 <- sum((tau - out$time) * mcf$surv / mcf$prop_at_risk * out$dM_event)
-  int_2 <- sum((tau - out$time) * mcf$mcf  / mcf$prop_at_risk * out$dM_death)
-  psi <- int_1 + int_2
   
+  # Second integral.
+  out$nu <- sum((tau - out$time) * mcf$surv * mcf$event_rate) - 
+    cumsum((tau - out$time) * mcf$surv * mcf$event_rate)
+  int_2 <- sum(out$nu / mcf$prop_at_risk * out$dM_death)
+  
+  # Influence function.
+  psi <- int_1 - int_2
+
   # Output.
   return(psi)
 }

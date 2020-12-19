@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",

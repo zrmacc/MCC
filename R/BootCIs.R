@@ -48,6 +48,7 @@ BootCIs <- function(
       x = finite_log_ratios,
       probs = c(alpha2, 1 - alpha2)
     )
+    names(ci_ratio) <- NULL
     ci_ratio <- exp(ci_ratio)
     se_ratio <- exp(mean(finite_log_ratios)) * sd(finite_log_ratios)
     
