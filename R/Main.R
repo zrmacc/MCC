@@ -14,12 +14,12 @@
 #' of bootstrap replicates on which the sign of the difference is areas is
 #' reversed.
 #'
+#' @param idx Unique subject index.
 #' @param time Observation time.
 #' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
 #'   Note that subjects who are neither censored nor die are assumed to
 #'   remain at risk throughout the observation period.
 #' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
 #' @param tau Truncation time.
 #' @param covars Optional covariate matrix. Rows should correspond with the
 #'   subject index `idx`. Factor and interaction terms should be expanded.
@@ -59,10 +59,10 @@
 #' }
 
 CompareAUCs <- function(
+  idx,
   time,
   status,
   arm,
-  idx,
   tau,
   covars = NULL,
   strata = NULL,
@@ -79,14 +79,20 @@ CompareAUCs <- function(
     stop(msg)
   }
   
+  # Format data.
+  data <- FormatData(
+    idx = idx,
+    time = time,
+    status = status,
+    arm = arm,
+    covars = covars,
+    strata = strata
+  )
+  
   if (!is.null(covars)) {
     out <- CompareAugAUCs(
-      time = time,
-      status = status,
-      arm = arm,
-      idx = idx,
+      data = data,
       tau = tau,
-      covars = covars,
       alpha = alpha,
       boot = boot,
       perm = perm,
@@ -94,12 +100,8 @@ CompareAUCs <- function(
     )
   } else {
     out <- CompareStratAUCs(
-      time = time,
-      status = status,
-      arm = arm,
-      idx = idx,
+      data = data,
       tau = tau,
-      strata = strata,
       alpha = alpha,
       boot = boot,
       perm = perm,

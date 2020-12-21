@@ -1,13 +1,14 @@
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 2020-12-19
+Updated: 2020-12-21
 
 
 
 ### Description
 
 This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. Also see:
+
 * [CICs](https://github.com/zrmacc/CICs) for comparing cumulative incidence curves. 
 
 ## Installation
@@ -21,12 +22,11 @@ devtools::install_github(repo = 'zrmacc/MCC')
 
 ### Data
 
-The function `GenData` simulates example data in the format expected by this package. The censoring, death, and recurrent event gap times are drawn from independent exponential distributions. The example data includes 100 patients in each of the treatment and control arms. Observation of a given patient continues until censoring, death, or time `tau = 10`, whichever occurs first. The rate of recurrent events for patients in the treatment arm is 80% the rate for patients in the control arm. 
+The function `GenData` simulates example data in the format expected by this package. The censoring, death, and recurrent event gap times are drawn from independent exponential distributions. The example data includes 100 patients in each of the treatment and control arms. Observation of a given patient continues until censoring, death, or time `tau = 4`, whichever occurs first. The rate of recurrent events for patients in the treatment arm is 80% the rate for patients in the control arm. 
 
 
 ```r
 library(MCC)
-set.seed(2013)
 data <- MCC::GenData(
   n1 = 100,
   n0 = 100,
@@ -37,23 +37,49 @@ head(data)
 ```
 
 ```
-##   idx      time status arm       covar strata true_event_rate
-## 1   1 0.2043354      1   1 -0.09202453      0       0.7837398
-## 2   1 1.2468056      1   1 -0.09202453      0       0.7837398
-## 3   1 1.6207695      1   1 -0.09202453      0       0.7837398
-## 4   1 2.5341082      1   1 -0.09202453      0       0.7837398
-## 5   1 2.8331590      1   1 -0.09202453      0       0.7837398
-## 6   1 3.1115173      1   1 -0.09202453      0       0.7837398
+##   idx       time status arm      covar strata true_event_rate
+## 1   1 1.24880530      2   1 -0.1191161      0       0.7790161
+## 2   2 0.92041765      1   1  1.7388641      0       1.1792431
+## 3   2 1.20365788      0   1  1.7388641      0       1.1792431
+## 4   3 0.04608151      1   1 -0.2368181      0       0.7588220
+## 5   3 1.27370805      1   1 -0.2368181      0       0.7588220
+## 6   3 1.56318526      1   1 -0.2368181      0       0.7588220
 ```
 
 The essential data are:
 
 * `idx`, the subject index. 
 * `time`, the observation time. 
-* `status`, coded 0 for censoring, 1 for an event, 2 for death.
+* `status`, coded 0 for censoring, 1 for an event, 2 for death (or any competing terminal event).
 * `arm`, coded as 1 for treatment, 0 for reference. 
 
-For analyses of other data sets, arm and status should have the same coding. Each subject should experience at most one of censoring or death. Subjects who experience neither censoring nor death are assumed to remain at risk throughout follow-up. 
+For analyzing other data sets, arm and status should have the same coding. Each subject should experience an observation-terminating event, i.e. either death or censoring. If the last appearance of a subject in the data set has status 1, then a censoring time is added immediately after this recurrence. For example, if the data for subject 1 is:
+
+```
+##   idx time status
+## 1   1    2      1
+## 2   1    3      1
+## 3   1    5      1
+```
+then, for analysis, the subject's is assumed to be censored after the last event:
+
+```
+##   idx time status
+## 1   1    2      1
+## 2   1    3      1
+## 3   1    5      1
+## 4   1    5      0
+```
+
+If instead the last recurrence is fatal, encode the input data as:
+
+```
+##   idx time status
+## 1   1    2      1
+## 2   1    3      1
+## 3   1    5      1
+## 4   1    5      2
+```
 
 The example data also include:
 
@@ -201,7 +227,7 @@ aucs@Pvals
 
 ### Adjusted AUCs
 
-The previous estimator allows for stratification, but a different approach is needed to accommodate for continuous covariates. If covariates are provided, `CompareAUCs` uses an augmentation estimator to adjust for covariate differences.
+The previous estimator allows for stratification, but a different approach is needed to accommodate continuous covariates. If covariates are provided, then `CompareAUCs` uses an augmentation estimator to adjust for differences between the treatment groups. Note that strata and covariates should not both be provided. If adjustment for both is needed, use `model.matrix` to generate a design matrix including both covariates and stratum indicators, e.g. `model.matrix(~ 0 + covar + strata, data = data)`, then supply the design matrix `covar` argument.
 
 
 ```r
@@ -228,14 +254,14 @@ show(aucs)
 ## 
 ## 
 ## CIs:
-##       method contrast observed    se lower  upper
-## 1 asymptotic    A1-A0    -1.62 0.706 -3.01 -0.241
-## 2  bootstrap    A1-A0    -1.62 0.701 -3.16 -0.438
+##       method contrast observed    se lower   upper
+## 1 asymptotic    A1-A0    -1.01 0.529 -2.05  0.0235
+## 2  bootstrap    A1-A0    -1.01 0.532 -2.32 -0.0756
 ## 
 ## 
 ## P-values:
 ##        method contrast observed      p
-## 1  asymptotic    A1-A0    -1.62 0.0214
-## 2   bootstrap    A1-A0    -1.62 0.0299
-## 3 permutation    A1-A0    -1.62 0.0199
+## 1  asymptotic    A1-A0    -1.01 0.0554
+## 2   bootstrap    A1-A0    -1.01 0.0597
+## 3 permutation    A1-A0    -1.01 0.1090
 ```

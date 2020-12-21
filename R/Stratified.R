@@ -231,14 +231,8 @@ MargAUC <- function(
 #' the mean cumulative count curves, comparing treatment (arm = 1) with
 #' reference (arm = 0).
 #'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to
-#'   remain at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
+#' @param data Formatted data.frame. \code{\link{FormatData}}.
 #' @param tau Truncation time.
-#' @param strata Optional stratification factor.
 #' @param alpha Alpha level.
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
@@ -277,31 +271,13 @@ MargAUC <- function(
 #' }
 
 CompareStratAUCs <- function(
-  time,
-  status,
-  arm,
-  idx,
-  strata = NULL,
+  data,
   tau,
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
   reps = 2000
 ) {
-  
-  # Create single stratum if no strata are provided.
-  if (is.null(strata)) {
-    strata <- rep(1, length(time))
-  }
-  
-  # Create data.frame
-  data <- data.frame(
-    idx = idx,
-    time = time,
-    status = status,
-    arm = arm,
-    strata = strata
-  )
 
   # Observed test stats.
   obs <- CalcStratAUC(

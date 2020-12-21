@@ -213,15 +213,8 @@ AugAUC <- function(
 #' the mean cumulative count curves, comparing treatment (arm = 1) with
 #' reference (arm = 0) with adjusted for covariates.
 #'
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to remain
-#'   at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param idx Unique subject index.
+#' @param data Formatted data frame. \code{\link{FormatData}}.
 #' @param tau Truncation time.
-#' @param covars Optional covariate matrix. Rows should correspond with the
-#'   subject index `idx`. Factor and interaction terms should be expanded.
 #' @param alpha Alpha level.
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
@@ -258,30 +251,13 @@ AugAUC <- function(
 #' }
 
 CompareAugAUCs <- function(
-  time,
-  status,
-  arm,
-  idx,
+  data,
   tau,
-  covars = NULL,
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
   reps = 2000
 ) {
-  
-  if (is.null(covars)) {
-    covars <- rep(1, length(idx))
-  }
-  
-  # Create data.frames.
-  data <- data.frame(
-    idx = idx,
-    time = time,
-    status = status,
-    arm = arm,
-    covars
-  )
   
   # Observed test stats.
   obs <- CalcAugAUC(

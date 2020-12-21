@@ -5,12 +5,8 @@
 \title{Inference on the Area Under the Cumulative Count Curve}
 \usage{
 CompareAugAUCs(
-  time,
-  status,
-  arm,
-  idx,
+  data,
   tau,
-  covars = NULL,
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
@@ -18,20 +14,9 @@ CompareAugAUCs(
 )
 }
 \arguments{
-\item{time}{Observation time.}
-
-\item{status}{Status, coded as 0 for censoring, 1 for event, 2 for death.
-Note that subjects who are neither censored nor die are assumed to remain
-at risk throughout the observation period.}
-
-\item{arm}{Arm, coded as 1 for treatment, 0 for reference.}
-
-\item{idx}{Unique subject index.}
+\item{data}{Formatted data frame. \code{\link{FormatData}}.}
 
 \item{tau}{Truncation time.}
-
-\item{covars}{Optional covariate matrix. Rows should correspond with the
-subject index `idx`. Factor and interaction terms should be expanded.}
 
 \item{alpha}{Alpha level.}
 

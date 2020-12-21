@@ -39,7 +39,7 @@ AvgMCF <- function (curve_list, weights) {
     'mcf' = avg_mcf,
     'var_mcf' = avg_var
   )
-  out$se_mcf <- sqrt(out$var)
+  out$se_mcf <- sqrt(out$var_mcf)
   return(out)
 }
 

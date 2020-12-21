@@ -5,10 +5,10 @@
 \title{Inference on the Area Under the Cumulative Count Curve}
 \usage{
 CompareAUCs(
+  idx,
   time,
   status,
   arm,
-  idx,
   tau,
   covars = NULL,
   strata = NULL,
@@ -19,6 +19,8 @@ CompareAUCs(
 )
 }
 \arguments{
+\item{idx}{Unique subject index.}
+
 \item{time}{Observation time.}
 
 \item{status}{Status, coded as 0 for censoring, 1 for event, 2 for death.
@@ -26,8 +28,6 @@ Note that subjects who are neither censored nor die are assumed to
 remain at risk throughout the observation period.}
 
 \item{arm}{Arm, coded as 1 for treatment, 0 for reference.}
-
-\item{idx}{Unique subject index.}
 
 \item{tau}{Truncation time.}
 
