@@ -76,5 +76,6 @@ FormatData <- function(
     stop("Error formatting the data. Please ensure each subject has a single observation terminating event.")
   }
   
+  data$obs_end <- NULL
   return(final_data)
 }

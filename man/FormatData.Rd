@@ -22,6 +22,9 @@ subject index `idx`. Factor and interaction terms should be expanded.}
 
 \item{strata}{Optional stratification factor.}
 }
+\value{
+Formatted data.frame.
+}
 \description{
 Format Data
 }
