@@ -60,42 +60,50 @@ SimSubj <- function(
 #' 
 #' Simulate recurrent events data using exponential censoring, gap, and death 
 #' times. Status is coded as 0 for censoring, 1 for event, 2 for death. 
+#' \itemize{
+#'   \item The subject-specific event rate may depend on the treatment arm,
+#'   a single standard normal covariate, and a binary stratification factor.
+#'   \item The subject-specific event rate is calculated as base_event_rate *
+#'   exp(arm x treatment_effect + covar x covar_effect + strata x strata_effect).
+#' }
 #'
-#' @param n1 Subjects in the treatment arm.
-#' @param n0 Subjects in the reference arm.
-#' @param censoring_rate Arrival rate for the censoring time.
 #' @param base_event_rate Baseline arrival rate for recurrent events.
-#' @param death_rate Arrival rate for the terminal event.
-#' @param treatment_effect Log rate ratio for treatment.
-#' @param pi Probability of membership to the high-risk stratum.
-#' @param risk_effect Log rate ratio for membership to the high risk stratum.
+#' @param censoring_rate Arrival rate for the censoring time.
 #' @param covar_effect Log rate ratio for the covariate, which follows a 
 #'   standard normal distribution.
-#' @param min_event_rate Minimum subject-specific event rate. Most be positive.
+#' @param death_rate Arrival rate for the terminal event.
+#' @param frailty_variance Variance of the gamma frailty.
+#' @param min_event_rate Minimum subject-specific event rate. Must be positive.
+#' @param n0 Subjects in the reference arm.
+#' @param n1 Subjects in the treatment arm.
+#' @param strata_effect Log rate ratio for membership to the stratum.
+#' @param strata_prob Probability of the binary stratification factor.
 #' @param tau Truncation time.
-#' @importFrom dplyr "%>%" group_by summarise
-#' @importFrom stats rbinom rnorm
-#' @export
+#' @param treatment_effect Log rate ratio for treatment.
 #' @return Data.frame, containing:
 #' \itemize{
 #'   \item Subject 'idx', treatment 'arm', a baseline covariate 'covar', 
-#'     an indicator 'strata' of membership to the high-risk stratum, and the
-#'     subject's true underlying event rate.
-#'   \item 'time' and 'status' of the event: 0 for censoring, 1 for an 
+#'     an indicator 'strata' of stratum membership.
+#'  \item 
+#'  \item 'time' and 'status' of the event: 0 for censoring, 1 for an 
 #'     event, 2 for death.
 #' }
+#' 
+#' @importFrom dplyr "%>%" 
+#' @export
 
 GenData <- function(
-  n1 = 100,
-  n0 = 100,
-  censoring_rate = 0.25,
   base_event_rate = 1.0,
-  death_rate = 0.25,
-  treatment_effect = log(0.5),
-  pi = 0.2,
-  risk_effect = log(1.25),
+  censoring_rate = 0.25,
   covar_effect = log(1.25),
+  death_rate = 0.25,
+  frailty_variance = 0.0,
   min_event_rate = 0.05,
+  n0 = 100,
+  n1 = 100,
+  strata_effect = log(1.25),
+  strata_prob = 0.2,
+  treatment_effect = log(0.5),
   tau = 4
 ){
   
@@ -104,30 +112,43 @@ GenData <- function(
   
   # Generate covariate data.
   covar <- data.frame(
-    "idx" = seq_len(n),
-    "arm" = c(rep(1, n1), rep(0, n0)),
-    "covar" = rnorm(n)
+    idx = seq_len(n),
+    arm = c(rep(1, n1), rep(0, n0)),
+    covar = stats::rnorm(n)
   )
   
   # Strata.
-  if (pi > 0) {
-    covar$strata <- rbinom(n = n, size = 1, prob = pi)
-  } 
+  if (strata_prob > 0) {
+    covar$strata <- stats::rbinom(n = n, size = 1, prob = strata_prob)
+  } else {
+    covar$strata <- 0
+  }
   
   # Calculate subject-specific event rate:
   covar$true_event_rate <- base_event_rate * 
-    exp(
-      covar$arm * treatment_effect + 
-        covar$strat * risk_effect +
-        covar$covar * covar_effect 
+    exp(covar$arm * treatment_effect + 
+        covar$covar * covar_effect +
+        covar$strat * strata_effect
       )
   covar$true_event_rate <- sapply(
     covar$true_event_rate, 
     function(x) {max(x, min_event_rate)}
   )
   
+  # Frailty.
+  if (frailty_variance > 0) {
+    theta <- 1 / frailty_variance
+    covar$frailty <- stats::rgamma(n = n, shape = theta, rate = theta)
+  } else {
+    covar$frailty <- 1
+  }
+  covar$true_event_rate <- covar$frailty * covar$true_event_rate 
+  covar$true_death_rate <- covar$frailty * death_rate
+  
   # Generate event-date.
-  idx <- true_event_rate <- NULL
+  idx <- NULL
+  true_death_rate <- NULL
+  true_event_rate <- NULL
   data <- covar %>%
     dplyr::group_by(idx) %>%
     dplyr::summarise(
@@ -135,11 +156,11 @@ GenData <- function(
         idx = idx, 
         censoring_rate = censoring_rate, 
         event_rate = true_event_rate, 
-        death_rate = death_rate, 
+        death_rate = true_death_rate, 
         tau = tau
       ),
       .groups = "drop"
-    ) %>% as.data.frame
+    ) %>% as.data.frame()
   
   # Merge in covariates.
   data <- merge(

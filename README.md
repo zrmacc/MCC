@@ -1,7 +1,7 @@
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 2020-12-21
+Updated: 2021-08-07
 
 
 
@@ -22,7 +22,7 @@ devtools::install_github(repo = 'zrmacc/MCC')
 
 ### Data
 
-The function `GenData` simulates example data in the format expected by this package. The censoring, death, and recurrent event gap times are drawn from independent exponential distributions. The example data includes 100 patients in each of the treatment and control arms. Observation of a given patient continues until censoring, death, or time `tau = 4`, whichever occurs first. The rate of recurrent events for patients in the treatment arm is 80% the rate for patients in the control arm. 
+The function `GenData` simulates example data in the format expected by this package. The recurrent event times are generated from a Poisson process that continues until censoring or death, whichever occurs first. Optionally, a `frailty_variance` may be specified such that the patient-specific event and death rates are correlated. The example data includes 100 patients in each of the treatment and control arms. The maximum duration of follow-up is `tau = 4`. The rate of recurrent events for patients in the treatment arm is 80% the rate for patients in the control arm. 
 
 
 ```r
@@ -30,6 +30,7 @@ library(MCC)
 data <- MCC::GenData(
   n1 = 100,
   n0 = 100,
+  frailty_variance = 0.2,
   treatment_effect = log(0.8),
   tau = 4
 )
@@ -37,13 +38,20 @@ head(data)
 ```
 
 ```
-##   idx       time status arm      covar strata true_event_rate
-## 1   1 1.24880530      2   1 -0.1191161      0       0.7790161
-## 2   2 0.92041765      1   1  1.7388641      0       1.1792431
-## 3   2 1.20365788      0   1  1.7388641      0       1.1792431
-## 4   3 0.04608151      1   1 -0.2368181      0       0.7588220
-## 5   3 1.27370805      1   1 -0.2368181      0       0.7588220
-## 6   3 1.56318526      1   1 -0.2368181      0       0.7588220
+##   idx      time status arm      covar strata true_event_rate   frailty
+## 1   1 0.0384734      1   1  1.0142459      1       1.1919426 0.9505276
+## 2   1 0.2945289      1   1  1.0142459      1       1.1919426 0.9505276
+## 3   1 0.7683170      0   1  1.0142459      1       1.1919426 0.9505276
+## 4   2 0.1150868      1   1 -0.6833771      0       0.9614766 1.3998285
+## 5   2 1.0639391      0   1 -0.6833771      0       0.9614766 1.3998285
+## 6   3 0.5764852      1   1  2.0503155      1       2.0573856 1.3020258
+##   true_death_rate
+## 1       0.2376319
+## 2       0.2376319
+## 3       0.2376319
+## 4       0.3499571
+## 5       0.3499571
+## 6       0.3255065
 ```
 
 The essential data are:
@@ -84,8 +92,10 @@ If instead the last recurrence is fatal, encode the input data as:
 The example data also include:
 
 * `covar`, a standard normal covariate that decreases the event rate. 
-* `strat`, a two-level stratification factor that increases the event rate.
+* `strat`, a binary stratification factor that increases the event rate.
 * `true_event_rate`, the patient-specific recurrent event rate.
+* `frailty`,the patient-specific frailty drawn from a gamma distribution with mean 1 and the specified variance. 
+* `true_death_rate`, the patient-specific death rate, equal to the overall death rate times the frailty. 
 
 ### AUCs
 
@@ -110,26 +120,26 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n area    se tau
-## 1   0 100 6.72 0.582   4
-## 2   1 100 4.72 0.462   4
+## 1   0 100 6.22 0.724   4
+## 2   1 100 5.94 0.682   4
 ## 
 ## 
 ## CIs:
-##       method contrast observed     se  lower  upper
-## 1 asymptotic    A1-A0   -2.000 0.7430 -3.450 -0.539
-## 3  bootstrap    A1-A0   -2.000 0.7950 -3.880 -0.662
-## 2 asymptotic    A1/A0    0.703 0.0919  0.544  0.908
-## 4  bootstrap    A1/A0    0.703 0.0973  0.519  0.890
+##       method contrast observed    se  lower upper
+## 1 asymptotic    A1-A0   -0.276 0.995 -2.230  1.67
+## 3  bootstrap    A1-A0   -0.276 0.987 -2.160  1.69
+## 2 asymptotic    A1/A0    0.956 0.156  0.694  1.32
+## 4  bootstrap    A1/A0    0.956 0.160  0.707  1.33
 ## 
 ## 
 ## P-values:
-##        method contrast observed       p
-## 1  asymptotic    A1-A0   -2.000 0.00724
-## 3   bootstrap    A1-A0   -2.000 0.00995
-## 5 permutation    A1-A0   -2.000 0.01990
-## 2  asymptotic    A1/A0    0.703 0.00699
-## 4   bootstrap    A1/A0    0.703 0.00995
-## 6 permutation    A1/A0    0.703 0.01990
+##        method contrast observed     p
+## 1  asymptotic    A1-A0   -0.276 0.781
+## 3   bootstrap    A1-A0   -0.276 0.896
+## 5 permutation    A1-A0   -0.276 0.766
+## 2  asymptotic    A1/A0    0.956 0.781
+## 4   bootstrap    A1/A0    0.956 0.896
+## 6 permutation    A1/A0    0.956 0.776
 ```
 
 Here:
@@ -155,10 +165,10 @@ aucs@StratumAreas
 
 ```
 ##   arm strata  n tau     area var_area   se_area weight
-## 1   0      0 82   4 6.521333 32.07541 0.6254307  0.815
-## 2   0      1 18   4 7.584617 41.42754 1.5170795  0.185
-## 3   1      0 81   4 4.806613 22.18537 0.5233483  0.815
-## 4   1      1 19   4 4.352797 17.50931 0.9599702  0.185
+## 1   0      0 80   4 6.169910 46.44172 0.7619196  0.785
+## 2   0      1 20   4 6.391197 72.16467 1.8995350  0.215
+## 3   1      0 77   4 5.108318 42.13942 0.7397737  0.785
+## 4   1      1 23   4 8.981404 63.46855 1.6611750  0.215
 ```
 
 * `@MargAreas` containing the AUCs for each arm, marginalized over any strata. 
@@ -170,8 +180,8 @@ aucs@MargAreas
 
 ```
 ##   arm   n     area        se tau
-## 1   0 100 6.718040 0.5818853   4
-## 2   1 100 4.722657 0.4620246   4
+## 1   0 100 6.217487 0.7242392   4
+## 2   1 100 5.941031 0.6817598   4
 ```
 
 * `@CIs` containing confindence intervals for the difference and ratio of AUCs.
@@ -182,11 +192,11 @@ aucs@CIs
 ```
 
 ```
-##       method contrast   observed         se      lower      upper
-## 1 asymptotic    A1-A0 -1.9953835 0.74300550 -3.4516475 -0.5391195
-## 3  bootstrap    A1-A0 -1.9953835 0.79473518 -3.8838068 -0.6617801
-## 2 asymptotic    A1/A0  0.7029813 0.09185471  0.5441542  0.9081668
-## 4  bootstrap    A1/A0  0.7029813 0.09731066  0.5190986  0.8901389
+##       method contrast   observed        se      lower    upper
+## 1 asymptotic    A1-A0 -0.2764552 0.9946451 -2.2259238 1.673013
+## 3  bootstrap    A1-A0 -0.2764552 0.9865350 -2.1569580 1.688333
+## 2 asymptotic    A1/A0  0.9555359 0.1562445  0.6935260 1.316531
+## 4  bootstrap    A1/A0  0.9555359 0.1599824  0.7067549 1.331820
 ```
 
 * `@MCF` containing the per arm mean cumulative count curve, averaged across strata.
@@ -197,13 +207,13 @@ head(aucs@MCF)
 ```
 
 ```
-##          time       mcf     var_mcf     se_mcf arm
-## 1 0.004062820 0.0000000 0.000000000 0.00000000   1
-## 2 0.005559498 0.0000000 0.000000000 0.00000000   1
-## 3 0.008942332 0.0101875 0.008301515 0.09111265   1
-## 4 0.019738298 0.0203750 0.016392865 0.12803463   1
-## 5 0.025924152 0.0305625 0.024274051 0.15580132   1
-## 6 0.027934783 0.0305625 0.024274051 0.15580132   1
+##          time         mcf     var_mcf     se_mcf arm
+## 1 0.007670539 0.009347826 0.001922401 0.04384519   1
+## 2 0.013073871 0.009347826 0.001922401 0.04384519   1
+## 3 0.014699690 0.009347826 0.001922401 0.04384519   1
+## 4 0.021395138 0.019676773 0.010029221 0.10014600   1
+## 5 0.022266388 0.030005721 0.017919859 0.13386508   1
+## 6 0.038473398 0.039353547 0.019666812 0.14023841   1
 ```
 
 * `@Pvals` containing the bootstrap and permutation p-values.
@@ -214,13 +224,13 @@ aucs@Pvals
 ```
 
 ```
-##        method contrast   observed           p
-## 1  asymptotic    A1-A0 -1.9953835 0.007240906
-## 3   bootstrap    A1-A0 -1.9953835 0.009950249
-## 5 permutation    A1-A0 -1.9953835 0.019900498
-## 2  asymptotic    A1/A0  0.7029813 0.006993068
-## 4   bootstrap    A1/A0  0.7029813 0.009950249
-## 6 permutation    A1/A0  0.7029813 0.019900498
+##        method contrast   observed         p
+## 1  asymptotic    A1-A0 -0.2764552 0.7810557
+## 3   bootstrap    A1-A0 -0.2764552 0.8955224
+## 5 permutation    A1-A0 -0.2764552 0.7661692
+## 2  asymptotic    A1/A0  0.9555359 0.7808912
+## 4   bootstrap    A1/A0  0.9555359 0.8955224
+## 6 permutation    A1/A0  0.9555359 0.7761194
 ```
 
 * `@Reps` is a list containing the bootstrap and permutation test statistics.
@@ -249,19 +259,31 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n tau area    se
-## 1   0 100   4 6.72 0.586
-## 2   1 100   4 4.75 0.467
+## 1   0 100   4 6.19 0.701
+## 2   1 100   4 6.12 0.720
 ## 
 ## 
 ## CIs:
-##       method contrast observed    se lower   upper
-## 1 asymptotic    A1-A0    -1.01 0.529 -2.05  0.0235
-## 2  bootstrap    A1-A0    -1.01 0.532 -2.32 -0.0756
+##       method contrast observed    se lower upper
+## 1 asymptotic    A1-A0    0.325 0.983 -1.60  2.25
+## 2  bootstrap    A1-A0    0.325 1.020 -1.74  2.05
 ## 
 ## 
 ## P-values:
-##        method contrast observed      p
-## 1  asymptotic    A1-A0    -1.01 0.0554
-## 2   bootstrap    A1-A0    -1.01 0.0597
-## 3 permutation    A1-A0    -1.01 0.1090
+##        method contrast observed     p
+## 1  asymptotic    A1-A0    0.325 0.741
+## 2   bootstrap    A1-A0    0.325 0.776
+## 3 permutation    A1-A0    0.325 0.896
 ```
+
+### Plotting
+
+The function `PlotMCFs` plots the mean cumulative count curves, comparing two treatment arms.
+
+
+```r
+q <- MCC::PlotMCFs(data)
+show(q)
+```
+
+<img src="README_files/figure-html/unnamed-chunk-13-1.png" style="display: block; margin: auto;" />
