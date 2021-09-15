@@ -38,6 +38,7 @@ FormatSubj <- function(df) {
 #'   subject index `idx`. Factor and interaction terms should be expanded.
 #' @param strata Optional stratification factor.
 #' @return Formatted data.frame.
+#' @export 
 
 FormatData <- function(
   idx,

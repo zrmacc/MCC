@@ -233,7 +233,14 @@ AugAUC <- function(
 #' @examples 
 #' \donttest{
 #' # Simulate data set.
-#' data <- GenData()
+#' covariates <- data.frame(
+#'   arm = c(rep(1, 50), rep(0, 50)),
+#'   covar = rnorm(100)
+#' )
+#' data <- GenData(
+#'   beta_event = c(log(0.5), 1),
+#'   covariates = covariates
+#' )
 #'
 #' aucs <- CompareAUCs(
 #'   time = data$time,

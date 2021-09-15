@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.5.3
+Version: 0.5.4
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -21,3 +21,7 @@ Imports:
   survival,
   tidyr
 RoxygenNote: 7.1.1
+Suggests: 
+  testthat (>= 3.0.0),
+  withr
+Config/testthat/edition: 3

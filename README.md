@@ -1,7 +1,7 @@
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>
-Updated: 2021-08-07
+Updated: 2021-09-15
 
 
 
@@ -27,31 +27,26 @@ The function `GenData` simulates example data in the format expected by this pac
 
 ```r
 library(MCC)
+covariates <- data.frame(
+  arm = c(rep(1, 100), rep(0, 100))
+)
 data <- MCC::GenData(
-  n1 = 100,
-  n0 = 100,
+  beta_event = c(log(0.8)),
+  covariates = covariates,
   frailty_variance = 0.2,
-  treatment_effect = log(0.8),
   tau = 4
 )
 head(data)
 ```
 
 ```
-##   idx      time status arm      covar strata true_event_rate   frailty
-## 1   1 0.0384734      1   1  1.0142459      1       1.1919426 0.9505276
-## 2   1 0.2945289      1   1  1.0142459      1       1.1919426 0.9505276
-## 3   1 0.7683170      0   1  1.0142459      1       1.1919426 0.9505276
-## 4   2 0.1150868      1   1 -0.6833771      0       0.9614766 1.3998285
-## 5   2 1.0639391      0   1 -0.6833771      0       0.9614766 1.3998285
-## 6   3 0.5764852      1   1  2.0503155      1       2.0573856 1.3020258
-##   true_death_rate
-## 1       0.2376319
-## 2       0.2376319
-## 3       0.2376319
-## 4       0.3499571
-## 5       0.3499571
-## 6       0.3255065
+##   idx      time status arm true_death_rate true_event_rate   frailty
+## 1   1 0.7812179      1   1       0.1979635       0.6334831 0.7918539
+## 2   1 1.8675515      1   1       0.1979635       0.6334831 0.7918539
+## 3   1 3.7086377      1   1       0.1979635       0.6334831 0.7918539
+## 4   1 4.0000000      0   1       0.1979635       0.6334831 0.7918539
+## 5   2 0.2411106      1   1       0.2348890       0.7516449 0.9395562
+## 6   2 0.3202443      2   1       0.2348890       0.7516449 0.9395562
 ```
 
 The essential data are:
@@ -91,17 +86,83 @@ If instead the last recurrence is fatal, encode the input data as:
 
 The example data also include:
 
-* `covar`, a standard normal covariate that decreases the event rate. 
-* `strat`, a binary stratification factor that increases the event rate.
-* `true_event_rate`, the patient-specific recurrent event rate.
+* `true_death_rate`, the patient-specific terminal event rate, calculated as `frailty` x `base_death_rate` x `exp(covariates %*% beta_death)`. If omitted, `beta_death` is set to zero.
+* `true_event_rate`, the patient-specific recurrent event rate, calculated as `frailty` x `base_event_rate` x `exp(covariates %*% beta_event)`. If omitted, `beta_event` is set to zero.
 * `frailty`,the patient-specific frailty drawn from a gamma distribution with mean 1 and the specified variance. 
-* `true_death_rate`, the patient-specific death rate, equal to the overall death rate times the frailty. 
+
 
 ### AUCs
 
 To compare the areas under the mean cumulative count curves up to time $\tau = 4$: 
 
 ```r
+aucs <- MCC::CompareAUCs(
+  time = data$time,
+  status = data$status,
+  arm = data$arm,
+  idx = data$idx,
+  tau = 4,
+  boot = TRUE,
+  perm = TRUE,
+  reps = 200,
+  alpha = 0.05
+)
+show(aucs)
+```
+
+```
+## Marginal Areas:
+##   arm   n area    se tau
+## 1   0 100 5.77 0.560   4
+## 2   1 100 6.20 0.669   4
+## 
+## 
+## CIs:
+##       method contrast observed    se  lower upper
+## 1 asymptotic    A1-A0    0.432 0.872 -1.280  2.14
+## 3  bootstrap    A1-A0    0.432 0.891 -1.150  2.18
+## 2 asymptotic    A1/A0    1.070 0.156  0.809  1.43
+## 4  bootstrap    A1/A0    1.070 0.159  0.817  1.47
+## 
+## 
+## P-values:
+##        method contrast observed     p
+## 1  asymptotic    A1-A0    0.432 0.621
+## 3   bootstrap    A1-A0    0.432 0.746
+## 5 permutation    A1-A0    0.432 0.597
+## 2  asymptotic    A1/A0    1.070 0.619
+## 4   bootstrap    A1/A0    1.070 0.746
+## 6 permutation    A1/A0    1.070 0.597
+```
+
+Here:
+
+* `tau` is the truncation time, or the time up to which the AUC is calculated. 
+* `boot` indicates to construct bootstrap confidence intervals. 
+* `perm` indicates to perform permutation tests for the difference and ratio of AUCs.
+* `reps` is the number of simulation replicates. 
+  - The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable.
+* `alpha` is 1 minus the desired coverage for confidence intervals. 
+
+#### Stratified Analysis
+
+`CompareAUCs` also allows for stratified analysis. Consider a data set, similar to that described previously, but with the additional of a binary stratification factor. The event rate for individuals in stratum 1 is increased by 20%.
+
+
+```r
+# Generate data with strata.
+covariates <- data.frame(
+  arm = c(rep(1, 100), rep(0, 100)),
+  strata = stats::rbinom(200, 1, 0.25)
+)
+data <- MCC::GenData(
+  beta_event = c(log(0.8), log(1.2)),
+  covariates = covariates,
+  frailty_variance = 0.2,
+  tau = 4
+)
+
+# Stratified AUC analysis.
 aucs <- MCC::CompareAUCs(
   time = data$time,
   status = data$status,
@@ -120,38 +181,27 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n area    se tau
-## 1   0 100 6.22 0.724   4
-## 2   1 100 5.94 0.682   4
+## 1   0 100 5.90 0.542   4
+## 2   1 100 4.95 0.560   4
 ## 
 ## 
 ## CIs:
 ##       method contrast observed    se  lower upper
-## 1 asymptotic    A1-A0   -0.276 0.995 -2.230  1.67
-## 3  bootstrap    A1-A0   -0.276 0.987 -2.160  1.69
-## 2 asymptotic    A1/A0    0.956 0.156  0.694  1.32
-## 4  bootstrap    A1/A0    0.956 0.160  0.707  1.33
+## 1 asymptotic    A1-A0   -0.952 0.780 -2.480 0.577
+## 3  bootstrap    A1-A0   -0.952 0.760 -2.520 0.463
+## 2 asymptotic    A1/A0    0.839 0.122  0.630 1.120
+## 4  bootstrap    A1/A0    0.839 0.121  0.625 1.090
 ## 
 ## 
 ## P-values:
 ##        method contrast observed     p
-## 1  asymptotic    A1-A0   -0.276 0.781
-## 3   bootstrap    A1-A0   -0.276 0.896
-## 5 permutation    A1-A0   -0.276 0.766
-## 2  asymptotic    A1/A0    0.956 0.781
-## 4   bootstrap    A1/A0    0.956 0.896
-## 6 permutation    A1/A0    0.956 0.776
+## 1  asymptotic    A1-A0   -0.952 0.222
+## 3   bootstrap    A1-A0   -0.952 0.259
+## 5 permutation    A1-A0   -0.952 0.229
+## 2  asymptotic    A1/A0    0.839 0.228
+## 4   bootstrap    A1/A0    0.839 0.259
+## 6 permutation    A1/A0    0.839 0.229
 ```
-
-Here:
-
-* `tau` is the truncation time, or the time up to which the AUC is calculated. 
-* `boot` indicates to construct bootstrap confidence intervals. 
-* `perm` indicates to perform permutation tests for the difference and ratio of AUCs.
-* `reps` is the number of simulation replicates. 
-  - The bootstrap is grouped by `idx`, and stratified by `strata`, if applicable.
-* `alpha` is 1 minus the desired coverage for confidence intervals. 
-
-Note that the `strata` argument may be omitted for unstratified data. 
 
 #### Outputs
 
@@ -165,10 +215,10 @@ aucs@StratumAreas
 
 ```
 ##   arm strata  n tau     area var_area   se_area weight
-## 1   0      0 80   4 6.169910 46.44172 0.7619196  0.785
-## 2   0      1 20   4 6.391197 72.16467 1.8995350  0.215
-## 3   1      0 77   4 5.108318 42.13942 0.7397737  0.785
-## 4   1      1 23   4 8.981404 63.46855 1.6611750  0.215
+## 1   0      0 80   4 5.459152 29.82589 0.6105929  0.765
+## 2   0      1 20   4 7.333409 27.37406 1.1699158  0.235
+## 3   1      0 73   4 4.822089 32.74563 0.6697539  0.765
+## 4   1      1 27   4 5.357632 25.24728 0.9669977  0.235
 ```
 
 * `@MargAreas` containing the AUCs for each arm, marginalized over any strata. 
@@ -180,8 +230,8 @@ aucs@MargAreas
 
 ```
 ##   arm   n     area        se tau
-## 1   0 100 6.217487 0.7242392   4
-## 2   1 100 5.941031 0.6817598   4
+## 1   0 100 5.899602 0.5420077   4
+## 2   1 100 4.947942 0.5604950   4
 ```
 
 * `@CIs` containing confindence intervals for the difference and ratio of AUCs.
@@ -192,11 +242,11 @@ aucs@CIs
 ```
 
 ```
-##       method contrast   observed        se      lower    upper
-## 1 asymptotic    A1-A0 -0.2764552 0.9946451 -2.2259238 1.673013
-## 3  bootstrap    A1-A0 -0.2764552 0.9865350 -2.1569580 1.688333
-## 2 asymptotic    A1/A0  0.9555359 0.1562445  0.6935260 1.316531
-## 4  bootstrap    A1/A0  0.9555359 0.1599824  0.7067549 1.331820
+##       method contrast   observed        se      lower     upper
+## 1 asymptotic    A1-A0 -0.9516605 0.7796967 -2.4798379 0.5765170
+## 3  bootstrap    A1-A0 -0.9516605 0.7595063 -2.5180135 0.4630395
+## 2 asymptotic    A1/A0  0.8386907 0.1223237  0.6301638 1.1162211
+## 4  bootstrap    A1/A0  0.8386907 0.1214556  0.6249029 1.0932030
 ```
 
 * `@MCF` containing the per arm mean cumulative count curve, averaged across strata.
@@ -207,13 +257,13 @@ head(aucs@MCF)
 ```
 
 ```
-##          time         mcf     var_mcf     se_mcf arm
-## 1 0.007670539 0.009347826 0.001922401 0.04384519   1
-## 2 0.013073871 0.009347826 0.001922401 0.04384519   1
-## 3 0.014699690 0.009347826 0.001922401 0.04384519   1
-## 4 0.021395138 0.019676773 0.010029221 0.10014600   1
-## 5 0.022266388 0.030005721 0.017919859 0.13386508   1
-## 6 0.038473398 0.039353547 0.019666812 0.14023841   1
+##         time      mcf     var_mcf     se_mcf arm
+## 1 0.01722083 0.000000 0.000000000 0.00000000   1
+## 2 0.02737544 0.010625 0.008126557 0.09014742   1
+## 3 0.03425807 0.021250 0.016024197 0.12658672   1
+## 4 0.03799397 0.021250 0.016024197 0.12658672   1
+## 5 0.05125238 0.021250 0.016024197 0.12658672   1
+## 6 0.05934910 0.031875 0.023692786 0.15392461   1
 ```
 
 * `@Pvals` containing the bootstrap and permutation p-values.
@@ -225,12 +275,12 @@ aucs@Pvals
 
 ```
 ##        method contrast   observed         p
-## 1  asymptotic    A1-A0 -0.2764552 0.7810557
-## 3   bootstrap    A1-A0 -0.2764552 0.8955224
-## 5 permutation    A1-A0 -0.2764552 0.7661692
-## 2  asymptotic    A1/A0  0.9555359 0.7808912
-## 4   bootstrap    A1/A0  0.9555359 0.8955224
-## 6 permutation    A1/A0  0.9555359 0.7761194
+## 1  asymptotic    A1-A0 -0.9516605 0.2222556
+## 3   bootstrap    A1-A0 -0.9516605 0.2587065
+## 5 permutation    A1-A0 -0.9516605 0.2288557
+## 2  asymptotic    A1/A0  0.8386907 0.2277719
+## 4   bootstrap    A1/A0  0.8386907 0.2587065
+## 6 permutation    A1/A0  0.8386907 0.2288557
 ```
 
 * `@Reps` is a list containing the bootstrap and permutation test statistics.
@@ -241,6 +291,18 @@ The previous estimator allows for stratification, but a different approach is ne
 
 
 ```r
+# Generate data with a continuous covariate.
+covariates <- data.frame(
+  arm = c(rep(1, 100), rep(0, 100)),
+  covar = stats::rnorm(200)
+)
+data <- MCC::GenData(
+  beta_event = c(log(0.8), log(1.2)),
+  covariates = covariates,
+  frailty_variance = 0.2,
+  tau = 4
+)
+
 aucs <- MCC::CompareAUCs(
   time = data$time,
   status = data$status,
@@ -259,26 +321,26 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n tau area    se
-## 1   0 100   4 6.19 0.701
-## 2   1 100   4 6.12 0.720
+## 1   0 100   4 6.34 0.646
+## 2   1 100   4 5.47 0.584
 ## 
 ## 
 ## CIs:
 ##       method contrast observed    se lower upper
-## 1 asymptotic    A1-A0    0.325 0.983 -1.60  2.25
-## 2  bootstrap    A1-A0    0.325 1.020 -1.74  2.05
+## 1 asymptotic    A1-A0    -1.07 0.840 -2.72 0.572
+## 2  bootstrap    A1-A0    -1.07 0.842 -2.74 0.522
 ## 
 ## 
 ## P-values:
 ##        method contrast observed     p
-## 1  asymptotic    A1-A0    0.325 0.741
-## 2   bootstrap    A1-A0    0.325 0.776
-## 3 permutation    A1-A0    0.325 0.896
+## 1  asymptotic    A1-A0    -1.07 0.201
+## 2   bootstrap    A1-A0    -1.07 0.229
+## 3 permutation    A1-A0    -1.07 0.279
 ```
 
 ### Plotting
 
-The function `PlotMCFs` plots the mean cumulative count curves, comparing two treatment arms.
+The function `PlotMCFs` plots the mean cumulative count curves, comparing two treatment arms. Note that `data` must contain the column `arm`.
 
 
 ```r
@@ -286,4 +348,4 @@ q <- MCC::PlotMCFs(data)
 show(q)
 ```
 
-<img src="README_files/figure-html/unnamed-chunk-13-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-html/unnamed-chunk-14-1.png" style="display: block; margin: auto;" />

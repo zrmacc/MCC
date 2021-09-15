@@ -46,7 +46,14 @@ reference (arm = 0).
 \examples{
 \donttest{
 # Simulate data set.
-data <- GenData()
+covariates <- data.frame(
+  arm = c(rep(1, 50), rep(0, 50)),
+  strata = stats::rbinom(100, 1, 0.2)
+)
+data <- GenData(
+  beta_event = c(log(0.5), log(0.8)),
+  covariates = covariates
+)
 
 aucs <- CompareAUCs(
   time = data$time,

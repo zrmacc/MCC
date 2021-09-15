@@ -42,7 +42,11 @@
 #' @examples
 #' \donttest{
 #' # Simulate data set.
-#' data <- GenData()
+#' covariates <- data.frame(arm = c(rep(1, 50), rep(0, 50)))
+#' data <- GenData(
+#'   beta_event = log(0.5),
+#'   covariates = covariates
+#' )
 #'
 #' aucs <- CompareAUCs(
 #'   time = data$time,

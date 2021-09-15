@@ -5,63 +5,58 @@
 \title{Simulate Recurrent Events Data}
 \usage{
 GenData(
+  base_death_rate = 0.25,
   base_event_rate = 1,
+  beta_death = NULL,
+  beta_event = NULL,
   censoring_rate = 0.25,
-  covar_effect = log(1.25),
-  death_rate = 0.25,
+  covariates = NULL,
   frailty_variance = 0,
+  min_death_rate = 0.05,
   min_event_rate = 0.05,
-  n0 = 100,
-  n1 = 100,
-  strata_effect = log(1.25),
-  strata_prob = 0.2,
-  treatment_effect = log(0.5),
+  n = 100,
   tau = 4
 )
 }
 \arguments{
+\item{base_death_rate}{Baseline arrival rate for the terminal event.}
+
 \item{base_event_rate}{Baseline arrival rate for recurrent events.}
+
+\item{beta_death}{Numeric vector of log rate ratios for the death rate.}
+
+\item{beta_event}{Numeric vector of log rate ratios for the event rate.}
 
 \item{censoring_rate}{Arrival rate for the censoring time.}
 
-\item{covar_effect}{Log rate ratio for the covariate, which follows a 
-standard normal distribution.}
-
-\item{death_rate}{Arrival rate for the terminal event.}
+\item{covariates}{Numeric design matrix.}
 
 \item{frailty_variance}{Variance of the gamma frailty.}
 
+\item{min_death_rate}{Minimum subject-specific event rate. Must be positive.}
+
 \item{min_event_rate}{Minimum subject-specific event rate. Must be positive.}
 
-\item{n0}{Subjects in the reference arm.}
-
-\item{n1}{Subjects in the treatment arm.}
-
-\item{strata_effect}{Log rate ratio for membership to the stratum.}
-
-\item{strata_prob}{Probability of the binary stratification factor.}
-
-\item{treatment_effect}{Log rate ratio for treatment.}
+\item{n}{Number of subjects. Overwritten by `nrow(covariates)` if covariates are provided.}
 
 \item{tau}{Truncation time.}
 }
 \value{
 Data.frame, containing:
 \itemize{
-  \item Subject 'idx', treatment 'arm', a baseline covariate 'covar', 
-    an indicator 'strata' of stratum membership.
- \item 
- \item 'time' and 'status' of the event: 0 for censoring, 1 for an 
+ \item The subject identifier `idx` (index).
+ \item `time` and `status` of the event: 0 for censoring, 1 for an 
     event, 2 for death.
+ \item The `true_death_rate`, `true_event_rate`, and `frailty`, which are subject-specific.
 }
 }
 \description{
 Simulate recurrent events data using exponential censoring, gap, and death 
-times. Status is coded as 0 for censoring, 1 for event, 2 for death. 
+times. Status is coded as 0 for censoring, 1 for event, 2 for death.
 \itemize{
-  \item The subject-specific event rate may depend on the treatment arm,
-  a single standard normal covariate, and a binary stratification factor.
-  \item The subject-specific event rate is calculated as base_event_rate *
-  exp(arm x treatment_effect + covar x covar_effect + strata x strata_effect).
+  \item The subject-specific death rate is calculated as frailty x base_death_rate x 
+  exp(beta_death x covariates).
+  \item The subject-specific event rate is calculated as frailty x base_event_rate x
+  exp(beta_event x covariates).
 }
 }
