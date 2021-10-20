@@ -1,3 +1,12 @@
+---
+title: "README"
+author: "Zachary McCaw"
+date: "2021-09-15"
+output: 
+  html_document: 
+    keep_md: TRUE
+--- 
+
 # Compare Mean Cumulative Count Curves
 
 Zachary McCaw <br>

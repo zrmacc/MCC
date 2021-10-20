@@ -11,13 +11,15 @@ PlotMCFs(
   ctrl_color = "#C65842",
   idx_name = "idx",
   status_name = "status",
+  strata_name = NULL,
   tau = NULL,
   time_name = "time",
   title = NULL,
   trt_color = "#6385B8",
   x_breaks = NULL,
-  x_max = NULL,
+  x_lim = NULL,
   x_name = "Time",
+  y_breaks = NULL,
   y_lim = NULL,
   y_name = "Mean Cumulative Count"
 )
@@ -35,6 +37,8 @@ PlotMCFs(
 
 \item{status_name}{Name of status column in data.}
 
+\item{strata_name}{Name of stratum column in data.}
+
 \item{tau}{Truncation time.}
 
 \item{time_name}{Name of column column in data.}
@@ -45,9 +49,11 @@ PlotMCFs(
 
 \item{x_breaks}{X-axis breaks.}
 
-\item{x_max}{X-axis upper limit.}
+\item{x_lim}{X-axis limits.}
 
 \item{x_name}{X-axis label.}
+
+\item{y_breaks}{Y-axis breaks.}
 
 \item{y_lim}{Y-axis limits.}
 

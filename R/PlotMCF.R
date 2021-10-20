@@ -142,13 +142,15 @@ MCFPlotFrame <- function(
 #' @param ctrl_color Color for control arm.
 #' @param idx_name Name of index (subject identifier) column in data.
 #' @param status_name Name of status column in data.
+#' @param strata_name Name of stratum column in data. 
 #' @param tau Truncation time.
 #' @param time_name Name of column column in data.
 #' @param title Plot title.
 #' @param trt_color Color for treatment arm.
 #' @param x_breaks X-axis breaks.
-#' @param x_max X-axis upper limit.
+#' @param x_lim X-axis limits.
 #' @param x_name X-axis label.
+#' @param y_breaks Y-axis breaks.
 #' @param y_lim Y-axis limits.
 #' @param y_name Y-axis label.
 #' @return ggplot object.
@@ -164,13 +166,15 @@ PlotMCFs <- function(
   ctrl_color = "#C65842",
   idx_name = "idx",
   status_name = "status",
+  strata_name = NULL,
   tau = NULL,
   time_name = "time",
   title = NULL,
   trt_color = "#6385B8",
   x_breaks = NULL,
-  x_max = NULL,
+  x_lim = NULL,
   x_name = "Time",
+  y_breaks = NULL,
   y_lim = NULL,
   y_name = "Mean Cumulative Count"
 ) {
@@ -184,41 +188,37 @@ PlotMCFs <- function(
       "time" = {{time_name}}
     )
   
-  # Defaults.
-  if (is.null(x_max)) {
+  # Strata.
+  if (!is.null(strata_name)) {
+    data <- data %>%
+      dplyr::rename(
+        "strata" = {{strata_name}}
+      )
+  } else {
+    data$strata <- 1
+  }
+  
+  # Truncation.
+  if (is.null(x_lim[2])) {
     x_max <- max(data$time)
   }
   if (is.null(tau)) {
     tau <- x_max
   }
   
-  # Split data.
-  data0 <- data %>% dplyr::filter(arm == 0)
-  data1 <- data %>% dplyr::filter(arm == 1)
-  
-  # Estimate mean cumulative function (MCF).
-  fit_mcf_0 <- MCC::CalcMCF(
-    time = data0$time,
-    status = data0$status,
-    idx = data0$idx
-  )
-  
-  fit_mcf_1 <- MCC::CalcMCF(
-    time = data1$time,
-    status = data1$status,
-    idx = data1$idx
-  )
+  # Calculate marginal MCF.
+  marg_mcf <- CalcMargMCF(data)
   
   # MCF function for arm 0
   g0 <- stats::stepfun(
-    x = fit_mcf_0$time,
-    y = c(0, fit_mcf_0$mcf)
+    x = marg_mcf$time[marg_mcf$arm == 0],
+    y = c(0, marg_mcf$mcf[marg_mcf$arm == 0])
   )
   
   # MCF function for arm 1
   g1 <- stats::stepfun(
-    x = fit_mcf_1$time,
-    y = c(0, fit_mcf_1$mcf)
+    x = marg_mcf$time[marg_mcf$arm == 1],
+    y = c(0, marg_mcf$mcf[marg_mcf$arm == 1])
   )
   
   # Plotting frame for control arm.
@@ -253,14 +253,42 @@ PlotMCFs <- function(
       name = NULL,
       values = c(ctrl_color, trt_color),
       labels = color_labs
-    ) + 
-    ggplot2::scale_x_continuous(
-      name = x_name
-    ) +
-    ggplot2::scale_y_continuous(
-      name = y_name,
-      limits = y_lim
-    ) + 
+    )
+  
+  # X-axis.
+  if (is.null(x_breaks)) {
+    q <- q + 
+      ggplot2::scale_x_continuous(
+        name = x_name,
+        limits = x_lim
+      )
+  } else {
+    q <- q + 
+      ggplot2::scale_x_continuous(
+        name = x_name,
+        breaks = x_breaks,
+        limits = x_lim
+      )
+  }
+
+  # Y-axis.
+  if (is.null(y_breaks)) {
+    q <- q + 
+      ggplot2::scale_y_continuous(
+        name = y_name,
+        limits = y_lim
+      )
+  } else {
+    q <- q + 
+      ggplot2::scale_y_continuous(
+        name = y_name,
+        breaks = y_breaks,
+        limits = y_lim
+      )
+  }
+  
+  # Title.
+  q <- q + 
     ggplot2::ggtitle(
       label = title
     )
@@ -283,12 +311,14 @@ PlotMCFs <- function(
 #' @param color Color.
 #' @param idx_name Name of index (subject identifier) column in data.
 #' @param status_name Name of status column in data.
+#' @param strata_name Name of stratum column in data. 
 #' @param tau Truncation time for shading.
 #' @param time_name Name of column column in data.
 #' @param title Plot title.
 #' @param x_breaks X-axis breaks.
-#' @param x_max X-axis upper limit.
+#' @param x_lim X-axis limits.
 #' @param x_name X-axis label.
+#' @param y_breaks Y-axis breaks.
 #' @param y_lim Y-axis limits.
 #' @param y_name Y-axis label.
 #' @return ggplot object.
@@ -305,12 +335,14 @@ PlotAUMCFs <- function(
   color = "#C65842",
   idx_name = "idx",
   status_name = "status",
+  strata_name = NULL,
   time_name = "time",
   title = NULL,
   tau = NULL,
   x_breaks = NULL,
-  x_max = NULL,
+  x_lim = NULL,
   x_name = "Time",
+  y_breaks = NULL,
   y_lim = NULL,
   y_name = "Mean Cumulative Count"
 ) {
@@ -324,7 +356,18 @@ PlotAUMCFs <- function(
       "time" = {{time_name}}
     )
   
-  if (is.null(x_max)) {
+  # Strata.
+  if (!is.null(strata_name)) {
+    data <- data %>%
+      dplyr::rename(
+        "strata" = {{strata_name}}
+      )
+  } else {
+    data$strata <- 1
+  }
+  
+  # Truncation.
+  if (is.null(x_lim[2])) {
     x_max <- max(data$time)
   }
   if (is.null(tau)) {
@@ -333,7 +376,7 @@ PlotAUMCFs <- function(
   
   # Split data.
   arm <- NULL
-  data <- data %>% dplyr::filter(arm == which_arm)
+  fit_mcf <- CalcMargMCF(data) %>% dplyr::filter(arm == which_arm)
   
   # Estimate mean cumulative function (MCF).
   fit_mcf <- MCC::CalcMCF(
@@ -380,14 +423,42 @@ PlotAUMCFs <- function(
       aes(x = time, y = mcf), 
       color = color,
       size = 1
-    ) + 
-    ggplot2::scale_x_continuous(
-      name = x_name
-    ) +
-    ggplot2::scale_y_continuous(
-      name = y_name,
-      limits = y_lim
-    ) + 
+    ) 
+  
+  # X-axis.
+  if (is.null(x_breaks)) {
+      q <- q + 
+        ggplot2::scale_x_continuous(
+          name = x_name,
+          limits = x_lim
+        )
+    } else {
+      q <- q + 
+        ggplot2::scale_x_continuous(
+          name = x_name,
+          breaks = x_breaks,
+          limits = x_lim
+        )
+    }
+  
+  # Y-axis.
+  if (is.null(y_breaks)) {
+    q <- q + 
+      ggplot2::scale_y_continuous(
+        name = y_name,
+        limits = y_lim
+      )
+  } else {
+    q <- q + 
+      ggplot2::scale_y_continuous(
+        name = y_name,
+        breaks = y_breaks,
+        limits = y_lim
+      )
+  }
+  
+  # Title.
+  q <- q + 
     ggplot2::ggtitle(
       label = title
     )

@@ -70,33 +70,9 @@ CalcStratAUC <- function(
   )
   
   # Output
-  if(return_areas){
+  if (return_areas) {
     
-    # Marginal MCF for arm 1.
-    mcf1 <- data %>%
-      dplyr::filter(arm == 1) %>%
-      dplyr::group_by(strata) %>%
-      dplyr::summarise(
-        CalcMCF(time, status, idx),
-        .groups = "keep"
-      ) %>%
-      dplyr::group_split()
-    avg_mcf1 <- AvgMCF(mcf1, weights = stratum_sizes$weight)
-    avg_mcf1$arm <- 1
-    
-    # Marginal MCF for arm 0.
-    mcf0 <- data %>%
-      dplyr::filter(arm == 0) %>%
-      dplyr::group_by(strata) %>%
-      dplyr::summarise(
-        CalcMCF(time, status, idx),
-        .groups = "keep"
-      ) %>%
-      dplyr::group_split()
-    avg_mcf0 <- AvgMCF(mcf1, weights = stratum_sizes$weight)
-    avg_mcf0$arm <- 0
-    
-    avg_mcf <- rbind(avg_mcf1, avg_mcf0)
+    avg_mcf <- CalcMargMCF(data)
     
     # Outputs.
     out <- list(
