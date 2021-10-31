@@ -65,9 +65,19 @@ CalcMargMCF <- function(data) {
   idx <- time <- status <- arm <- strata <- NULL
   stratum_sizes <- data %>%
     dplyr::group_by(strata) %>%
-    dplyr::summarise("n" = length(unique(idx)), .groups = "drop") %>%
-    as.data.frame
-  stratum_sizes$weight <- stratum_sizes$n / sum(stratum_sizes$n)
+    dplyr::summarise(
+      n0 = length(unique(idx[arm == 0])),
+      n1 = length(unique(idx[arm == 1])),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      n = n0 + n1,
+      w = n / sum(n),
+      w0 = w / sum(w[n0 != 0]),
+      w1 = w / sum(w[n1 != 0])
+    )
+  stratum_sizes$w1[stratum_sizes$n1 == 0] <- 0
+  stratum_sizes$w0[stratum_sizes$n0 == 0] <- 0
   
   # Marginal MCF for arm 1.
   mcf1 <- data %>%
@@ -78,7 +88,7 @@ CalcMargMCF <- function(data) {
       .groups = "keep"
     ) %>%
     dplyr::group_split()
-  avg_mcf1 <- AvgMCF(mcf1, weights = stratum_sizes$weight)
+  avg_mcf1 <- AvgMCF(mcf1, weights = stratum_sizes$w1[stratum_sizes$w1 != 0])
   avg_mcf1$arm <- 1
   
   # Marginal MCF for arm 0.
@@ -90,7 +100,7 @@ CalcMargMCF <- function(data) {
       .groups = "keep"
     ) %>%
     dplyr::group_split()
-  avg_mcf0 <- AvgMCF(mcf0, weights = stratum_sizes$weight)
+  avg_mcf0 <- AvgMCF(mcf0, weights = stratum_sizes$w0[stratum_sizes$w0 != 0])
   avg_mcf0$arm <- 0
   
   avg_mcf <- rbind(avg_mcf1, avg_mcf0)

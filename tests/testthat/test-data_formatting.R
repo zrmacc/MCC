@@ -9,7 +9,7 @@ test_that("Expect no change in the case of correctly formatted data.", {
     strata = c(1, 1)
   )
   
-  out <- FormatData(
+  out <- MCC::FormatData(
     idx = data$idx, 
     time = data$time, 
     status = data$status, 
@@ -40,7 +40,7 @@ test_that("Check addition of censoring time when missing.", {
   
   # Censor after last set to FALSE.
   observed <- expect_warning({
-    FormatData(
+    MCC::FormatData(
       idx = data$idx, 
       time = data$time, 
       status = data$status, 
@@ -53,7 +53,7 @@ test_that("Check addition of censoring time when missing.", {
   expect_identical(observed, data)
   
   # Censor after last set to TRUE.
-  observed <- FormatData(
+  observed <- MCC::FormatData(
       idx = data$idx, 
       time = data$time, 
       status = data$status, 
@@ -80,7 +80,7 @@ test_that("Multiple censoring times triggers an error.", {
   )
   
   expect_error({
-    FormatData(
+    MCC::FormatData(
       idx = data$idx, 
       time = data$time, 
       status = data$status, 
