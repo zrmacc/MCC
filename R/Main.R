@@ -24,6 +24,8 @@
 #' @param covars Optional covariate matrix. Rows should correspond with the
 #'   subject index `idx`. Factor and interaction terms should be expanded.
 #' @param strata Optional stratification factor.
+#' @param cens_after_last Should subjects who lack an explicit censoring time
+#'   be censored after their last observed event? 
 #' @param alpha Alpha level.
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
@@ -70,6 +72,7 @@ CompareAUCs <- function(
   tau,
   covars = NULL,
   strata = NULL,
+  cens_after_last = TRUE,
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
@@ -90,7 +93,8 @@ CompareAUCs <- function(
     status = status,
     arm = arm,
     covars = covars,
-    strata = strata
+    strata = strata,
+    cens_after_last = cens_after_last
   )
   
   if (!is.null(covars)) {

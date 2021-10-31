@@ -12,6 +12,7 @@ CompareAUCs(
   tau,
   covars = NULL,
   strata = NULL,
+  cens_after_last = TRUE,
   alpha = 0.05,
   boot = FALSE,
   perm = FALSE,
@@ -35,6 +36,9 @@ remain at risk throughout the observation period.}
 subject index `idx`. Factor and interaction terms should be expanded.}
 
 \item{strata}{Optional stratification factor.}
+
+\item{cens_after_last}{Should subjects who lack an explicit censoring time
+be censored after their last observed event?}
 
 \item{alpha}{Alpha level.}
 

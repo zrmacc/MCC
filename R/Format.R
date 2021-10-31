@@ -3,9 +3,12 @@
 #' Format Data for a Single Subject
 #' 
 #' @param df Data.frame for a single subject.
+#' @param cens_after_last Should subjects who lack an explicit censoring time
+#'   be censored after their last observed event? 
 #' @return Data.frame with an added censoring event.
+#' @noRd
 
-FormatSubj <- function(df) {
+FormatSubj <- function(df, cens_after_last) {
   obs_end <- sum(df$obs_end)
   out <- df
   
@@ -15,7 +18,7 @@ FormatSubj <- function(df) {
   }
   
   # Add censoring if no observation terminating event is present.
-  if (obs_end == 0) {
+  if (obs_end == 0 & cens_after_last) {
     n_row <- nrow(df)
     last_row <- df[n_row, ]
     last_row$status <- 0
@@ -37,7 +40,10 @@ FormatSubj <- function(df) {
 #' @param covars Optional covariate matrix. Rows should correspond with the
 #'   subject index `idx`. Factor and interaction terms should be expanded.
 #' @param strata Optional stratification factor.
+#' @param cens_after_last Should subjects who lack an explicit censoring time
+#'   be censored after their last observed event? 
 #' @return Formatted data.frame.
+#' @importFrom dplyr "%>%"
 #' @export 
 
 FormatData <- function(
@@ -46,7 +52,8 @@ FormatData <- function(
   status,
   arm, 
   covars,
-  strata
+  strata,
+  cens_after_last
 ) {
   
   data <- data.frame(idx, time, status, arm)
@@ -60,21 +67,27 @@ FormatData <- function(
   }
   
   # Indicator of an observation-terminating event.
-  data$obs_end <- 1 * (data$status != 1)
-  
-  # Sort data.
-  data <- data[order(data$idx, data$time, data$obs_end), ]
+  data <- data %>%
+    dplyr::mutate(obs_end = 1 * (status != 1)) %>%
+    dplyr::arrange(idx, time, obs_end)
   
   # Format data.
   split_data <- split(x = data, f = data$idx)
-  format_data <- lapply(split_data, FormatSubj)
+  format_data <- lapply(split_data, function(x) {
+    FormatSubj(x, cens_after_last = cens_after_last)
+  })
   final_data <- do.call(rbind, format_data)
   rownames(final_data) <- NULL
   
   # Ensure each subject has exactly 1 terminal event.
-  check <- tapply(final_data$obs_end, final_data$idx, sum)
-  if (unique(check) != 1){
-    stop("Error formatting the data. Please ensure each subject has a single observation terminating event.")
+  check <- final_data %>%
+    dplyr::group_by(idx) %>%
+    dplyr::summarise(
+      n_obs_end = sum(obs_end)
+    )
+  
+  if (any(check$n_obs_end != 1)) {
+    warning("Patience without censoring times were found.")
   }
   
   final_data$obs_end <- NULL

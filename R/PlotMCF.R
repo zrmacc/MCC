@@ -80,7 +80,16 @@ NARCurve <- function(
   
   # Fit cumulative incidence curve.
   fit <- MCC::CalcMCF(data$time, data$status, data$idx, calc_var = FALSE)
-  g <- stats::stepfun(x = fit$time, y = c(length(unique(df$idx)), fit$nar))
+  
+  # Case where last observation is censoring or death.
+  last_row <- fit[nrow(fit), ]
+  last_row$time <- last_row$time + 1e-8
+  last_row$nar <- last_row$nar - (last_row$censor + last_row$death)
+  fit <- rbind(fit, last_row)
+  
+  g <- stats::stepfun(
+    x = fit$time, 
+    y = c(length(unique(df$idx)), fit$nar))
   return(g)
 }
 

@@ -4,7 +4,7 @@
 \alias{FormatData}
 \title{Format Data}
 \usage{
-FormatData(idx, time, status, arm, covars, strata)
+FormatData(idx, time, status, arm, covars, strata, cens_after_last)
 }
 \arguments{
 \item{idx}{Unique subject index.}
@@ -21,6 +21,9 @@ remain at risk throughout the observation period.}
 subject index `idx`. Factor and interaction terms should be expanded.}
 
 \item{strata}{Optional stratification factor.}
+
+\item{cens_after_last}{Should subjects who lack an explicit censoring time
+be censored after their last observed event?}
 }
 \value{
 Formatted data.frame.
