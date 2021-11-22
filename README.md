@@ -1,13 +1,13 @@
-# Compare Mean Cumulative Count Curves
+# Comparison of mean cumulative count curves via the area under the curve (AUC).
 
 Zachary McCaw <br>
-Updated: 2021-10-30
+Updated: 2021-11-21
 
 
 
 ### Description
 
-This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x), which allows for the occurrence of terminal events such as death. Also see:
+This package provides functions for inference on the difference and ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC curves are estimated using an approach based on the method of [Ghosh and Lin (2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x) that accounts for the presence of terminal competing risks. Also see:
 
 * [CICs](https://github.com/zrmacc/CICs) for comparing cumulative incidence curves. 
 
@@ -56,7 +56,17 @@ The essential data are:
 * `status`, coded 0 for censoring, 1 for an event, 2 for death (or any competing terminal event).
 * `arm`, coded as 1 for treatment, 0 for reference. 
 
-For analyzing other data sets, arm and status should have the same coding. Each subject should experience an observation-terminating event, i.e. either death or censoring. If the last appearance of a subject in the data set has status 1, then a censoring time is added immediately after this recurrence. For example, if the data for subject 1 is:
+For analyzing other data sets, arm and status should have the same coding. Each subject should experience an observation-terminating event, i.e. either death or censoring. 
+
+The example data also include:
+
+* `true_death_rate`, the patient-specific terminal event rate, calculated as `frailty` x `base_death_rate` x `exp(covariates %*% beta_death)`. If omitted, `beta_death` is set to zero.
+* `true_event_rate`, the patient-specific recurrent event rate, calculated as `frailty` x `base_event_rate` x `exp(covariates %*% beta_event)`. If omitted, `beta_event` is set to zero.
+* `frailty`,the patient-specific frailty drawn from a gamma distribution with mean 1 and the specified variance. 
+
+### Observation-terminating events 
+
+In contrast to the time to first event setting, in the multiple or recurrent events setting, a subject may remain at risk after experiencing the event of interest. An *observation-terminating* event, either censoring or the occurrence of a competing risk, is therefore necessary to remove a subject from the risk set. Conversely, a subject who lacks an observation-terminating event is implicitly assumed to remain at risk indefinitely. If a subject *lacks* an observation-terminating event, then by default `CompareAUCs` will add a censoring time immediately after their last event of interest. For example, if the data for subject 1 is:
 
 ```
 ##   idx time status
@@ -74,7 +84,11 @@ then, for analysis, the subject's is assumed to be censored after the last event
 ## 4   1    5      0
 ```
 
-If instead the last recurrence is fatal, encode the input data as:
+If a subject who lacks an observation-terminating event should in fact remain at risk until the truncation time `tau`, either add an appropriate censoring time for that subject, or set `cens_after_last = FALSE` to retain that subject in the risk set indefinitely.
+
+### Terminal events of interest
+
+Suppose the endpoint of interest can include fatal events. One such example is the endpoint of heart failure hospitalization or CV-death. In this setting, it becomes necessary to distinguish non-fatal events of interest, after which the subject remains in the risk set, from fatal events of interest, after which the subject is removed from the risk set and precluded from having any future events of interest. To achieve this, fatal events of interest should be recorded using two records, both having the same value for `time`. The first, with `status = 1`, identifies that an event of interest has occurred. The second, with `status = 2`, indicates that the event was terminal. For example, the following data indicate that subject 1 had 3 events of interest, and the 3rd was terminal. 
 
 ```
 ##   idx time status
@@ -84,12 +98,26 @@ If instead the last recurrence is fatal, encode the input data as:
 ## 4   1    5      2
 ```
 
-The example data also include:
+By contrast, the following data indicate that subject 2 had 3 events of interest, none of which was terminal:
 
-* `true_death_rate`, the patient-specific terminal event rate, calculated as `frailty` x `base_death_rate` x `exp(covariates %*% beta_death)`. If omitted, `beta_death` is set to zero.
-* `true_event_rate`, the patient-specific recurrent event rate, calculated as `frailty` x `base_event_rate` x `exp(covariates %*% beta_event)`. If omitted, `beta_event` is set to zero.
-* `frailty`,the patient-specific frailty drawn from a gamma distribution with mean 1 and the specified variance. 
+```
+##   idx time status
+## 1   2    2      1
+## 2   2    3      1
+## 3   2    5      1
+```
 
+Note that, by default, subject 2 is assumed censoring after their 3rd event of interest, as in the following:
+
+```
+##   idx time status
+## 1   2    2      1
+## 2   2    3      1
+## 3   2    5      1
+## 4   2    5      0
+```
+
+Although censoring (`status = 0`) and a terminal event (`status = 2`) both remove a subject from the risk set, there is an important distinciton. Censoring leaves open the possibility that the subject experienced more events of interest in the future, which were unobserved, whereas a terminal event precludes the possiblity of any future events of interest.
 
 ### AUCs
 
@@ -348,4 +376,4 @@ q <- MCC::PlotMCFs(data)
 show(q)
 ```
 
-<img src="README_files/figure-html/unnamed-chunk-14-1.png" style="display: block; margin: auto;" />
+<img src="README_files/figure-html/unnamed-chunk-16-1.png" style="display: block; margin: auto;" />
