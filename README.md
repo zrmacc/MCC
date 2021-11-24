@@ -1,7 +1,7 @@
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
-Zachary McCaw <br>
-Updated: 2021-11-21
+Zachary R. McCaw <br>
+Updated: 2021-11-24
 
 
 
@@ -18,11 +18,21 @@ This package provides functions for inference on the difference and ratio in AUC
 devtools::install_github(repo = 'zrmacc/MCC')
 ```
 
-## Examples
+## Methods
+
+### Estimation of the mean cumulative count curve
+
+For each study arm, the MCC is estimated as follows. Define $N(\cdot)$ as the counting process for events of interest, both terminal and non-terminal, $Y(\cdot)$ as the number of subjects who remain at risk, and $S(\cdot)$ as the probability of not having experienced a terminal event. The MCC $\mu(t)$ at time $t$ is estimated by:
+$$
+\mu(t) = \int_{0}^{t} \hat{S}(u) \frac{ dN(u) }{ Y(u) }
+$$
+
+Here $\hat{S}(u)$ is the Kaplan-Meier estimate of the probability of being terminal event-free, estimated from *all* terminal events, both those of interest and those regarded as a competing risk; $dN(u)$ is the number of events of interest, both non-terminal and terminal, occurring at time $u$; and $Y(u)$ is the number of subjects who remain at risk, which are subjects who have neither been censored nor experienced a terminal event.
+
 
 ### Data
 
-The function `GenData` simulates example data in the format expected by this package. The recurrent event times are generated from a Poisson process that continues until censoring or death, whichever occurs first. Optionally, a gamma `frailty_variance` may be specified such that the patient-specific event and death rates are correlated. The example data includes 100 patients in each of the treatment and control arms. The maximum duration of follow-up is `tau = 4`. The rate of recurrent events for patients in the treatment arm is 80% the rate for patients in the control arm. 
+The function `GenData` simulates example data in the format expected by this package. The recurrent event times are generated from a Poisson process that continues until censoring or death, whichever occurs first. Optionally, a gamma `frailty_variance` may be specified such that the patient-specific event and death rates are correlated. The example data includes 100 patients in each of the treatment and control arms. The maximum duration of follow-up is `tau = 4` (e.g. years). The rate of recurrent events for patients in the treatment arm is 80% the rate for patients in the control arm. 
 
 
 ```r
@@ -64,9 +74,10 @@ The example data also include:
 * `true_event_rate`, the patient-specific recurrent event rate, calculated as `frailty` x `base_event_rate` x `exp(covariates %*% beta_event)`. If omitted, `beta_event` is set to zero.
 * `frailty`,the patient-specific frailty drawn from a gamma distribution with mean 1 and the specified variance. 
 
+
 ### Observation-terminating events 
 
-In contrast to the time to first event setting, in the multiple or recurrent events setting, a subject may remain at risk after experiencing the event of interest. An *observation-terminating* event, either censoring or the occurrence of a competing risk, is therefore necessary to remove a subject from the risk set. Conversely, a subject who lacks an observation-terminating event is implicitly assumed to remain at risk indefinitely. If a subject *lacks* an observation-terminating event, then by default `CompareAUCs` will add a censoring time immediately after their last event of interest. For example, if the data for subject 1 were:
+In contrast to the time to first event setting, in the multiple or recurrent events setting, a subject may remain at risk after experiencing an event of interest. An *observation-terminating* event, either censoring or the occurrence of a competing risk, is therefore necessary to remove a subject from the risk set. Conversely, a subject who lacks an observation-terminating event is implicitly assumed to remain at risk indefinitely. If a subject *lacks* an observation-terminating event, then by default `CompareAUCs` will add a censoring time immediately after their last event of interest. For example, if the data for subject 1 were:
 
 ```
 ##   idx time status
@@ -74,7 +85,7 @@ In contrast to the time to first event setting, in the multiple or recurrent eve
 ## 2   1    3      1
 ## 3   1    5      1
 ```
-then, for analysis, the subject's is assumed to have been censored after the last event:
+then, for analysis, the subject is assumed to have been censored after the last event, as in the following:
 
 ```
 ##   idx time status
@@ -84,11 +95,12 @@ then, for analysis, the subject's is assumed to have been censored after the las
 ## 4   1    5      0
 ```
 
-If a subject who lacks an observation-terminating event should, in fact, remain at risk indefinitely, then set `cens_after_last = FALSE`.
+If a subject who lacks an observation-terminating event should, in fact, remain at risk indefinitely, set `cens_after_last = FALSE`.
+
 
 ### Terminal events of interest
 
-Suppose the endpoint of interest includes a fatal event. One such endpoint is heart failure hospitalization or CV-death. In this setting, it becomes necessary to distinguish non-fatal events of interest, after which the subject remains in the risk set, from fatal events of interest, after which the subject is removed from the risk set and precluded from having any future events. To achieve this, a fatal event of interest should be recorded using two records. The first, with `status = 1`, indicates that an event of interest has occurred. The second, with `status = 2`, indicates that the event was terminal. For example, the following data indicate that subject 1 had 3 events of interest, and that the 3rd event, occurring at `time = 5`, was terminal. 
+Suppose the endpoint of interest includes a fatal event. One such endpoint is heart failure hospitalization (HFH) or cardiovascular (CV)-death. In this setting, it becomes necessary to distinguish non-fatal events of interest (e.g. HFH), after which the subject remains in the risk set, from fatal events of interest (e.g. CV-death), after which the subject is removed from the risk set. To achieve this, a fatal event of interest should be recorded using two records. The first, with `status = 1`, indicates that an event of interest has occurred. The second, with `status = 2`, indicates that the event was terminal. For example, the following data indicate that subject 1 had 3 events of interest, and that the 3rd event, occurring at `time = 5`, was terminal. 
 
 ```
 ##   idx time status
@@ -118,6 +130,9 @@ Note that, by default, subject 2 is assumed to have been censored after their 3r
 ```
 
 Although censoring (`status = 0`) and a terminal event (`status = 2`) both remove a subject from the risk set, there is an important distinction. Censoring leaves open the possibility that the subject experienced more events of interest in the future, whereas a terminal event precludes the possibility of any future events of interest.
+
+
+## Analyses
 
 ### AUCs
 
