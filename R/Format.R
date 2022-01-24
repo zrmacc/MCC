@@ -80,6 +80,7 @@ FormatData <- function(
   rownames(final_data) <- NULL
   
   # Ensure each subject has exactly 1 terminal event.
+  obs_end <- NULL
   check <- final_data %>%
     dplyr::group_by(idx) %>%
     dplyr::summarise(

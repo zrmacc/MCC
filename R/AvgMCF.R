@@ -63,6 +63,7 @@ CalcMargMCF <- function(data) {
   
   # Stratum sizes.
   idx <- time <- status <- arm <- strata <- NULL
+  n0 <- n1 <- n <- w <- NULL
   stratum_sizes <- data %>%
     dplyr::group_by(strata) %>%
     dplyr::summarise(
