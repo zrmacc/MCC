@@ -40,7 +40,7 @@ print.CompAugAUCs <- function(x, ...) {
     out <- y
     if (is.numeric(y)) {
       dec_part <- (y %% 1)
-      if (max(dec_part) > 0) {
+      if (max(dec_part, na.rm = TRUE) > 0) {
         out <- signif(y, digits = 3)
       }
     }
@@ -137,7 +137,7 @@ print.CompStratAUCs <- function(x, ...) {
     out <- y
     if (is.numeric(y)) {
       dec_part <- (y %% 1)
-      if (max(dec_part) > 0) {
+      if (max(dec_part, na.rm = TRUE) > 0) {
         out <- signif(y, digits = 3)
       }
       }
