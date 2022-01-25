@@ -86,6 +86,18 @@ CompareAUCs <- function(
     stop(msg)
   }
   
+  # Check that no patient are in both arms.
+  arm1_idx <- unique(idx[arm == 1])
+  arm0_idx <- unique(idx[arm == 0])
+  repeated_indices <- length(intersect(arm1_idx, arm0_idx))
+  if (repeated_indices > 0) {
+    msg <- paste0(
+      "Patient in different arms with the same identifier (idx)\n",
+      "were detected. Each patient should have a unique identifier."
+    )
+    stop(msg)
+  }
+  
   # Format data.
   data <- FormatData(
     idx = idx,

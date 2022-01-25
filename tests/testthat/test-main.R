@@ -1,3 +1,22 @@
+test_that("Reused subject IDs raises error.", {
+  data <- data.frame(
+    time = c(1, 1),
+    status = c(1, 2),
+    idx = c(1, 1),
+    arm = c(1, 0)
+  )
+  
+  expect_error(
+    CompareAUCs(
+      data$idx,
+      data$time,
+      data$status,
+      data$arm,
+      tau = 1
+    )
+  )
+})
+
 test_that("Test AUC comparison.", {
   
   tau <- 5
@@ -14,6 +33,7 @@ test_that("Test AUC comparison.", {
       )
     )
   }
+  
   
   # Case 1.
   data1 <- data.frame(
@@ -38,6 +58,7 @@ test_that("Test AUC comparison.", {
   expect_equal(observed@MargAreas$area[1], auc0)
   expect_equal(observed@MargAreas$area[2], auc1)
   expect_equal(observed@Pvals$observed[1], auc1 - auc0)
+  
   
   # Case 2.
   data1 <- data.frame(
