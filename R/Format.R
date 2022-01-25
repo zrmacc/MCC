@@ -88,7 +88,7 @@ FormatData <- function(
     )
   
   if (any(check$n_obs_end != 1)) {
-    warning("Patience without censoring times were found.")
+    warning("Patients without censoring times were found.")
   }
   
   final_data$obs_end <- NULL
