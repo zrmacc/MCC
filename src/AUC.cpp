@@ -3,7 +3,7 @@
 
 // ----------------------------------------------------------------------------
 
-//' Calculate Variance of AUC
+//' Calculate AUC Influence Function Contributions 
 //'
 //' @param event_rate Event rate. 
 //' @param idx Unique subject index. 
