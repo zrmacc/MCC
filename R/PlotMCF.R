@@ -1,6 +1,6 @@
 # Purpose: Function to plot the mean cumulative functions,
 # comparing two treatment arms.
-# Updated: 2021-08-06
+# Updated: 2022-05-19
 
 # -----------------------------------------------------------------------------
 
@@ -14,7 +14,6 @@
 #' @param status_name Name of status column in data.
 #' @param time_name Name of column column in data.
 #' @return stepfun.
-#' 
 #' @export
 
 MCFCurve <- function(
@@ -34,9 +33,9 @@ MCFCurve <- function(
   
   # Construct MCF.
   mcf <- MCC::CalcMCF(
-    time = df$time, 
-    status = df$status, 
     idx = df$idx,
+    status = df$status, 
+    time = df$time, 
     calc_var = FALSE
   )
   
@@ -46,7 +45,6 @@ MCFCurve <- function(
 
 
 # -----------------------------------------------------------------------------
-
 
 
 #' Number at Risk Curve
@@ -59,7 +57,6 @@ MCFCurve <- function(
 #' @param status_name Name of status column in data.
 #' @param time_name Name of column column in data.
 #' @return stepfun.
-#' 
 #' @importFrom dplyr "%>%"
 #' @export
 
@@ -79,7 +76,12 @@ NARCurve <- function(
     )
   
   # Fit cumulative incidence curve.
-  fit <- MCC::CalcMCF(data$time, data$status, data$idx, calc_var = FALSE)
+  fit <- MCC::CalcMCF(
+    idx = data$idx,
+    status = data$status,
+    time = data$time,
+    calc_var = FALSE
+  )
   
   # Case where last observation is censoring or death.
   last_row <- fit[nrow(fit), ]
@@ -163,9 +165,7 @@ MCFPlotFrame <- function(
 #' @param y_lim Y-axis limits.
 #' @param y_name Y-axis label.
 #' @return ggplot object.
-#' 
 #' @importFrom dplyr "%>%"
-#' @importFrom ggplot2 aes
 #' @export
 
 PlotMCFs <- function(
@@ -256,7 +256,7 @@ PlotMCFs <- function(
     ) + 
     ggplot2::geom_step(
       data = df, 
-      aes(x = time, y = mcf, color = arm), 
+      ggplot2::aes(x = time, y = mcf, color = arm), 
       size = 1) + 
     ggplot2::scale_color_manual(
       name = NULL,
@@ -309,6 +309,7 @@ PlotMCFs <- function(
 
 # -----------------------------------------------------------------------------
 
+
 #' Plot AUMCFs.
 #' 
 #' Plot area under the mean cumulative function for a single treatment arm.
@@ -331,9 +332,7 @@ PlotMCFs <- function(
 #' @param y_lim Y-axis limits.
 #' @param y_name Y-axis label.
 #' @return ggplot object.
-#' 
 #' @importFrom dplyr "%>%"
-#' @importFrom ggplot2 aes element_blank
 #' @export
 
 PlotAUMCFs <- function(
@@ -389,9 +388,9 @@ PlotAUMCFs <- function(
   
   # Estimate mean cumulative function (MCF).
   fit_mcf <- MCC::CalcMCF(
-    time = data$time,
+    idx = data$idx,
     status = data$status,
-    idx = data$idx
+    time = data$time
   )
   
   # MCF function.
@@ -413,13 +412,13 @@ PlotAUMCFs <- function(
   q <- ggplot2::ggplot() +
     ggplot2::theme_bw() + 
     ggplot2::theme(
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank(),
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
       legend.position = c(0.2, 0.8)
     ) + 
     ggplot2::geom_ribbon(
       data = df_shade,
-      aes(x = time, ymin = 0, ymax = mcf, fill = arm),
+      ggplot2::aes(x = time, ymin = 0, ymax = mcf, fill = arm),
       alpha = 0.5
     ) +
     ggplot2::scale_fill_manual(
@@ -429,7 +428,7 @@ PlotAUMCFs <- function(
     ) +
     ggplot2::geom_step(
       data = df, 
-      aes(x = time, y = mcf), 
+      ggplot2::aes(x = time, y = mcf), 
       color = color,
       size = 1
     ) 
@@ -491,7 +490,7 @@ PlotAUMCFs <- function(
 #' @param time_name Name of time column.
 #' @return Data.frame containing `time`, `nar_ctrl`, `nar_trt`.
 #' 
-#' @importFrom dplyr "%>%" filter rename 
+#' @importFrom dplyr "%>%" 
 
 NARPlotFrame <- function(
   data, 
@@ -539,9 +538,7 @@ NARPlotFrame <- function(
 #' @param x_max X-axis upper limit.
 #' @param y_labs Y-axis tick labels.
 #' @return ggplot.
-#' 
 #' @importFrom dplyr "%>%"
-#' @importFrom ggplot2 aes element_blank
 #' @export
 
 PlotNARs <- function(
@@ -592,12 +589,12 @@ PlotNARs <- function(
   q <- ggplot2::ggplot(data = df) +
     ggplot2::theme_bw() + 
     ggplot2::theme(
-      panel.border = element_blank(),
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank()
+      panel.border = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank()
     ) +
     ggplot2::geom_text(
-      aes(x = time, y = arm, label = nar)
+      ggplot2::aes(x = time, y = arm, label = nar)
     ) +
     ggplot2::scale_x_continuous(
       breaks = x_breaks,

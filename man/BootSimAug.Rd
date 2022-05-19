@@ -2,20 +2,20 @@
 % Please edit documentation in R/Bootstrap.R
 \name{BootSimAug}
 \alias{BootSimAug}
-\title{Bootstrap Inference}
+\title{Bootstrap Inference for Augmentation Estimator}
 \usage{
-BootSimAug(data, obs_stats, alpha, reps, tau)
+BootSimAug(data, obs_stats, tau, alpha = 0.05, reps = 2000)
 }
 \arguments{
 \item{data}{Data.frame containing: idx, time, status, arm, strata.}
 
 \item{obs_stats}{Observed contrasts.}
 
+\item{tau}{Truncation time.}
+
 \item{alpha}{Type I error.}
 
 \item{reps}{Simulations replicates.}
-
-\item{tau}{Truncation time.}
 }
 \value{
 Data.frame containing:

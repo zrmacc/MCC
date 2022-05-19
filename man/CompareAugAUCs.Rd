@@ -44,9 +44,10 @@ reference (arm = 0) with adjusted for covariates.
 \examples{
 \donttest{
 # Simulate data set.
+n <- 100
 covariates <- data.frame(
-  arm = c(rep(1, 50), rep(0, 50)),
-  covar = rnorm(100)
+  arm = c(rep(1, n/2), rep(0, n/2)),
+  covar = rnorm(n)
 )
 data <- GenData(
   beta_event = c(log(0.5), 1),
@@ -54,10 +55,7 @@ data <- GenData(
 )
 
 aucs <- CompareAUCs(
-  time = data$time,
-  status = data$status,
-  arm = data$arm,
-  idx = data$idx,
+  data,
   covars = data$covar,
   tau = 2,
   boot = TRUE,

@@ -4,26 +4,39 @@
 \alias{FormatData}
 \title{Format Data}
 \usage{
-FormatData(idx, time, status, arm, covars, strata, cens_after_last)
+FormatData(
+  data,
+  arm_name = "arm",
+  cens_after_last = TRUE,
+  covars = NULL,
+  idx_name = "idx",
+  status_name = "status",
+  strata = NULL,
+  time_name = "time"
+)
 }
 \arguments{
-\item{idx}{Unique subject index.}
+\item{data}{Data.frame.}
 
-\item{time}{Observation time.}
+\item{arm_name}{Name of column containing treatment arm. Must be coded as 1
+for treatment, 0 for reference.}
 
-\item{status}{Status, coded as 0 for censoring, 1 for event, 2 for death.
-Note that subjects who are neither censored nor die are assumed to
-remain at risk throughout the observation period.}
-
-\item{arm}{Arm, coded as 1 for treatment, 0 for reference.}
+\item{cens_after_last}{Should subjects who lack an explicit censoring time
+be censored after their last observed event?}
 
 \item{covars}{Optional covariate matrix. Rows should correspond with the
 subject index `idx`. Factor and interaction terms should be expanded.}
 
-\item{strata}{Optional stratification factor.}
+\item{idx_name}{Name of column containing a unique subject index.}
 
-\item{cens_after_last}{Should subjects who lack an explicit censoring time
-be censored after their last observed event?}
+\item{status_name}{Name of column containing the status. Must be coded as 0 for
+censoring, 1 for event, 2 for death. Each subject should have an 
+observation-terminating event, either censoring or death.}
+
+\item{strata}{Optional stratification factor. Should not be provided if a
+covariate matrix is provided.}
+
+\item{time_name}{Name of column containing the observation time.}
 }
 \value{
 Formatted data.frame.

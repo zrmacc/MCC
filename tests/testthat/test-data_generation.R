@@ -33,6 +33,6 @@ test_that("Data generation with covariates and betas.", {
     beta_event = beta_event,
     covariates = covariates
   )
-  expect_gt(length(unique(data$true_death_rate)), 1)
-  expect_gt(length(unique(data$true_event_rate)), 1)
+  expect_gt(length(unique(data$death_rate)), 1)
+  expect_gt(length(unique(data$event_rate)), 1)
 })

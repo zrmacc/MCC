@@ -1,64 +1,5 @@
-
-#' Simulate Data for a Single Subject.
-#' 
-#' @param idx Subject index.
-#' @param censoring_rate Rate of censoring. 
-#' @param event_rate Rate of events.
-#' @param death_rate Rate of terminal events. 
-#' @param tau Truncation time.
-#' @importFrom stats rexp
-#' @return Recurrent event data for a single subject.
-
-SimSubj <- function(
-  idx,
-  censoring_rate,
-  event_rate,
-  death_rate,
-  tau
-) {
-  
-  # Censoring and death times.
-  censor <- ifelse(
-    censoring_rate > 0,
-    min(rexp(n = 1, rate = censoring_rate), tau),
-    tau
-  )
-  death <- ifelse(
-    death_rate > 0,
-    rexp(n = 1, rate = death_rate),
-    Inf
-  )
-  final_status <- ifelse(death <= censor, 2, 0)
-  obs_time <- min(censor, death)
-  
-  # Simulate event times.
-  events <- c()
-  follow_up <- 0
-  while (follow_up < obs_time) {
-    
-    gap <- rexp(n = 1, rate = event_rate)
-    follow_up <- follow_up + gap
-    
-    # If follow-up at event does not exceed minimum of censoring and death,
-    # then append the event.
-    if (follow_up < obs_time) {
-      events <- c(events, follow_up)
-    }
-  }
-  
-  # Data.
-  out <- data.frame(
-    "idx" = idx,
-    "time" = c(events, obs_time),
-    "status" = c(rep(1, length(events)), final_status)
-  )
-  return(out)
-}
-
-# -----------------------------------------------------------------------------
-# Data Generation.
-# -----------------------------------------------------------------------------
-
+# Purpose: Data generation.
+# Updated: 2022-05-15
 
 #' Simulate Recurrent Events Data
 #' 
@@ -119,12 +60,13 @@ GenData <- function(
   # Calculate subject-specific event rate.
   if (is.null(beta_death)) {beta_death <- rep(0, ncol(covariates))}
   if (is.null(beta_event)) {beta_event <- rep(0, ncol(covariates))}
-  df$true_death_rate <- base_death_rate * exp(covariates %*% beta_death)
-  df$true_event_rate <- base_event_rate * exp(covariates %*% beta_event)
+  df$cens_rate <- censoring_rate
+  df$death_rate <- base_death_rate * exp(covariates %*% beta_death)
+  df$event_rate <- base_event_rate * exp(covariates %*% beta_event)
   
   # Apply floor to death and event rates.
-  df$true_death_rate <- pmax(df$true_death_rate, min_death_rate)
-  df$true_event_rate <- pmax(df$true_event_rate, min_event_rate)
+  df$death_rate <- pmax(df$death_rate, min_death_rate)
+  df$event_rate <- pmax(df$event_rate, min_event_rate)
   
   # Apply frailty.
   if (frailty_variance > 0) {
@@ -133,31 +75,18 @@ GenData <- function(
   } else {
     df$frailty <- 1
   }
-  df$true_death_rate <- df$frailty * df$true_death_rate
-  df$true_event_rate <- df$frailty * df$true_event_rate 
+  df$death_rate <- df$frailty * df$death_rate
+  df$event_rate <- df$frailty * df$event_rate 
   
   # Generate event-date.
-  idx <- NULL
-  true_death_rate <- NULL
-  true_event_rate <- NULL
-  data <- df %>%
-    dplyr::group_by(idx) %>%
-    dplyr::summarise(
-      SimSubj(
-        idx = idx, 
-        censoring_rate = censoring_rate, 
-        event_rate = true_event_rate, 
-        death_rate = true_death_rate, 
-        tau = tau
-      ),
-      .groups = "drop"
-    ) %>% as.data.frame()
+  data <- SimDataCpp(
+    df$cens_rate, df$death_rate, df$idx, df$event_rate, tau)
   
   # Merge in covariates.
-  data <- merge(
+  out <- merge(
     x = data,
     y = df,
     by = "idx"
   )
-  return(data)
+  return(out)
 }

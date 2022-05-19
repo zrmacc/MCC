@@ -4,14 +4,16 @@
 \alias{AUC}
 \title{Find Area Under the Curve}
 \usage{
-AUC(times, values, tau)
+AUC(times, values, tau, subdiv = 10000)
 }
 \arguments{
-\item{times}{MCF times.}
+\item{times}{Time points.}
 
-\item{values}{MCF values}
+\item{values}{Values.}
 
 \item{tau}{Truncation time.}
+
+\item{subdiv}{Subdivisions for integration.}
 }
 \value{
 Numeric area under the curve.

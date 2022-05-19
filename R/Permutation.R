@@ -1,4 +1,5 @@
 # Purpose: Functions for permutation inference.
+# Updated: 2022-05-19
 
 # -----------------------------------------------------------------------------
 # P-value calculation.
@@ -9,6 +10,7 @@
 #' Calculates p-value from 1-sided rejection indicator.
 #' @param p Vector of 1/0 rejection indicators.
 #' @return Numeric p-value.
+#' @noRd
 
 CalcP <- function(p) {
   out <- 2 * mean(c(1, p))
@@ -20,9 +22,9 @@ CalcP <- function(p) {
 # Stratified Estimator.
 # -----------------------------------------------------------------------------
 
-#' Permutation Inference for Stratified Estimator.
+#' Permutation Inference for Stratified Estimator
 #'
-#' @param data Data.frame containing: idx, time, status, arm, strata.
+#' @param data Data.frame containing: {arm, idx, status, strata time}.
 #' @param obs_stats Observed contrasts.
 #' @param tau Truncation time.
 #' @param alpha Type I error.
@@ -38,8 +40,8 @@ PermSimStrat <- function(
   data,
   obs_stats,
   tau,
-  alpha,
-  reps
+  alpha = 0.05,
+  reps = 2000
 ) {
   
   # Permutation function.
@@ -71,8 +73,8 @@ PermSimStrat <- function(
     # Results
     out <- c(
       perm_stats$perm_observed,
-      "perm_diff_1sided" = perm_diff_1sided,
-      "perm_ratio_1sided" = perm_ratio_1sided
+      perm_diff_1sided = perm_diff_1sided,
+      perm_ratio_1sided = perm_ratio_1sided
     )
     return(out)
   }
@@ -111,8 +113,8 @@ PermSimAug <- function(
   data,
   obs_stats,
   tau,
-  alpha,
-  reps
+  alpha = 0.05,
+  reps = 2000
 ) {
   
   # Permutation function.
@@ -146,9 +148,6 @@ PermSimAug <- function(
   
   sim <- lapply(seq_len(reps), Loop)
   sim <- data.frame(do.call(rbind, sim))
-  colnames(sim) <- c(
-    "perm_diff",
-    "perm_1sided"
-  )
+  colnames(sim) <- c("perm_diff", "perm_1sided")
   return(sim)
 }

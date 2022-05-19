@@ -1,4 +1,5 @@
 # Purpose: Calculate the average MCF across strata.
+# Updated: 2022-05-19
 
 #' Calculate Average MCF Curve
 #'
@@ -17,7 +18,7 @@ AvgMCF <- function(curve_list, weights) {
 
   # Extract MCFs evaluated on times.
   aux <- function(x) {
-    g <- stepfun(x$time, c(0, x$mcf), right = FALSE)
+    g <- stats::stepfun(x$time, c(0, x$mcf), right = FALSE)
     return(g(time))
   }
   mcfs <- lapply(curve_list, aux)
@@ -26,7 +27,7 @@ AvgMCF <- function(curve_list, weights) {
 
   # Standard errors.
   aux <- function(x) {
-    g <- stepfun(x$time, c(0, x$var_mcf), right = FALSE)
+    g <- stats::stepfun(x$time, c(0, x$var_mcf), right = FALSE)
     return(g(time))
   }
   vars <- lapply(curve_list, aux)
@@ -35,9 +36,9 @@ AvgMCF <- function(curve_list, weights) {
 
   # Output table.
   out <- data.frame(
-    "time" = time,
-    "mcf" = avg_mcf,
-    "var_mcf" = avg_var
+    time = time,
+    mcf = avg_mcf,
+    var_mcf = avg_var
   )
   out$se_mcf <- sqrt(out$var_mcf)
   return(out)
@@ -54,15 +55,19 @@ AvgMCF <- function(curve_list, weights) {
 #' weights proportional to the total number of subjects (across arms)
 #' belonging to that stratum. 
 #'
-#' @param data Data.frame containing: idx, time, status, arm, strata.
+#' @param data Data.frame containing {arm, idx, status, strata, time}.
 #' @importFrom dplyr "%>%"
 #' @return Data.frame.
 #' @export 
 
 CalcMargMCF <- function(data) {
   
+  # Format data.
+  arm <- idx <- status <- strata <- time <- NULL
+  data <- data %>%
+    dplyr::select(arm, idx, status, strata, time)
+  
   # Stratum sizes.
-  idx <- time <- status <- arm <- strata <- NULL
   n0 <- n1 <- n <- w <- NULL
   stratum_sizes <- data %>%
     dplyr::group_by(strata) %>%
@@ -77,6 +82,7 @@ CalcMargMCF <- function(data) {
       w0 = w / sum(w[n0 != 0]),
       w1 = w / sum(w[n1 != 0])
     )
+  # Strata empty in one arm or the other receive no weight.
   stratum_sizes$w1[stratum_sizes$n1 == 0] <- 0
   stratum_sizes$w0[stratum_sizes$n0 == 0] <- 0
   
@@ -85,7 +91,7 @@ CalcMargMCF <- function(data) {
     dplyr::filter(arm == 1) %>%
     dplyr::group_by(strata) %>%
     dplyr::summarise(
-      CalcMCF(time, status, idx),
+      CalcMCF(idx = idx, status = status, time = time, calc_var = TRUE),
       .groups = "keep"
     ) %>%
     dplyr::group_split()
@@ -97,7 +103,7 @@ CalcMargMCF <- function(data) {
     dplyr::filter(arm == 0) %>%
     dplyr::group_by(strata) %>%
     dplyr::summarise(
-      CalcMCF(time, status, idx),
+      CalcMCF(idx = idx, status = status, time = time),
       .groups = "keep"
     ) %>%
     dplyr::group_split()

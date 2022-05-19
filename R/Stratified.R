@@ -1,19 +1,16 @@
 # Purpose: Stratified estimation of AUC.
-# Updated: 2020-12-17
+# Updated: 2022-05-19
 
 # -----------------------------------------------------------------------------
 # Calculate Stratified AUC.
 # -----------------------------------------------------------------------------
 
-#' Calculate Test Statistics for Stratified Estimator.
+#' Calculate Test Statistics for Stratified Estimator
 #'
-#' @param data Data.frame containing: idx, time, status, arm, strata.
+#' @param data Data.frame containing: {arm, idx, status, strata, time}.
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
-#' @importFrom dplyr "%>%" filter group_by group_split inner_join select
-#'   summarise
-#' @export 
 #' @return If `return_areas`, list containing:
 #' \itemize{
 #'   \item 'avg_mcf', average MCF across strata.
@@ -22,12 +19,12 @@
 #'   \item 'stratum_areas', the per-stratum and per-arm areas.
 #'   \item 'weights', the weights of each stratum.
 #' }
-#'  Else, only 'contrasts' is returned. 
-
+#' @importFrom dplyr "%>%"
+#' @noRd
 CalcStratAUC <- function(
   data,
   tau,
-  alpha,
+  alpha = 0.05,
   return_areas = FALSE
 ) {
   
@@ -36,28 +33,34 @@ CalcStratAUC <- function(
   stratum_sizes <- data %>%
     dplyr::group_by(strata) %>%
     dplyr::summarise("n" = length(unique(idx)), .groups = "drop") %>%
-    as.data.frame
+    as.data.frame()
   stratum_sizes$weight <- stratum_sizes$n / sum(stratum_sizes$n)
   
   # Stratum areas.
   stratum_areas <- data %>%
     dplyr::group_by(arm, strata) %>%
     dplyr::summarise(
-      StratumAUC(time, status, idx, tau = tau, calc_var = return_areas),
+      StratumAUC(
+        idx = idx,
+        status = status,
+        time = time,
+        tau = tau,
+        calc_var = return_areas
+      ),
       .groups = "drop"
     ) %>% 
     dplyr::inner_join(
       stratum_sizes[, c("strata", "weight")], 
       by = "strata"
     ) %>%
-    as.data.frame
+    as.data.frame()
   
   # Marginal areas.
   area <- n <- se_area <- weight <- NULL
   marg_areas <- stratum_areas %>%
     dplyr::group_by(arm) %>%
     dplyr::summarise(
-      MargAUC(areas = area, ses = se_area, weights = weight, n = n),
+      MargAUC(areas = area, n = n, ses = se_area, weights = weight),
       .groups = "drop"
     ) %>%
     as.data.frame
@@ -94,9 +97,9 @@ CalcStratAUC <- function(
 #' 
 #' Calculates the AUC for a single stratum.
 #' 
+#' @param idx Subject index.
+#' @param status Event status.
 #' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
-#' @param idx Unique subject index. 
 #' @param tau Truncation time. 
 #' @param calc_var Calculate analytical variance? 
 #' @return Data.frame containing:
@@ -104,54 +107,44 @@ CalcStratAUC <- function(
 #'   \item Truncation time 'tau' and estimated 'area'.
 #'   \item Variance 'var_area' and standard error 'se_area', if requested.
 #' }
+#' @noRd
 
 StratumAUC <- function(
-  time, 
-  status,
   idx,
+  status,
+  time,
   tau,
   calc_var = TRUE
 ) { 
   
   # Fit MCF.
-  fit <- CalcMCF(
-    time = time,
-    status = status,
+  mcf <- CalcMCF(
     idx = idx,
+    status = status,
+    time = time,
     calc_var = calc_var
   )
   
   # Find AUC.
   area <- AUC(
-    times = fit$time,
-    values = fit$mcf,
+    times = mcf$time,
+    values = mcf$mcf,
     tau = tau
   )
   
   # Output.
   n <- length(unique(idx))
   out <- data.frame(
-    "n" = n,
-    "tau" = tau,
-    "area" = area
+    n = n,
+    tau = tau,
+    area = area
   )
   
   if (calc_var) {
     
-    # Calculate influence contributions.
-    psi <- data.frame(
-      time = time,
-      status = status,
-      idx = idx
-    ) %>%
-      dplyr::group_by(idx) %>%
-      dplyr::summarise(
-        "psi" = PsiAUCi(mcf = fit, time = time, status = status, tau = tau),
-        .groups = "drop" ) %>%
-      dplyr::pull(psi) 
-    
     # Find variance of area.
-    out$var_area <- mean(psi^2)
+    df <- data.frame(idx = idx, status = status, time = time)
+    out$var_area <- VarAUC(df, tau, mcf = mcf)
     out$se_area <- sqrt(out$var_area / n)
   }
   
@@ -166,27 +159,25 @@ StratumAUC <- function(
 #' Calculates the marginal AUC across strata.
 #' 
 #' @param areas Estimated statistics.
+#' @param n Sample sizes.
 #' @param ses Standard errors.
 #' @param weights Weights.
-#' @param n Sample sizes.
 #' @return Data.frame containing:
 #' \itemize{
 #'   \item The marginal area.
 #'   \item The standard error of the area.
 #' }
+#' @noRd
 
 MargAUC <- function(
   areas,
+  n,
   ses,
-  weights,
-  n
+  weights
 ) {
   
   # Output.
-  out <- data.frame(
-    "n" = sum(n),
-    "area" = sum(weights * areas)
-  )
+  out <- data.frame(n = sum(n), area = sum(weights * areas))
   
   # Add standard error, if provided.
   if (!is.null(ses)) {
@@ -213,9 +204,6 @@ MargAUC <- function(
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
-#' @importFrom stats quantile
-#' @importFrom methods new
-#' @importFrom dplyr "%>%" select
 #' @return Object of class compAUCs with these slots:
 #' \itemize{
 #'   \item `@Areas`: The AUC for each arm.
@@ -226,12 +214,14 @@ MargAUC <- function(
 #'   \item `@Reps`: Bootstrap and permutation realizations of the test statistics.
 #'   \item `@Weights`: Per-stratum weights and AUCs.
 #' }
+#' @importFrom dplyr "%>%" 
 #' @examples
 #' \donttest{
 #' # Simulate data set.
+#' n <- 100
 #' covariates <- data.frame(
-#'   arm = c(rep(1, 50), rep(0, 50)),
-#'   strata = stats::rbinom(100, 1, 0.2)
+#'   arm = c(rep(1, n/2), rep(0, n/2)),
+#'   strata = stats::rbinom(n, 1, 0.2)
 #' )
 #' data <- GenData(
 #'   beta_event = c(log(0.5), log(0.8)),
@@ -239,10 +229,7 @@ MargAUC <- function(
 #' )
 #'
 #' aucs <- CompareAUCs(
-#'   time = data$time,
-#'   status = data$status,
-#'   arm = data$arm,
-#'   idx = data$idx,
+#'   data,
 #'   strata = data$strata,
 #'   tau = 2,
 #'   boot = TRUE,
@@ -273,17 +260,11 @@ CompareStratAUCs <- function(
 
   # CIs.
   cis <- obs_stats %>% dplyr::select(-c("p"))
-  cis <- data.frame(
-    method = "asymptotic",
-    cis
-  )
+  cis <- data.frame(method = "asymptotic", cis)
 
   # P-values.
   pvals <- obs_stats %>% dplyr::select(c("contrast", "observed", "p"))
-  pvals <- data.frame(
-    "method" = "asymptotic",
-    pvals
-  )
+  pvals <- data.frame(method = "asymptotic", pvals)
 
   # Simulation replicates.
   sim_reps <- list()
@@ -318,14 +299,11 @@ CompareStratAUCs <- function(
     # P-value.
     boot_p <- CalcP(boot_sim$is_diff_sign)
     boot_pvals <- cbind(
-      "method" = "bootstrap",
+      method = "bootstrap",
       pvals %>% dplyr::select(c("contrast", "observed")),
-      "p" = boot_p
+      p = boot_p
     )
-    pvals <- rbind(
-      pvals,
-      boot_pvals
-    )
+    pvals <- rbind(pvals, boot_pvals)
   }
 
   # -------------------------------------------------------
@@ -349,23 +327,20 @@ CompareStratAUCs <- function(
       dplyr::summarise_all(CalcP) %>% as.numeric
       
     perm_pvals <- data.frame(
-      "method" = "permutation",
-      "contrast" = c("A1-A0", "A1/A0"),
-      "observed" = obs_stats$observed,
-      "p" = perm_pvals
+      method = "permutation",
+      contrast = c("A1-A0", "A1/A0"),
+      observed = obs_stats$observed,
+      p = perm_pvals
     )
     rownames(perm_pvals) <- NULL
-    pvals <- rbind(
-      pvals,
-      perm_pvals
-    )
+    pvals <- rbind(pvals, perm_pvals)
     pvals <- pvals[order(pvals$observed), ]
   }
 
   # -------------------------------------------------------
 
   # Output
-  out <- new(
+  out <- methods::new(
     Class = "CompStratAUCs",
     StratumAreas = obs$stratum_areas,
     MargAreas = obs$marg_areas,

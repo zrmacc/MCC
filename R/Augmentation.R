@@ -1,5 +1,5 @@
 # Purpose: Augmentation estimator of AUC.
-# Updated: 2020-12-17
+# Updated: 2022-05-18
 
 # -----------------------------------------------------------------------------
 # Calculated Augmented AUC.
@@ -9,59 +9,50 @@
 #' 
 #' Calculate test statistics for augmentation estimator.
 #'
-#' @param data Data.frame containing: idx, time, status, arm, and covars.
+#' @param data Data.frame containing {arm, idx, status, time}.
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
-#' @importFrom dplyr "%>%" group_by select summarise summarise_all
-#' @importFrom MASS ginv
-#' @export 
 #' @return If return_areas is TRUE, list containing:
 #' \itemize{
 #'   \item 'marg_area', marginal area for each arm.
 #'   \item 'mcf', mean cumulative function for each strata.
 #'   \item 'contrasts', including the augmented difference of areas.
 #' }
-#'  Else, only 'contrasts' is returned. 
+#' @importFrom dplyr "%>%"
+#' @export 
 
 CalcAugAUC <- function(
   data,
   tau, 
-  alpha, 
+  alpha = 0.05, 
   return_areas = FALSE
 ) {
   
   # Summarize to per-subject covariate data.
   arm <- idx <- NULL
-  subj_covars <- data %>% 
+  covars <- data %>% 
     dplyr::select(-c("time", "status")) %>%
-    dplyr::group_by(idx) %>%
+    dplyr::group_by(arm, idx) %>%
     dplyr::summarise_all(.funs = mean, .groups = "drop") %>%
-    as.data.frame
+    as.data.frame()
   
-  mu <- subj_covars %>%
-    dplyr::select(-c("idx", "arm")) %>%
+  mu <- covars %>%
+    dplyr::select(-c("arm", "idx")) %>%
     dplyr::summarise_all(.funs = mean) %>%
-    as.numeric
-  
-  # Split data.
-  data1 <- subset(x = data, arm == 1)
-  subj_covars1 <- subset(x = subj_covars, arm == 1, select = -arm)
-  
-  data0 <- subset(x = data, arm == 0)
-  subj_covars0 <- subset(x = subj_covars, arm == 0, select = -arm)
+    as.numeric()
   
   # Areas. 
   a1 <- AugAUC(
-    data = data1,
-    subj_covars = subj_covars1,
+    data = data %>% dplyr::filter(arm == 1),
+    covars = covars %>% dplyr::filter(arm == 1) %>% dplyr::select(-arm),
     mu = mu,
     tau = tau,
     calc_var = return_areas
   )
   a0 <- AugAUC(
-    data = data0,
-    subj_covars = subj_covars0,
+    data = data %>% dplyr::filter(arm == 0),
+    covars = covars %>% dplyr::filter(arm == 0) %>% dplyr::select(-arm),
     mu = mu,
     tau = tau,
     calc_var = return_areas
@@ -81,14 +72,14 @@ CalcAugAUC <- function(
   se_delta <- sqrt(var_delta)
   
   # Contrast data.frame.
-  crit <- qnorm(p = 1 - alpha / 2)
+  crit <- stats::qnorm(p = 1 - alpha / 2)
   contrasts <- data.frame(
-    "contrast" = "A1-A0",
-    "observed" = delta,
-    "se" = se_delta,
-    "lower" = delta - crit * se_delta,
-    "upper" = delta + crit * se_delta,
-    "p" = 2 * pnorm(q = abs(delta) / se_delta, lower.tail = FALSE)
+    contrast = "A1-A0",
+    observed = delta,
+    se = se_delta,
+    lower = delta - crit * se_delta,
+    upper = delta + crit * se_delta,
+    p = 2 * stats::pnorm(q = abs(delta) / se_delta, lower.tail = FALSE)
   )
   
   # Output
@@ -96,11 +87,11 @@ CalcAugAUC <- function(
     
     # Areas.
     marg_areas <- data.frame(
-      "arm" = c(0, 1),
-      "n" = c(a0$n, a1$n),
-      "tau" = tau,
-      "area" = c(a0$area, a1$area),
-      "se" = c(sqrt(a0$var_area / a0$n), sqrt(a1$var_area / a1$n))
+      arm = c(0, 1),
+      n = c(a0$n, a1$n),
+      tau = tau,
+      area = c(a0$area, a1$area),
+      se = c(sqrt(a0$var_area / a0$n), sqrt(a1$var_area / a1$n))
     )
     
     # MCF.
@@ -111,9 +102,9 @@ CalcAugAUC <- function(
     
     # Outputs.
     out <- list(
-      "marg_areas" = marg_areas,
-      "mcf" = rbind(mcf1, mcf0),
-      "contrasts" = contrasts
+      marg_areas = marg_areas,
+      mcf = rbind(mcf1, mcf0),
+      contrasts = contrasts
     )
   } else {
     out <- contrasts
@@ -124,13 +115,13 @@ CalcAugAUC <- function(
 
 # -----------------------------------------------------------------------------
 
-#' AUC Calculation for a Single Arm.
+#' Calculate Augmentation Components for a Single Arm
 #'
-#' @param data Data.frame including: time, status, idx.
-#' @param subj_covars Per-subject covariate data.
+#' @param data Data.frame including {idx, status, time}.
+#' @param covars Per-subject covariate data.
 #' @param mu Grand mean.
 #' @param tau Truncation time. 
-#' @param calc_var Calculate analytical variance?
+#' @param calc_var Calculate analytical variance of MCF?
 #' @return List containing:
 #' \itemize{
 #'   \item Tabulated mean cumulative function 'mcf'.
@@ -139,65 +130,55 @@ CalcAugAUC <- function(
 #'   \item 'gamma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\mu)\xi_{i}}.
 #'   \item 'mean_resid', \eqn{\frac{1}{n}\sum_{i=1}^{n}(X_{i}-\mu)}.
 #' }
+#' @noRd
 
 AugAUC <- function(
   data,
-  subj_covars,
+  covars,
   mu,
   tau,
   calc_var = TRUE
 ) { 
   
   # Fit MCF.
-  fit <- CalcMCF(
-    time = data$time,
-    status = data$status,
+  mcf <- CalcMCF(
     idx = data$idx,
+    status = data$status,
+    time = data$time,
     calc_var = calc_var
   )
   
   # Find Area.
   area <- AUC(
-    times = fit$time,
-    values = fit$mcf,
+    times = mcf$time,
+    values = mcf$mcf,
     tau = tau
   )
   
   # Calculate influence contributions.
-  # Note that psi is needed to calculate the argumentation estimator. 
-  idx <- time <- status <- NULL
-  subj_covars_psi <- data %>%
-    dplyr::group_by(idx) %>%
-    dplyr::summarise(
-      "psi" = PsiAUCi(mcf = fit, time = time, status = status, tau = tau),
-      .groups = "drop" ) %>%
-    dplyr::inner_join(y = subj_covars, by = "idx")
+  psi <- VarAUC(data, tau, mcf = mcf, return_psi = TRUE)
   
   # Covariates.
-  covars <- subj_covars_psi %>% dplyr::select(-c("idx", "psi")) %>% data.matrix
+  covars <- covars %>% 
+    dplyr::inner_join(psi, by = "idx") %>%
+    dplyr::select(-c("idx", "psi")) %>%
+    data.matrix()
   
   # Find variance of area.
-  var_area <- mean(subj_covars_psi$psi^2)
+  var_area <- mean(psi$psi^2)
   
-  # Resid matrix.
-  n <- nrow(subj_covars)
-  center <- matrix(data = mu, nrow = n, ncol = length(mu), byrow = TRUE)
-  resid <- covars - center
-  
-  # Covariance.
-  sigma <- t(resid) %*% resid / (n^2)
-  gamma <- t(resid) %*% subj_covars_psi$psi / (n^2)
-  mean_resid <- t(resid) %*% rep(1, n) / n
+  # Calculate remaining augmentation components.
+  aug_comp <- CalcAugComp(covars, mu, psi$psi)
   
   # Output.
   out <- list(
-    "n" = n,
-    "mcf" = fit,
-    "area" = area,
-    "var_area" = var_area,
-    "sigma" = sigma,
-    "gamma" = gamma,
-    "mean_resid" = mean_resid
+    area = area,
+    gamma = aug_comp$gamma,
+    n = aug_comp$n,
+    mean_resid = aug_comp$mean_resid,
+    mcf = mcf,
+    sigma = aug_comp$sigma,
+    var_area = var_area
   )
   return(out)
 }
@@ -219,9 +200,7 @@ AugAUC <- function(
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
-#' @importFrom dplyr "%>%" select
-#' @importFrom stats quantile
-#' @importFrom methods new
+#' @importFrom dplyr "%>%"
 #' @return Object of class CompareAugAUCs with these slots:
 #' \itemize{
 #'   \item `@Areas`: Marginal AUC for each arm.
@@ -233,9 +212,10 @@ AugAUC <- function(
 #' @examples 
 #' \donttest{
 #' # Simulate data set.
+#' n <- 100
 #' covariates <- data.frame(
-#'   arm = c(rep(1, 50), rep(0, 50)),
-#'   covar = rnorm(100)
+#'   arm = c(rep(1, n/2), rep(0, n/2)),
+#'   covar = rnorm(n)
 #' )
 #' data <- GenData(
 #'   beta_event = c(log(0.5), 1),
@@ -243,10 +223,7 @@ AugAUC <- function(
 #' )
 #'
 #' aucs <- CompareAUCs(
-#'   time = data$time,
-#'   status = data$status,
-#'   arm = data$arm,
-#'   idx = data$idx,
+#'   data,
 #'   covars = data$covar,
 #'   tau = 2,
 #'   boot = TRUE,
@@ -276,18 +253,12 @@ CompareAugAUCs <- function(
   obs_stats <- obs$contrasts
   
   # CIs.
-  cis <- obs_stats %>% select(-c("p"))
-  cis <- data.frame(
-    "method" = "asymptotic",
-    cis
-  )
+  cis <- obs_stats %>% dplyr::select(-c("p"))
+  cis <- data.frame(method = "asymptotic", cis)
   
   # P-values.
-  pvals <- obs_stats %>% select(c("contrast", "observed", "p"))
-  pvals <- cbind(
-    "method" = "asymptotic",
-    pvals
-  )
+  pvals <- obs_stats %>% dplyr::select(c("contrast", "observed", "p"))
+  pvals <- cbind(method = "asymptotic", pvals)
   
   # Simulation replicates.
   sim_reps <- list()
@@ -322,14 +293,11 @@ CompareAugAUCs <- function(
     # P-value.
     boot_p <- CalcP(boot_sim$is_diff_sign)
     boot_pvals <- data.frame(
-      "method" = "bootstrap",
+      method = "bootstrap",
       pvals %>% dplyr::select("contrast", "observed"),
-      "p" = boot_p
+      p = boot_p
     )
-    pvals <- rbind(
-      pvals,
-      boot_pvals
-    )
+    pvals <- rbind(pvals, boot_pvals)
   }
   
   # -------------------------------------------------------
@@ -350,10 +318,10 @@ CompareAugAUCs <- function(
     # Permutation p-values.
     perm_pval <- CalcP(perm_sim$perm_1sided)
     perm_pvals <- data.frame(
-      "method" = "permutation",
-      "contrast" = "A1-A0",
-      "observed" = obs_stats$observed[1],
-      "p" = perm_pval
+      method = "permutation",
+      contrast = "A1-A0",
+      observed = obs_stats$observed[1],
+      p = perm_pval
     )
     pvals <- rbind(
       pvals,
@@ -364,7 +332,7 @@ CompareAugAUCs <- function(
   # -------------------------------------------------------
   
   # Output
-  out <- new(
+  out <- methods::new(
     Class = "CompAugAUCs",
     Areas = obs$marg_areas,
     CIs = cis,

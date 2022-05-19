@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.5.4
+Version: 0.6.0
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -11,16 +11,19 @@ Description: Provides functions for estimating the mean cumulative count curve, 
 Depends: R (>= 3.4.0)
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
 Imports:
   dplyr,
   ggplot2,
   methods,
   MASS,
+  Rcpp,
   stats,
   survival,
   tidyr
-RoxygenNote: 7.1.1
+LinkingTo: 
+  Rcpp,
+  RcppArmadillo
+RoxygenNote: 7.1.2
 Suggests: 
   testthat (>= 3.0.0),
   withr

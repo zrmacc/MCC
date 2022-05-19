@@ -5,48 +5,53 @@
 \title{Inference on the Area Under the Cumulative Count Curve}
 \usage{
 CompareAUCs(
-  idx,
-  time,
-  status,
-  arm,
-  tau,
-  covars = NULL,
-  strata = NULL,
-  cens_after_last = TRUE,
+  data,
   alpha = 0.05,
+  arm_name = "arm",
   boot = FALSE,
+  cens_after_last = TRUE,
+  covars = NULL,
+  idx_name = "idx",
   perm = FALSE,
-  reps = 2000
+  reps = 2000,
+  status_name = "status",
+  strata = NULL,
+  tau = NULL,
+  time_name = "time"
 )
 }
 \arguments{
-\item{idx}{Unique subject index.}
+\item{data}{Data.frame.}
 
-\item{time}{Observation time.}
+\item{alpha}{Type I error level.}
 
-\item{status}{Status, coded as 0 for censoring, 1 for event, 2 for death.
-Note that subjects who are neither censored nor die are assumed to
-remain at risk throughout the observation period.}
+\item{arm_name}{Name of column containing treatment arm. Must be coded as 1
+for treatment, 0 for reference.}
 
-\item{arm}{Arm, coded as 1 for treatment, 0 for reference.}
-
-\item{tau}{Truncation time.}
-
-\item{covars}{Optional covariate matrix. Rows should correspond with the
-subject index `idx`. Factor and interaction terms should be expanded.}
-
-\item{strata}{Optional stratification factor.}
+\item{boot}{Logical, construct bootstrap confidence intervals (slow)?}
 
 \item{cens_after_last}{Should subjects who lack an explicit censoring time
 be censored after their last observed event?}
 
-\item{alpha}{Alpha level.}
+\item{covars}{Optional covariate matrix. Rows should correspond with the
+subject index `idx`. Factor and interaction terms should be expanded.}
 
-\item{boot}{Logical, construct bootstrap confidence intervals?}
+\item{idx_name}{Name of column containing a unique subject index.}
 
-\item{perm}{Logical, perform permutation test?}
+\item{perm}{Logical, perform permutation test (slow)?}
 
-\item{reps}{Replicates for bootstrap/permutation inference.}
+\item{reps}{Number of replicates for bootstrap/permutation inference.}
+
+\item{status_name}{Name of column containing the status. Must be coded as 0 for
+censoring, 1 for event, 2 for death. Each subject should have an 
+observation-terminating event, either censoring or death.}
+
+\item{strata}{Optional stratification factor. Should not be provided if a
+covariate matrix is provided.}
+
+\item{tau}{Numeric truncation time.}
+
+\item{time_name}{Name of column containing the observation time.}
 }
 \value{
 Object of class compAUCs with these slots:
@@ -83,10 +88,7 @@ data <- GenData(
 )
 
 aucs <- CompareAUCs(
-  time = data$time,
-  status = data$status,
-  arm = data$arm,
-  idx = data$idx,
+  data,
   tau = 2,
   boot = TRUE,
   perm = TRUE,

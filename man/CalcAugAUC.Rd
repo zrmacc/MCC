@@ -4,10 +4,10 @@
 \alias{CalcAugAUC}
 \title{Calculate Test Statistics for Augmentation Estimator.}
 \usage{
-CalcAugAUC(data, tau, alpha, return_areas = FALSE)
+CalcAugAUC(data, tau, alpha = 0.05, return_areas = FALSE)
 }
 \arguments{
-\item{data}{Data.frame containing: idx, time, status, arm, and covars.}
+\item{data}{Data.frame containing {arm, idx, status, time}.}
 
 \item{tau}{Truncation time.}
 
@@ -22,7 +22,6 @@ If return_areas is TRUE, list containing:
   \item 'mcf', mean cumulative function for each strata.
   \item 'contrasts', including the augmented difference of areas.
 }
- Else, only 'contrasts' is returned.
 }
 \description{
 Calculate test statistics for augmentation estimator.

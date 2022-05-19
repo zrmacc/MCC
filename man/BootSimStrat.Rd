@@ -2,9 +2,9 @@
 % Please edit documentation in R/Bootstrap.R
 \name{BootSimStrat}
 \alias{BootSimStrat}
-\title{Bootstrap Inference}
+\title{Bootstrap Inference for Stratified Estimator}
 \usage{
-BootSimStrat(data, obs_stats, tau, alpha, reps)
+BootSimStrat(data, obs_stats, tau, alpha = 0.05, reps = 2000)
 }
 \arguments{
 \item{data}{Data.frame containing: idx, time, status, arm, strata.}

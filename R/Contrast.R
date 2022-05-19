@@ -1,4 +1,5 @@
-# Purpose: Contrast AUCs.
+# Purpose: Inference on the difference and ratio of AUCs.
+# Updated: 2022-05-15
 
 #' Contrast AUCs
 #' 
@@ -7,17 +8,12 @@
 #' 
 #' @param marg_areas Marginal areas, including area and SE for each arm.
 #' @param alpha Type I error.
-#' @importFrom stats pnorm qnorm
-#' @return Data.frame containing:
-#' \itemize{
-#'   \item 'Contrast' and estimate 'Est'.
-#'   \item Lower 'L' and upper 'U' confidence bounds.
-#'   \item 'P' value.
-#' }
+#' @return Data.frame containing the difference and ratio of areas, together
+#'   with the confidence interval and p-value.
 
 ContrastAreas <- function(
   marg_areas,
-  alpha 
+  alpha = 0.05
 ) {
   
   # Unpack.
@@ -33,27 +29,29 @@ ContrastAreas <- function(
   
   # Output.
   out <- data.frame(
-    "contrast" = c("A1-A0", "A1/A0"),
-    "observed" = c(delta, rho)
+    contrast = c("A1-A0", "A1/A0"),
+    observed = c(delta, rho)
   )
   
   if (!is.null(se1) & !is.null(se0)) {
     
     # Critical value.
-    crit <- qnorm(p = 1 - alpha / 2)
+    crit <- stats::qnorm(p = 1 - alpha / 2)
     
     # Inference for delta.
     se_diff <- sqrt(se1^2 + se0^2)
     delta_lower <- delta - crit * se_diff
     delta_upper <- delta + crit * se_diff
-    delta_p <- 2 * pnorm(q = abs(delta) / se_diff, lower.tail = FALSE)
+    delta_p <- 2 * stats::pnorm(
+      q = abs(delta) / se_diff, lower.tail = FALSE)
     
     # Inference for rho.
     rho <- area1 / area0 
     se_rho_log <- sqrt(se1^2 / area1^2 + se0^2 / area0^2)
     rho_lower <- rho * exp(- crit * se_rho_log)
     rho_upper <- rho * exp(+ crit * se_rho_log)
-    rho_p <- 2 * pnorm(q = abs(log(rho)) / se_rho_log, lower.tail = FALSE)
+    rho_p <- 2 * stats::pnorm(
+      q = abs(log(rho)) / se_rho_log, lower.tail = FALSE)
     
     # Output.
     out$se <- c(se_diff, rho * se_rho_log)

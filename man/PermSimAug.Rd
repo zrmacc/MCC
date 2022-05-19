@@ -4,7 +4,7 @@
 \alias{PermSimAug}
 \title{Permutation Inference for Augmentation Estimator}
 \usage{
-PermSimAug(data, obs_stats, tau, alpha, reps)
+PermSimAug(data, obs_stats, tau, alpha = 0.05, reps = 2000)
 }
 \arguments{
 \item{data}{Data.frame containing: idx, time, status, arm, covars.}

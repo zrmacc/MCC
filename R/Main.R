@@ -1,5 +1,9 @@
 # Purpose: Main function for package.
-# Updated: 2020-12-12
+# Updated: 2022-05-14
+
+#' @useDynLib MCC, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+NULL
 
 #' Inference on the Area Under the Cumulative Count Curve
 #'
@@ -14,23 +18,25 @@
 #' of bootstrap replicates on which the sign of the difference is areas is
 #' reversed.
 #'
-#' @param idx Unique subject index.
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to
-#'   remain at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param tau Truncation time.
-#' @param covars Optional covariate matrix. Rows should correspond with the
-#'   subject index `idx`. Factor and interaction terms should be expanded.
-#' @param strata Optional stratification factor.
+#' @param data Data.frame. 
+#' @param alpha Type I error level.
+#' @param arm_name Name of column containing treatment arm. Must be coded as 1
+#'   for treatment, 0 for reference.
+#' @param boot Logical, construct bootstrap confidence intervals (slow)?
 #' @param cens_after_last Should subjects who lack an explicit censoring time
 #'   be censored after their last observed event? 
-#' @param alpha Alpha level.
-#' @param boot Logical, construct bootstrap confidence intervals?
-#' @param perm Logical, perform permutation test?
-#' @param reps Replicates for bootstrap/permutation inference.
-#' @export
+#' @param covars Optional covariate matrix. Rows should correspond with the
+#'   subject index `idx`. Factor and interaction terms should be expanded.
+#' @param idx_name Name of column containing a unique subject index.
+#' @param perm Logical, perform permutation test (slow)?
+#' @param reps Number of replicates for bootstrap/permutation inference.
+#' @param status_name Name of column containing the status. Must be coded as 0 for
+#'   censoring, 1 for event, 2 for death. Each subject should have an 
+#'   observation-terminating event, either censoring or death.
+#' @param strata Optional stratification factor. Should not be provided if a
+#'   covariate matrix is provided.
+#' @param tau Numeric truncation time.
+#' @param time_name Name of column containing the observation time.
 #' @return Object of class compAUCs with these slots:
 #' \itemize{
 #'   \item `@Areas`: The AUC for each arm.
@@ -41,6 +47,7 @@
 #'   \item `@Reps`: Bootstrap and permutation realizations of the test statistics.
 #'   \item `@Weights`: Per-stratum weights and AUCs.
 #' }
+#' @export
 #' @examples
 #' \donttest{
 #' # Simulate data set.
@@ -51,10 +58,7 @@
 #' )
 #'
 #' aucs <- CompareAUCs(
-#'   time = data$time,
-#'   status = data$status,
-#'   arm = data$arm,
-#'   idx = data$idx,
+#'   data,
 #'   tau = 2,
 #'   boot = TRUE,
 #'   perm = TRUE,
@@ -65,20 +69,22 @@
 #' }
 
 CompareAUCs <- function(
-  idx,
-  time,
-  status,
-  arm,
-  tau,
-  covars = NULL,
-  strata = NULL,
-  cens_after_last = TRUE,
+  data,
   alpha = 0.05,
+  arm_name = "arm",
   boot = FALSE,
+  cens_after_last = TRUE,
+  covars = NULL,
+  idx_name = "idx",
   perm = FALSE,
-  reps = 2000
+  reps = 2000,
+  status_name = "status",
+  strata = NULL,
+  tau = NULL,
+  time_name = "time"
 ) {
   
+  # Check that covariates and strata are not both provided.
   if (!is.null(covars) & !is.null(strata)) {
     msg <- paste0(
       "If adjustment for both strata and covariates is needed,\n",
@@ -86,13 +92,22 @@ CompareAUCs <- function(
     stop(msg)
   }
   
+  # Rename columns as necessary.
+  data <- data %>%
+    dplyr::rename(
+      arm = {{arm_name}},
+      idx = {{idx_name}},
+      status = {{status_name}},
+      time = {{time_name}}
+    )
+  
   # Check that no patient are in both arms.
-  arm1_idx <- unique(idx[arm == 1])
-  arm0_idx <- unique(idx[arm == 0])
+  arm1_idx <- unique(data$idx[data$arm == 1])
+  arm0_idx <- unique(data$idx[data$arm == 0])
   repeated_indices <- length(intersect(arm1_idx, arm0_idx))
   if (repeated_indices > 0) {
     msg <- paste0(
-      "Patient in different arms with the same identifier (idx)\n",
+      "Patients in different arms with the same identifier (idx)\n",
       "were detected. Each patient should have a unique identifier."
     )
     stop(msg)
@@ -100,35 +115,28 @@ CompareAUCs <- function(
   
   # Format data.
   data <- FormatData(
-    idx = idx,
-    time = time,
-    status = status,
-    arm = arm,
+    data,
+    cens_after_last = cens_after_last,
     covars = covars,
-    strata = strata,
-    cens_after_last = cens_after_last
+    strata = strata
   )
   
+  # Select analysis method.
   if (!is.null(covars)) {
-    out <- CompareAugAUCs(
-      data = data,
-      tau = tau,
-      alpha = alpha,
-      boot = boot,
-      perm = perm,
-      reps = reps
-    )
+    Analysis <- CompareAugAUCs
   } else {
-    out <- CompareStratAUCs(
-      data = data,
-      tau = tau,
-      alpha = alpha,
-      boot = boot,
-      perm = perm,
-      reps = reps
-    )
+    Analysis <- CompareStratAUCs
   }
+  out <- Analysis(
+    data = data,
+    tau = tau,
+    alpha = alpha,
+    boot = boot,
+    perm = perm,
+    reps = reps
+  )
   
+  # Output.
   return(out)
 }
 

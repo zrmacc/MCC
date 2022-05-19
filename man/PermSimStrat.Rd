@@ -2,12 +2,12 @@
 % Please edit documentation in R/Permutation.R
 \name{PermSimStrat}
 \alias{PermSimStrat}
-\title{Permutation Inference for Stratified Estimator.}
+\title{Permutation Inference for Stratified Estimator}
 \usage{
-PermSimStrat(data, obs_stats, tau, alpha, reps)
+PermSimStrat(data, obs_stats, tau, alpha = 0.05, reps = 2000)
 }
 \arguments{
-\item{data}{Data.frame containing: idx, time, status, arm, strata.}
+\item{data}{Data.frame containing: {arm, idx, status, strata time}.}
 
 \item{obs_stats}{Observed contrasts.}
 
@@ -26,5 +26,5 @@ Data.frame containing:
 }
 }
 \description{
-Permutation Inference for Stratified Estimator.
+Permutation Inference for Stratified Estimator
 }

@@ -4,7 +4,7 @@
 \alias{ContrastAreas}
 \title{Contrast AUCs}
 \usage{
-ContrastAreas(marg_areas, alpha)
+ContrastAreas(marg_areas, alpha = 0.05)
 }
 \arguments{
 \item{marg_areas}{Marginal areas, including area and SE for each arm.}
@@ -12,12 +12,8 @@ ContrastAreas(marg_areas, alpha)
 \item{alpha}{Type I error.}
 }
 \value{
-Data.frame containing:
-\itemize{
-  \item 'Contrast' and estimate 'Est'.
-  \item Lower 'L' and upper 'U' confidence bounds.
-  \item 'P' value.
-}
+Data.frame containing the difference and ratio of areas, together
+  with the confidence interval and p-value.
 }
 \description{
 Calculate the difference and ratio of areas under the cumulative count curve,

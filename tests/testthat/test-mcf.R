@@ -1,7 +1,11 @@
 test_that("Test tabulation.", {
   
   GetTab <- function(data){
-    TabulateEvents(data$time, data$status, data$idx)
+    CalcMCF(
+      idx = data$idx,
+      status = data$status,
+      time = data$time
+    )
   }
   
   # Case 1.
@@ -58,7 +62,11 @@ test_that("Test MCF calculation.", {
   
   
   GetMCF <- function(data){
-    CalcMCF(data$time, data$status, data$idx, FALSE)
+    CalcMCF(
+      idx = data$idx,
+      status = data$status,
+      time = data$time
+    )
   }
   
   # Case 1.

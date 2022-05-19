@@ -1,20 +1,22 @@
-# Purpose: Format data.
+# Purpose: Format input data.
+# Updated: 2022-05-15
 
 #' Format Data for a Single Subject
 #' 
-#' @param df Data.frame for a single subject.
+#' @param df Data.frame for a *single subject*.
 #' @param cens_after_last Should subjects who lack an explicit censoring time
 #'   be censored after their last observed event? 
 #' @return Data.frame with an added censoring event.
 #' @noRd
 
-FormatSubj <- function(df, cens_after_last) {
+FormatSubj <- function(df, cens_after_last = TRUE) {
   obs_end <- sum(df$obs_end)
   out <- df
   
   # Check for multiple observation terminating events.
   if (obs_end > 1) {
-    stop(paste0("Subject ", unique(df$idx), " has multiple observation terminating events."))
+    stop(paste0("Subject ", unique(df$idx), 
+                " has multiple observation terminating events."))
   }
   
   # Add censoring if no observation terminating event is present.
@@ -29,35 +31,49 @@ FormatSubj <- function(df, cens_after_last) {
   return(out)
 }
 
+
 #' Format Data
 #' 
-#' @param idx Unique subject index.
-#' @param time Observation time.
-#' @param status Status, coded as 0 for censoring, 1 for event, 2 for death.
-#'   Note that subjects who are neither censored nor die are assumed to
-#'   remain at risk throughout the observation period.
-#' @param arm Arm, coded as 1 for treatment, 0 for reference.
-#' @param covars Optional covariate matrix. Rows should correspond with the
-#'   subject index `idx`. Factor and interaction terms should be expanded.
-#' @param strata Optional stratification factor.
+#' @param data Data.frame.
+#' @param arm_name Name of column containing treatment arm. Must be coded as 1
+#'   for treatment, 0 for reference.
 #' @param cens_after_last Should subjects who lack an explicit censoring time
 #'   be censored after their last observed event? 
+#' @param covars Optional covariate matrix. Rows should correspond with the
+#'   subject index `idx`. Factor and interaction terms should be expanded.
+#' @param idx_name Name of column containing a unique subject index.
+#' @param status_name Name of column containing the status. Must be coded as 0 for
+#'   censoring, 1 for event, 2 for death. Each subject should have an 
+#'   observation-terminating event, either censoring or death.
+#' @param strata Optional stratification factor. Should not be provided if a
+#'   covariate matrix is provided.
+#' @param time_name Name of column containing the observation time.
 #' @return Formatted data.frame.
 #' @importFrom dplyr "%>%"
 #' @export 
 
 FormatData <- function(
-  idx,
-  time,
-  status,
-  arm, 
-  covars,
-  strata,
-  cens_after_last
+  data,
+  arm_name = "arm",
+  cens_after_last = TRUE,
+  covars = NULL,
+  idx_name = "idx",
+  status_name = "status",
+  strata = NULL,
+  time_name = "time"
 ) {
   
-  data <- data.frame(idx, time, status, arm)
+  # Rename columns as necessary.
+  arm <- idx <- status <- time <- NULL
+  data <- data %>%
+    dplyr::rename(
+      arm = {{arm_name}},
+      idx = {{idx_name}},
+      status = {{status_name}},
+      time = {{time_name}}
+    )
   
+  # Add covariates or strata.
   if (is.null(covars) & is.null(strata)) {
     data$strata <- 1
   } else if (!is.null(covars) & is.null(strata)) {
@@ -66,7 +82,8 @@ FormatData <- function(
     data$strata <- strata
   }
   
-  # Indicator of an observation-terminating event.
+  # Crate an indicator of an observation-terminating event.
+  # Sory by index > time > terminal indicator.
   data <- data %>%
     dplyr::mutate(obs_end = 1 * (status != 1)) %>%
     dplyr::arrange(idx, time, obs_end)

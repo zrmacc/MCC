@@ -7,7 +7,7 @@
 CalcMargMCF(data)
 }
 \arguments{
-\item{data}{Data.frame containing: idx, time, status, arm, strata.}
+\item{data}{Data.frame containing {arm, idx, status, strata, time}.}
 }
 \value{
 Data.frame.

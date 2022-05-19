@@ -4,7 +4,7 @@
 # Bootstrap/permutation
 # -----------------------------------------------------------------------------
 
-#' Bootstrap Inference
+#' Bootstrap Inference for Stratified Estimator
 #'
 #' Constructs bootstrap confidence intervals.
 #'
@@ -24,8 +24,8 @@ BootSimStrat <- function(
   data,
   obs_stats,
   tau,
-  alpha,
-  reps
+  alpha = 0.05,
+  reps = 2000
 ) {
   
   # Partition data.
@@ -72,15 +72,15 @@ BootSimStrat <- function(
 # -----------------------------------------------------------------------------
 
 
-#' Bootstrap Inference
+#' Bootstrap Inference for Augmentation Estimator
 #'
 #' Constructs bootstrap confidence intervals.
 #'
 #' @param data Data.frame containing: idx, time, status, arm, strata.
 #' @param obs_stats Observed contrasts.
+#' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param reps Simulations replicates.
-#' @param tau Truncation time.
 #' @return Data.frame containing:
 #' \itemize{
 #'   \item Bootstrap difference 'boot_diff' and ratio 'boot_ratio' of areas.
@@ -91,9 +91,9 @@ BootSimStrat <- function(
 BootSimAug <- function(
   data,
   obs_stats,
-  alpha,
-  reps,
-  tau
+  tau,
+  alpha = 0.05,
+  reps = 2000
 ) {
   
   # Partition data.
