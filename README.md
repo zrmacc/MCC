@@ -50,13 +50,13 @@ head(data)
 ```
 
 ```
-##   idx status      time arm cens_rate death_rate event_rate   frailty
-## 1   1      0 1.7302440   1      0.25  0.2777160  0.8886913 1.1108641
-## 2   2      0 1.0019519   1      0.25  0.1287498  0.4119993 0.5149992
-## 3   3      2 2.1274945   1      0.25  0.2983774  0.9548077 1.1935096
-## 4   4      0 0.3078111   1      0.25  0.5038046  1.6121746 2.0152183
-## 5   5      1 0.3701476   1      0.25  0.4659766  1.4911250 1.8639063
-## 6   5      1 0.3738888   1      0.25  0.4659766  1.4911250 1.8639063
+##   idx status       time arm cens_rate death_rate event_rate   frailty
+## 1   1      1 0.08845737   1      0.25  0.1888051  0.6041762 0.7552202
+## 2   1      2 0.23565323   1      0.25  0.1888051  0.6041762 0.7552202
+## 3   2      1 0.16410134   1      0.25  0.1884027  0.6028886 0.7536108
+## 4   2      1 0.66910083   1      0.25  0.1884027  0.6028886 0.7536108
+## 5   2      2 0.87297407   1      0.25  0.1884027  0.6028886 0.7536108
+## 6   3      2 0.02295830   1      0.25  0.3140817  1.0050614 1.2563267
 ```
 
 The essential data are:
@@ -153,26 +153,26 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n area    se tau
-## 1   0 100 5.61 0.561   4
-## 2   1 100 5.15 0.622   4
+## 1   0 100 6.29 0.568   4
+## 2   1 100 4.31 0.476   4
 ## 
 ## 
 ## CIs:
-##       method contrast observed    se  lower upper
-## 1 asymptotic    A1-A0   -0.460 0.837 -2.100  1.18
-## 3  bootstrap    A1-A0   -0.460 0.833 -1.900  1.35
-## 2 asymptotic    A1/A0    0.918 0.144  0.675  1.25
-## 4  bootstrap    A1/A0    0.918 0.144  0.691  1.25
+##       method contrast observed     se  lower  upper
+## 1 asymptotic    A1-A0   -1.980 0.7410 -3.430 -0.530
+## 3  bootstrap    A1-A0   -1.980 0.7480 -3.400 -0.616
+## 2 asymptotic    A1/A0    0.685 0.0978  0.518  0.906
+## 4  bootstrap    A1/A0    0.685 0.0994  0.508  0.890
 ## 
 ## 
 ## P-values:
-##        method contrast observed     p
-## 1  asymptotic    A1-A0   -0.460 0.582
-## 3   bootstrap    A1-A0   -0.460 0.657
-## 5 permutation    A1-A0   -0.460 0.587
-## 2  asymptotic    A1/A0    0.918 0.585
-## 4   bootstrap    A1/A0    0.918 0.657
-## 6 permutation    A1/A0    0.918 0.587
+##        method contrast observed       p
+## 1  asymptotic    A1-A0   -1.980 0.00748
+## 3   bootstrap    A1-A0   -1.980 0.00995
+## 5 permutation    A1-A0   -1.980 0.00995
+## 2  asymptotic    A1/A0    0.685 0.00801
+## 4   bootstrap    A1/A0    0.685 0.00995
+## 6 permutation    A1/A0    0.685 0.00995
 ```
 
 Here:
@@ -218,26 +218,26 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n area    se tau
-## 1   0 100  5.9 0.713   4
-## 2   1 100  4.6 0.514   4
+## 1   0 100 5.85 0.608   4
+## 2   1 100 5.51 0.597   4
 ## 
 ## 
 ## CIs:
 ##       method contrast observed    se  lower upper
-## 1 asymptotic    A1-A0   -1.300 0.879 -3.030 0.418
-## 3  bootstrap    A1-A0   -1.300 0.889 -3.050 0.375
-## 2 asymptotic    A1/A0    0.779 0.128  0.564 1.080
-## 4  bootstrap    A1/A0    0.779 0.130  0.561 1.090
+## 1 asymptotic    A1-A0   -0.338 0.852 -2.010  1.33
+## 3  bootstrap    A1-A0   -0.338 0.867 -1.860  1.21
+## 2 asymptotic    A1/A0    0.942 0.141  0.702  1.26
+## 4  bootstrap    A1/A0    0.942 0.146  0.720  1.24
 ## 
 ## 
 ## P-values:
 ##        method contrast observed     p
-## 1  asymptotic    A1-A0   -1.300 0.138
-## 3   bootstrap    A1-A0   -1.300 0.139
-## 5 permutation    A1-A0   -1.300 0.129
-## 2  asymptotic    A1/A0    0.779 0.129
-## 4   bootstrap    A1/A0    0.779 0.139
-## 6 permutation    A1/A0    0.779 0.129
+## 1  asymptotic    A1-A0   -0.338 0.692
+## 3   bootstrap    A1-A0   -0.338 0.697
+## 5 permutation    A1-A0   -0.338 0.846
+## 2  asymptotic    A1/A0    0.942 0.692
+## 4   bootstrap    A1/A0    0.942 0.697
+## 6 permutation    A1/A0    0.942 0.846
 ```
 
 #### Outputs
@@ -252,10 +252,10 @@ aucs@StratumAreas
 
 ```
 ##   arm strata  n tau     area var_area   se_area weight
-## 1   0      0 78   4 5.184795 53.84282 0.8308385  0.775
-## 2   0      1 22   4 8.372311 40.85371 1.3627130  0.225
-## 3   1      0 77   4 4.400773 24.75446 0.5669978  0.775
-## 4   1      1 23   4 5.275285 32.25659 1.1842552  0.225
+## 1   0      0 76   4 5.045419 34.65885 0.6753055   0.74
+## 2   0      1 24   4 8.145358 42.53490 1.3312729   0.26
+## 3   1      0 72   4 5.029110 31.44486 0.6608587   0.74
+## 4   1      1 28   4 6.892973 48.72342 1.3191369   0.26
 ```
 
 * `@MargAreas` containing the AUCs for each arm, marginalized over any strata. 
@@ -267,8 +267,8 @@ aucs@MargAreas
 
 ```
 ##   arm   n     area        se tau
-## 1   0 100 5.901986 0.7131739   4
-## 2   1 100 4.597538 0.5138992   4
+## 1   0 100 5.851403 0.6078921   4
+## 2   1 100 5.513715 0.5973172   4
 ```
 
 * `@CIs` containing confindence intervals for the difference and ratio of AUCs.
@@ -279,11 +279,11 @@ aucs@CIs
 ```
 
 ```
-##       method contrast   observed        se      lower     upper
-## 1 asymptotic    A1-A0 -1.3044477 0.8790389 -3.0273322 0.4184368
-## 3  bootstrap    A1-A0 -1.3044477 0.8893716 -3.0468535 0.3749549
-## 2 asymptotic    A1/A0  0.7789816 0.1282259  0.5641744 1.0755758
-## 4  bootstrap    A1/A0  0.7789816 0.1296619  0.5613733 1.0903481
+##       method contrast   observed        se      lower    upper
+## 1 asymptotic    A1-A0 -0.3376884 0.8522445 -2.0080569 1.332680
+## 3  bootstrap    A1-A0 -0.3376884 0.8672591 -1.8618497 1.214607
+## 2 asymptotic    A1/A0  0.9422893 0.1414339  0.7021378 1.264580
+## 4  bootstrap    A1/A0  0.9422893 0.1456046  0.7199988 1.236457
 ```
 
 * `@MCF` containing the per arm mean cumulative count curve, averaged across strata.
@@ -294,13 +294,13 @@ head(aucs@MCF)
 ```
 
 ```
-##         time        mcf     var_mcf     se_mcf arm
-## 1 0.01729211 0.01006494 0.007699022 0.08774407   1
-## 2 0.01901668 0.01006494 0.007699022 0.08774407   1
-## 3 0.02129013 0.02026230 0.015392641 0.12406708   1
-## 4 0.03039660 0.03045967 0.022875552 0.15124666   1
-## 5 0.03124162 0.04065704 0.030147753 0.17363108   1
-## 6 0.03282630 0.05085441 0.037209246 0.19289698   1
+##          time         mcf     var_mcf     se_mcf arm
+## 1 0.004363264 0.009285714 0.002328061 0.04824999   1
+## 2 0.016617209 0.019563492 0.009827984 0.09913619   1
+## 3 0.023142688 0.028849206 0.011983596 0.10946961   1
+## 4 0.024007674 0.039126984 0.019272254 0.13882454   1
+## 5 0.037141490 0.048412698 0.021255417 0.14579238   1
+## 6 0.039660038 0.057698413 0.023066131 0.15187538   1
 ```
 
 * `@Pvals` containing the bootstrap and permutation p-values.
@@ -312,12 +312,12 @@ aucs@Pvals
 
 ```
 ##        method contrast   observed         p
-## 1  asymptotic    A1-A0 -1.3044477 0.1378228
-## 3   bootstrap    A1-A0 -1.3044477 0.1393035
-## 5 permutation    A1-A0 -1.3044477 0.1293532
-## 2  asymptotic    A1/A0  0.7789816 0.1291764
-## 4   bootstrap    A1/A0  0.7789816 0.1393035
-## 6 permutation    A1/A0  0.7789816 0.1293532
+## 1  asymptotic    A1-A0 -0.3376884 0.6919322
+## 3   bootstrap    A1-A0 -0.3376884 0.6965174
+## 5 permutation    A1-A0 -0.3376884 0.8457711
+## 2  asymptotic    A1/A0  0.9422893 0.6920809
+## 4   bootstrap    A1/A0  0.9422893 0.6965174
+## 6 permutation    A1/A0  0.9422893 0.8457711
 ```
 
 * `@Reps` is a list containing the bootstrap and permutation test statistics.
@@ -354,26 +354,26 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n area    se tau
-## 1   0 100 5.57 0.561   4
-## 2   1 100 5.61 0.626   4
+## 1   0 100 5.74 0.579   4
+## 2   1 100 5.28 0.612   4
 ## 
 ## 
 ## CIs:
-##       method contrast observed    se  lower upper
-## 1 asymptotic    A1-A0    0.039 0.840 -1.610  1.69
-## 3  bootstrap    A1-A0    0.039 0.795 -1.380  1.57
-## 2 asymptotic    A1/A0    1.010 0.151  0.750  1.35
-## 4  bootstrap    A1/A0    1.010 0.145  0.776  1.30
+##       method contrast observed    se lower upper
+## 1 asymptotic    A1-A0   -0.467 0.843 -2.12  1.18
+## 3  bootstrap    A1-A0   -0.467 0.877 -2.11  1.35
+## 2 asymptotic    A1/A0    0.919 0.141  0.68  1.24
+## 4  bootstrap    A1/A0    0.919 0.147  0.68  1.25
 ## 
 ## 
 ## P-values:
 ##        method contrast observed     p
-## 1  asymptotic    A1-A0    0.039 0.963
-## 3   bootstrap    A1-A0    0.039 1.000
-## 5 permutation    A1-A0    0.039 0.965
-## 2  asymptotic    A1/A0    1.010 0.963
-## 4   bootstrap    A1/A0    1.010 1.000
-## 6 permutation    A1/A0    1.010 0.965
+## 1  asymptotic    A1-A0   -0.467 0.579
+## 3   bootstrap    A1-A0   -0.467 0.607
+## 5 permutation    A1-A0   -0.467 0.577
+## 2  asymptotic    A1/A0    0.919 0.581
+## 4   bootstrap    A1/A0    0.919 0.607
+## 6 permutation    A1/A0    0.919 0.577
 ```
 
 ### Plotting

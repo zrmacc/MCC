@@ -13,7 +13,13 @@
 #' @noRd
 
 CalcP <- function(p) {
-  out <- 2 * mean(c(1, p))
+  p1 <- c(1, p)
+  mu <- mean(p1)
+  if (mu <= 0.5) {
+    out <- 2 * mu
+  } else {
+    out <- 2 * mean(c(1, 1 - p))
+  }
   out <- min(out, 1)
   return(out)
 }
