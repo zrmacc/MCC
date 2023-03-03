@@ -257,7 +257,7 @@ PlotMCFs <- function(
     ggplot2::geom_step(
       data = df, 
       ggplot2::aes(x = time, y = mcf, color = arm), 
-      size = 1) + 
+      linewidth = 1) + 
     ggplot2::scale_color_manual(
       name = NULL,
       values = c(ctrl_color, trt_color),
@@ -430,7 +430,7 @@ PlotAUMCFs <- function(
       data = df, 
       ggplot2::aes(x = time, y = mcf), 
       color = color,
-      size = 1
+      linewidth = 1
     ) 
   
   # X-axis.
