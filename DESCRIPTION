@@ -12,7 +12,7 @@ Depends: R (>= 3.4.0)
 License: GPL-3
 Encoding: UTF-8
 Imports:
-  dplyr (>= 1.1.0),
+  dplyr,
   ggplot2,
   methods,
   MASS,
