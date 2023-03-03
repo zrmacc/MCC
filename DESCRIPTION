@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.6.0
+Version: 0.6.1
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -12,7 +12,7 @@ Depends: R (>= 3.4.0)
 License: GPL-3
 Encoding: UTF-8
 Imports:
-  dplyr,
+  dplyr (>= 1.1.0),
   ggplot2,
   methods,
   MASS,

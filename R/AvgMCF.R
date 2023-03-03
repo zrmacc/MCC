@@ -90,10 +90,11 @@ CalcMargMCF <- function(data) {
   mcf1 <- data %>%
     dplyr::filter(arm == 1) %>%
     dplyr::group_by(strata) %>%
-    dplyr::summarise(
+    dplyr::reframe(
       CalcMCF(idx = idx, status = status, time = time, calc_var = TRUE),
       .groups = "keep"
     ) %>%
+    dplyr::group_by(strata) %>%
     dplyr::group_split()
   avg_mcf1 <- AvgMCF(mcf1, weights = stratum_sizes$w1[stratum_sizes$w1 != 0])
   avg_mcf1$arm <- 1
@@ -102,10 +103,11 @@ CalcMargMCF <- function(data) {
   mcf0 <- data %>%
     dplyr::filter(arm == 0) %>%
     dplyr::group_by(strata) %>%
-    dplyr::summarise(
+    dplyr::reframe(
       CalcMCF(idx = idx, status = status, time = time),
       .groups = "keep"
     ) %>%
+    dplyr::group_by(strata) %>%
     dplyr::group_split()
   avg_mcf0 <- AvgMCF(mcf0, weights = stratum_sizes$w0[stratum_sizes$w0 != 0])
   avg_mcf0$arm <- 0

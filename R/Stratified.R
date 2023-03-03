@@ -39,7 +39,7 @@ CalcStratAUC <- function(
   # Stratum areas.
   stratum_areas <- data %>%
     dplyr::group_by(arm, strata) %>%
-    dplyr::summarise(
+    dplyr::reframe(
       StratumAUC(
         idx = idx,
         status = status,
@@ -59,7 +59,7 @@ CalcStratAUC <- function(
   area <- n <- se_area <- weight <- NULL
   marg_areas <- stratum_areas %>%
     dplyr::group_by(arm) %>%
-    dplyr::summarise(
+    dplyr::reframe(
       MargAUC(areas = area, n = n, ses = se_area, weights = weight),
       .groups = "drop"
     ) %>%
