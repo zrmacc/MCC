@@ -46,8 +46,7 @@ CalcStratAUC <- function(
         time = time,
         tau = tau,
         calc_var = return_areas
-      ),
-      .groups = "drop"
+      )
     ) %>% 
     dplyr::inner_join(
       stratum_sizes[, c("strata", "weight")], 
@@ -61,9 +60,8 @@ CalcStratAUC <- function(
     dplyr::group_by(arm) %>%
     dplyr::reframe(
       MargAUC(areas = area, n = n, ses = se_area, weights = weight),
-      .groups = "drop"
     ) %>%
-    as.data.frame
+    as.data.frame()
   marg_areas$tau <- tau
   
   # Difference and ratio.
@@ -324,7 +322,7 @@ CompareStratAUCs <- function(
     # Permutation p-values.
     perm_pvals <- perm_sim %>%
       dplyr::select("perm_diff_1sided", "perm_ratio_1sided") %>%
-      dplyr::summarise_all(CalcP) %>% as.numeric
+      dplyr::summarise_all(CalcP) %>% as.numeric()
       
     perm_pvals <- data.frame(
       method = "permutation",

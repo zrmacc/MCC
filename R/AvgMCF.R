@@ -91,8 +91,7 @@ CalcMargMCF <- function(data) {
     dplyr::filter(arm == 1) %>%
     dplyr::group_by(strata) %>%
     dplyr::reframe(
-      CalcMCF(idx = idx, status = status, time = time, calc_var = TRUE),
-      .groups = "keep"
+      CalcMCF(idx = idx, status = status, time = time, calc_var = TRUE)
     ) %>%
     dplyr::group_by(strata) %>%
     dplyr::group_split()
@@ -104,8 +103,7 @@ CalcMargMCF <- function(data) {
     dplyr::filter(arm == 0) %>%
     dplyr::group_by(strata) %>%
     dplyr::reframe(
-      CalcMCF(idx = idx, status = status, time = time),
-      .groups = "keep"
+      CalcMCF(idx = idx, status = status, time = time)
     ) %>%
     dplyr::group_by(strata) %>%
     dplyr::group_split()
