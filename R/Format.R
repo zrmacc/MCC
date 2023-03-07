@@ -32,6 +32,32 @@ FormatSubj <- function(df, cens_after_last = TRUE) {
 }
 
 
+#' Convert Index to Integer
+#' 
+#' @param data Data.Frame.
+#' @return Data.frame with `idx` converted to an integer.
+#' @noRd
+ConvertIdxToInt <- function(data) {
+  
+  idx <- orig_idx <- NULL
+  data$orig_idx <- data$idx
+  data$idx <- NULL
+  
+  idx_data <- data %>% 
+    dplyr::select(orig_idx) %>% 
+    unique()
+
+  idx_data$idx <- seq_len(nrow(idx_data))
+  
+  data <- merge(x = data, y = idx_data, by = "orig_idx")
+  out <- data %>%
+    dplyr::relocate(idx, .after = "orig_idx") %>%
+    dplyr::select(-orig_idx)
+  
+  return(out)
+}
+
+
 #' Format Data
 #' 
 #' @param data Data.frame.
@@ -65,13 +91,18 @@ FormatData <- function(
   
   # Rename columns as necessary.
   arm <- idx <- status <- time <- NULL
+  key_cols <- c(arm_name, idx_name, status_name, time_name)
   data <- data %>%
+    dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       arm = {{arm_name}},
       idx = {{idx_name}},
       status = {{status_name}},
       time = {{time_name}}
     )
+  
+  # Ensure index is an integer.
+  data <- ConvertIdxToInt(data)
   
   # Add covariates or strata.
   if (is.null(covars) & is.null(strata)) {

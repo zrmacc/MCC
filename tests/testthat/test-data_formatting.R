@@ -3,9 +3,9 @@ test_that("Expect no change in the case of correctly formatted data.", {
   # Correctly formatted data.
   data <- data.frame(
     idx = c(1, 1),
-    time = c(1, 2),
-    status = c(1, 0),
     arm = c(1, 1),
+    status = c(1, 0),
+    time = c(1, 2),
     strata = c(1, 1)
   )
   
@@ -16,7 +16,7 @@ test_that("Expect no change in the case of correctly formatted data.", {
     cens_after_last = TRUE
   )
   
-  expect_identical(data, out)
+  expect_equal(data, out)
   
 })
 
@@ -29,9 +29,9 @@ test_that("Check addition of censoring time when missing.", {
   # Data without censoring time.
   data <- data.frame(
     idx = c(1, 1),
-    time = c(1, 2),
-    status = c(1, 1),
     arm = c(1, 1),
+    status = c(1, 1),
+    time = c(1, 2),
     strata = c(1, 1)
   )
   
@@ -44,7 +44,7 @@ test_that("Check addition of censoring time when missing.", {
       cens_after_last = FALSE
     )
   })
-  expect_identical(observed, data)
+  expect_equal(observed, data)
   
   # Censor after last set to TRUE.
   observed <- MCC::FormatData(
@@ -80,4 +80,28 @@ test_that("Multiple censoring times triggers an error.", {
   })
   
 })
+
+# -----------------------------------------------------------------------------
+
+test_that("Character index converted to integer.", {
+  
+  data <- data.frame(
+    idx = c("a", "b"),
+    arm = c(1, 1),
+    status = c(0, 0),
+    time = c(1, 2)
+  )
+  
+  out <- MCC::FormatData(
+    data,
+    covars = NULL,
+    cens_after_last = TRUE
+  )
+  
+  data$idx <- c(1, 2)
+  data$strata <- c(1, 1)
+  expect_equal(data, out)
+  
+})
+
 

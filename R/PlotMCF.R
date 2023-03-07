@@ -1,6 +1,6 @@
 # Purpose: Function to plot the mean cumulative functions,
 # comparing two treatment arms.
-# Updated: 2022-05-19
+# Updated: 2023-03-07
 
 # -----------------------------------------------------------------------------
 
@@ -24,12 +24,15 @@ MCFCurve <- function(
 ) {
   
   # Data preparation.
+  key_cols <- c(idx_name, status_name, time_name)
   df <- data %>%
+    data %>% dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       "idx" = {{idx_name}},
       "status" = {{status_name}},
       "time" = {{time_name}}
     )
+  df <- ConvertIdxToInt(df)
   
   # Construct MCF.
   mcf <- MCC::CalcMCF(
@@ -68,7 +71,9 @@ NARCurve <- function(
 ) {
   
   # Data preparation.
+  key_cols <- c(idx_name, status_name, time_name)
   df <- data %>%
+    dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       "idx" = {{idx_name}},
       "status" = {{status_name}},
@@ -120,7 +125,9 @@ MCFPlotFrame <- function(
 ) {
   
   # Data preparation.
+  key_cols <- c(idx_name, status_name, time_name)
   df <- data %>%
+    dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       "idx" = {{idx_name}},
       "status" = {{status_name}},
@@ -189,13 +196,20 @@ PlotMCFs <- function(
 ) {
   
   # Data preparation.
+  key_cols <- c(arm_name, idx_name, status_name, time_name) 
+  if (!is.null(strata_name)) {
+    key_cols <- c(key_cols, strata_name)
+  }
+  
   data <- data %>%
+    dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       "arm" = {{arm_name}},
       "idx" = {{idx_name}},
       "status" = {{status_name}},
       "time" = {{time_name}}
     )
+  data <- ConvertIdxToInt(data)
   
   # Strata.
   if (!is.null(strata_name)) {
@@ -210,6 +224,8 @@ PlotMCFs <- function(
   # Truncation.
   if (is.null(x_lim[2])) {
     x_max <- max(data$time)
+  } else{
+    x_max <- x_lim[2]
   }
   if (is.null(tau)) {
     tau <- x_max
@@ -356,13 +372,16 @@ PlotAUMCFs <- function(
 ) {
   
   # Data preparation.
+  key_cols <- c(arm_name, idx_name, status_name, time_name)
   data <- data %>%
+    dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       "arm" = {{arm_name}},
       "idx" = {{idx_name}},
       "status" = {{status_name}},
       "time" = {{time_name}}
     )
+  data <- ConvertIdxToInt(data)
   
   # Strata.
   if (!is.null(strata_name)) {
@@ -377,6 +396,8 @@ PlotAUMCFs <- function(
   # Truncation.
   if (is.null(x_lim[2])) {
     x_max <- max(data$time)
+  } else {
+    x_max <- x_lim[2]
   }
   if (is.null(tau)) {
     tau <- x_max
@@ -502,13 +523,16 @@ NARPlotFrame <- function(
 ) {
   
   # Prepare data.
+  key_cols <- c(arm_name, idx_name, status_name, time_name) 
   df <- data %>%
+    dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       "arm" = {{arm_name}},
       "idx" = {{idx_name}},
       "status" = {{status_name}},
       "time" = {{time_name}}
     )
+  df <- ConvertIdxToInt(df)
   
   # NAR functions.
   arm <- NULL
@@ -565,13 +589,16 @@ PlotNARs <- function(
   # Data prep.
   nar_ctrl <- NULL
   nar_trt <- NULL
+  key_cols <- c(arm_name, idx_name, status_name, time_name) 
   df <- data %>%
+    dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       "arm" = {{arm_name}},
       "idx" = {{idx_name}},
       "status" = {{status_name}},
       "time" = {{time_name}}
     ) %>%
+    ConvertIdxToInt() %>%
     NARPlotFrame(x_breaks = x_breaks) %>%
     tidyr::pivot_longer(
       cols = c(nar_ctrl, nar_trt),
