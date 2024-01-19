@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.6.2
+Version: 0.6.3
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -18,13 +18,18 @@ Imports:
   MASS,
   Rcpp,
   stats,
-  survival,
   tidyr
 LinkingTo: 
   Rcpp,
   RcppArmadillo
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Suggests: 
+  cowplot,
+  knitr,
   testthat (>= 3.0.0),
   withr
 Config/testthat/edition: 3
+VignetteBuilder: knitr
+VignetteEngine: knitr::rmarkdown
+VignetteIndexEntry: "Plotting"
+VignetteSource: vignettes/plotting.Rmd

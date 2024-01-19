@@ -1,156 +1,10 @@
 # Purpose: Function to plot the mean cumulative functions,
 # comparing two treatment arms.
-# Updated: 2023-03-07
+# Updated: 2024-01-18
 
 # -----------------------------------------------------------------------------
 
-#' MCF Curve
-#' 
-#' Construct a function to evaluate the mean cumulative function at a given time
-#' for a single treatment arm.
-#'   
-#' @param data Data.frame.
-#' @param idx_name Name of index (subject identifier) column in data.
-#' @param status_name Name of status column in data.
-#' @param time_name Name of column column in data.
-#' @return stepfun.
-#' @export
-
-MCFCurve <- function(
-  data, 
-  idx_name = "idx",
-  status_name = "status",
-  time_name = "time"
-) {
-  
-  # Data preparation.
-  key_cols <- c(idx_name, status_name, time_name)
-  df <- data %>%
-    data %>% dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  df <- ConvertIdxToInt(df)
-  
-  # Construct MCF.
-  mcf <- MCC::CalcMCF(
-    idx = df$idx,
-    status = df$status, 
-    time = df$time, 
-    calc_var = FALSE
-  )
-  
-  g <- stats::stepfun(x = mcf$time, y = c(0, mcf$mcf))
-  return(g)
-}
-
-
-# -----------------------------------------------------------------------------
-
-
-#' Number at Risk Curve
-#' 
-#' Return a function that calculates the number at risk for a single
-#' treatment arm.
-#' 
-#' @param data Data.frame.
-#' @param idx_name Name of index (subject identifier) column in data.
-#' @param status_name Name of status column in data.
-#' @param time_name Name of column column in data.
-#' @return stepfun.
-#' @importFrom dplyr "%>%"
-#' @export
-
-NARCurve <- function(
-  data, 
-  idx_name = "idx",
-  status_name = "status",
-  time_name = "time"
-) {
-  
-  # Data preparation.
-  key_cols <- c(idx_name, status_name, time_name)
-  df <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  
-  # Fit cumulative incidence curve.
-  fit <- MCC::CalcMCF(
-    idx = data$idx,
-    status = data$status,
-    time = data$time,
-    calc_var = FALSE
-  )
-  
-  # Case where last observation is censoring or death.
-  last_row <- fit[nrow(fit), ]
-  last_row$time <- last_row$time + 1e-8
-  last_row$nar <- last_row$nar - (last_row$censor + last_row$death)
-  fit <- rbind(fit, last_row)
-  
-  g <- stats::stepfun(
-    x = fit$time, 
-    y = c(length(unique(df$idx)), fit$nar))
-  return(g)
-}
-
-
-# -----------------------------------------------------------------------------
-
-#' MCF Plotting Frame
-#' 
-#' Constructs the MCF plotting frame for a single treatment arm.
-#' 
-#' @param data Data.frame.
-#' @param eval_points Number of points at which to evaluate the curve.
-#' @param idx_name Name of index (subject identifier) column in data.
-#' @param status_name Name of status column in data.
-#' @param tau Truncation time.
-#' @param time_name Name of column column in data.
-#' @return Data.frame containing `time` and `mcf`.
-
-MCFPlotFrame <- function(
-  data,
-  eval_points = 1000,
-  idx_name = "idx",
-  status_name = "status",
-  tau = NULL,
-  time_name = "time"
-) {
-  
-  # Data preparation.
-  key_cols <- c(idx_name, status_name, time_name)
-  df <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  g <- df %>% MCFCurve()
-  
-  # Time grid.
-  if (is.null(tau)) {
-    tau <- max(df$time)
-  }
-  times <- seq(from = 0, to = tau, length.out = eval_points)
-  out <- data.frame(
-    time = times,
-    mcf = g(times)
-  )
-  return(out)
-}
-
-
-# -----------------------------------------------------------------------------
-
-#' Plot MCFs.
+#' Plot Two Sample Mean Cumulative Function
 #' 
 #' Plot the mean cumulative functions comparing two treatment arms.
 #'
@@ -273,7 +127,8 @@ PlotMCFs <- function(
     ggplot2::geom_step(
       data = df, 
       ggplot2::aes(x = time, y = mcf, color = arm), 
-      linewidth = 1) + 
+      linewidth = 1
+    ) + 
     ggplot2::scale_color_manual(
       name = NULL,
       values = c(ctrl_color, trt_color),
@@ -326,7 +181,7 @@ PlotMCFs <- function(
 # -----------------------------------------------------------------------------
 
 
-#' Plot AUMCFs.
+#' Plot Area Under the Mean Cumulative Function
 #' 
 #' Plot area under the mean cumulative function for a single treatment arm.
 #'
@@ -350,7 +205,6 @@ PlotMCFs <- function(
 #' @return ggplot object.
 #' @importFrom dplyr "%>%"
 #' @export
-
 PlotAUMCFs <- function(
   data,
   which_arm,
@@ -499,9 +353,9 @@ PlotAUMCFs <- function(
 
 # -----------------------------------------------------------------------------
 
-#' Number at Risk Plotting Frame
+#' Two Sample Number at Risk Plotting Frame
 #' 
-#' Numbers at risk for recurrent events data.
+#' Two sample numbers at risk for recurrent events data.
 #' 
 #' @param data Data.frame.
 #' @param x_breaks Time points at which to determine the NARs.
@@ -510,10 +364,8 @@ PlotAUMCFs <- function(
 #' @param status_name Name of status column.
 #' @param time_name Name of time column.
 #' @return Data.frame containing `time`, `nar_ctrl`, `nar_trt`.
-#' 
 #' @importFrom dplyr "%>%" 
-
-NARPlotFrame <- function(
+TwoSampleNARFrame <- function(
   data, 
   x_breaks, 
   arm_name = "arm",
@@ -549,7 +401,7 @@ NARPlotFrame <- function(
 }
 
 
-#' Plot Numbers at Risk
+#' Plot Two Sample Number at Risk
 #' 
 #' @param data Data.frame.
 #' @param x_breaks X-axis breaks.
@@ -599,7 +451,7 @@ PlotNARs <- function(
       "time" = {{time_name}}
     ) %>%
     ConvertIdxToInt() %>%
-    NARPlotFrame(x_breaks = x_breaks) %>%
+    TwoSampleNARFrame(x_breaks = x_breaks) %>%
     tidyr::pivot_longer(
       cols = c(nar_ctrl, nar_trt),
       names_to = "arm",

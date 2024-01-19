@@ -10,7 +10,7 @@ output:
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
 Zachary R. McCaw <br>
-Updated: 2022-05-19
+Updated: 2024-01-18
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE)
@@ -254,20 +254,5 @@ show(aucs)
 
 ### Plotting
 
-The function `PlotMCFs` plots the mean cumulative count curves, comparing two treatment arms. Note that `data` must contain the column `arm`.
+See the [plotting vignette]().
 
-```{r, fig.align='center'}
-q <- MCC::PlotMCFs(data)
-q_nar <- MCC::PlotNARs(
-  data = data,
-  x_breaks = seq(from = 0, to = 4)
-)
-q_main <- cowplot::plot_grid(
-  plotlist = list(q, q_nar),
-  nrow = 2,
-  align = "v",
-  axis = "l",
-  rel_heights = c(3, 1)
-)
-show(q_main)
-```

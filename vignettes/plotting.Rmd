@@ -1,0 +1,163 @@
+---
+title: "Plotting the Mean Cumulative Function"
+author: "Zachary McCaw"
+date: "`r Sys.Date()`"
+output: 
+  html_document
+vignette: >
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteIndexEntry{Perturbation Bootstrap}
+  %\usepackage[UTF-8]{inputenc}
+--- 
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(cache = FALSE, fig.align = "center")
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(MCC)
+})
+```
+
+# Plotting the Mean Cumulative Function
+
+## One sample setting
+
+### Simulate data for plotting
+```{r}
+data <- MCC::GenData(n = 100)
+```
+
+\newpage
+### Plot the MCF with NARs
+```{r, fig.align='center'}
+q <- MCC::PlotOneSampleMCF(
+  data = data,
+  color_lab = "Single Arm"
+)
+q_nar <- MCC::PlotOneSampleNAR(
+  data = data,
+  x_breaks = seq(from = 0, to = 4),
+  y_lab = "Single Arm"
+)
+q_main <- cowplot::plot_grid(
+  plotlist = list(q, q_nar),
+  nrow = 2,
+  align = "v",
+  axis = "l",
+  rel_heights = c(3, 1)
+)
+show(q_main)
+```
+
+\newpage
+### Plot area under the MCF with NARs
+```{r, fig.align='center'}
+q <- MCC::PlotOneSampleAUMCF(
+  data = data,
+  color_lab = "Single Arm"
+)
+q_nar <- MCC::PlotOneSampleNAR(
+  data = data,
+  x_breaks = seq(from = 0, to = 4),
+  y_lab = "Single Arm"
+)
+q_main <- cowplot::plot_grid(
+  plotlist = list(q, q_nar),
+  nrow = 2,
+  align = "v",
+  axis = "l",
+  rel_heights = c(3, 1)
+)
+show(q_main)
+```
+
+\newpage
+## Two sample setting
+
+### Simulate data for plotting
+```{r}
+covariates <- data.frame(
+  arm = c(rep(1, 100), rep(0, 100)),
+  covar = stats::rnorm(200)
+)
+data <- MCC::GenData(
+  beta_event = c(log(0.8), log(1.2)),
+  covariates = covariates,
+  frailty_variance = 0.2,
+  tau = 4
+)
+```
+
+\newpage
+### Plot the MCFs with NARs
+```{r, fig.align='center'}
+q <- MCC::PlotMCFs(
+  data = data,
+  color_labs = c("Control", "Treatment")
+)
+q_nar <- MCC::PlotNARs(
+  data = data,
+  x_breaks = seq(from = 0, to = 4),
+  y_labs = c("Control", "Treatment")
+)
+q_main <- cowplot::plot_grid(
+  plotlist = list(q, q_nar),
+  nrow = 2,
+  align = "v",
+  axis = "l",
+  rel_heights = c(3, 1)
+)
+show(q_main)
+```
+
+\newpage
+### Plot areas under the MCFs with NARs
+```{r, fig.align='center'}
+# Control arm.
+q0 <- MCC::PlotAUMCFs(
+  data = data,
+  which_arm = 0,
+  arm_label = "Control"
+)
+q0_nar <- MCC::PlotOneSampleNAR(
+  data = data %>% dplyr::filter(arm == 0),
+  x_breaks = seq(from = 0, to = 4),
+  y_lab = "Control"
+)
+q0_main <- cowplot::plot_grid(
+  plotlist = list(q0, q0_nar),
+  nrow = 2,
+  align = "v",
+  axis = "l",
+  rel_heights = c(3, 1)
+)
+
+# Treatment arm.
+q1 <- MCC::PlotAUMCFs(
+  data = data,
+  which_arm = 1,
+  color = "#6385B8",
+  arm_label = "Treatment"
+)
+q1_nar <- MCC::PlotOneSampleNAR(
+  data = data %>% dplyr::filter(arm == 1),
+  x_breaks = seq(from = 0, to = 4),
+  y_lab = "Treatment"
+)
+q1_main <- cowplot::plot_grid(
+  plotlist = list(q1, q1_nar),
+  nrow = 2,
+  align = "v",
+  axis = "l",
+  rel_heights = c(3, 1)
+)
+
+# Overall figure.
+q_main <- cowplot::plot_grid(
+  plotlist = list(q0_main, q1_main),
+  nrow = 1
+)
+show(q_main)
+```
+
