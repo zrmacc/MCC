@@ -378,5 +378,5 @@ show(aucs)
 
 ### Plotting
 
-See the [plotting vignette]().
+See the [plotting vignette](https://github.com/zrmacc/MCC/blob/master/vignettes/plotting.pdf).
 
