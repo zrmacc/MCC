@@ -1,12 +1,3 @@
----
-title: "README"
-author: "Zachary McCaw"
-date: "2024-02-24"
-output: 
-  html_document: 
-    keep_md: TRUE
---- 
-
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
 Zachary R. McCaw <br>
