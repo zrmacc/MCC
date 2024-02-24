@@ -178,7 +178,7 @@ Here:
 
 ### Weighted Analysis
 
-Weights may be supplied to control the size of the jump in the cumulative count curve at each event time (i.e. each time with `status == 1`). The following example weights each event by how many events a patient has experienced. For example, if a patient has 3 events before censoring, the first contributes a jump of size 1, the second of size 2, and the third of size 3. Other weighting schemes are of course possible. Note that the weights assigned to censoring (`status == 0`) and terminal event (`status == 2`) records are not used, and may be set to any value.
+Weights may be supplied to control the size of the jump in the cumulative count curve at each event time (i.e. each time with `status == 1`). The following example weights each event by how many events a patient has experienced. For example, if a patient has 3 events before censoring, the first contributes a jump of size 1, the second a jump of size 2, and the third a jump of size 3. Other weighting schemes are of course possible. Note that the weights assigned to censoring (`status == 0`) and terminal event (`status == 2`) records are not used, and may be set to any value. 
 
 ```{r}
 data <- data %>%
@@ -186,7 +186,7 @@ data <- data %>%
   dplyr::mutate(weights = dplyr::row_number()) %>%
   dplyr::ungroup()
 
-# Example.
+cat("Visualization of weights for the first 10 records.\n")
 data %>%
   dplyr::select(idx, time, status, weights) %>%
   dplyr::slice(1:10)

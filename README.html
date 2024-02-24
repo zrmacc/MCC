@@ -608,17 +608,19 @@ cumulative count curve at each event time (i.e. each time with
 <code>status == 1</code>). The following example weights each event by
 how many events a patient has experienced. For example, if a patient has
 3 events before censoring, the first contributes a jump of size 1, the
-second of size 2, and the third of size 3. Other weighting schemes are
-of course possible. Note that the weights assigned to censoring
-(<code>status == 0</code>) and terminal event (<code>status == 2</code>)
-records are not used, and may be set to any value.</p>
+second a jump of size 2, and the third a jump of size 3. Other weighting
+schemes are of course possible. Note that the weights assigned to
+censoring (<code>status == 0</code>) and terminal event
+(<code>status == 2</code>) records are not used, and may be set to any
+value.</p>
 <pre class="r"><code>data &lt;- data %&gt;%
   dplyr::group_by(idx) %&gt;%
   dplyr::mutate(weights = dplyr::row_number()) %&gt;%
   dplyr::ungroup()
 
-# Example.
-data %&gt;%
+cat(&quot;Visualization of weights for the first 10 records.\n&quot;)</code></pre>
+<pre><code>## Visualization of weights for the first 10 records.</code></pre>
+<pre class="r"><code>data %&gt;%
   dplyr::select(idx, time, status, weights) %&gt;%
   dplyr::slice(1:10)</code></pre>
 <pre><code>## # A tibble: 10 × 4
