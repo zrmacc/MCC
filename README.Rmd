@@ -185,6 +185,11 @@ data <- data %>%
   dplyr::group_by(idx) %>%
   dplyr::mutate(weights = dplyr::row_number()) %>%
   dplyr::ungroup()
+
+# Example.
+data %>%
+  dplyr::select(idx, time, status, weights) %>%
+  dplyr::slice(1:10)
 ```
 
 ```{r}

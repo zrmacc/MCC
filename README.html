@@ -615,7 +615,25 @@ records are not used, and may be set to any value.</p>
 <pre class="r"><code>data &lt;- data %&gt;%
   dplyr::group_by(idx) %&gt;%
   dplyr::mutate(weights = dplyr::row_number()) %&gt;%
-  dplyr::ungroup()</code></pre>
+  dplyr::ungroup()
+
+# Example.
+data %&gt;%
+  dplyr::select(idx, time, status, weights) %&gt;%
+  dplyr::slice(1:10)</code></pre>
+<pre><code>## # A tibble: 10 × 4
+##      idx   time status weights
+##    &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;int&gt;
+##  1     1 0.0885      1       1
+##  2     1 0.236       2       2
+##  3     2 0.164       1       1
+##  4     2 0.669       1       2
+##  5     2 0.873       2       3
+##  6     3 0.0230      2       1
+##  7     4 0.0975      0       1
+##  8     5 0.257       0       1
+##  9     6 0.0402      1       1
+## 10     6 1.29        1       2</code></pre>
 <pre class="r"><code>aucs &lt;- MCC::CompareAUCs(
   data,
   tau = 4,
