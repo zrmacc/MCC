@@ -1,5 +1,5 @@
 # Purpose: Function to plot the mean cumulative function for one treatment arm.
-# Updated: 2024-01-18
+# Updated: 2024-02-19
 
 # -----------------------------------------------------------------------------
 
@@ -12,19 +12,22 @@
 #' @param idx_name Name of index (subject identifier) column in data.
 #' @param status_name Name of status column in data.
 #' @param time_name Name of column column in data.
+#' @param weights Optional column of weights, controlling the size of the jump
+#'   in the cumulative count curve at times with status == 1.
 #' @return stepfun.
 #' @export
 MCFCurve <- function(
   data, 
   idx_name = "idx",
   status_name = "status",
-  time_name = "time"
+  time_name = "time",
+  weights = NULL
 ) {
   
   # Data preparation.
   key_cols <- c(idx_name, status_name, time_name)
-  df <- data %>%
-    data %>% dplyr::select(dplyr::all_of(key_cols)) %>%
+  df <- data %>% 
+    dplyr::select(dplyr::all_of(key_cols)) %>%
     dplyr::rename(
       "idx" = {{idx_name}},
       "status" = {{status_name}},
@@ -32,11 +35,16 @@ MCFCurve <- function(
     )
   df <- ConvertIdxToInt(df)
   
+  # Jump weights.
+  if (is.null(weights)) {weights <- 1}
+  df$weights <- weights
+  
   # Construct MCF.
-  mcf <- MCC::CalcMCF(
+  mcf <- CalcMCF(
     idx = df$idx,
     status = df$status, 
     time = df$time, 
+    weights = df$weights,
     calc_var = FALSE
   )
   
@@ -58,7 +66,6 @@ MCFCurve <- function(
 #' @param status_name Name of status column in data.
 #' @param time_name Name of column column in data.
 #' @return stepfun.
-#' @importFrom dplyr "%>%"
 #' @export
 NARCurve <- function(
   data, 
@@ -78,10 +85,12 @@ NARCurve <- function(
     )
   
   # Fit cumulative incidence curve.
-  fit <- MCC::CalcMCF(
+  data$weights <- 1
+  fit <- CalcMCF(
     idx = data$idx,
     status = data$status,
     time = data$time,
+    weights = data$weights,
     calc_var = FALSE
   )
   
@@ -110,6 +119,8 @@ NARCurve <- function(
 #' @param status_name Name of status column in data.
 #' @param tau Truncation time.
 #' @param time_name Name of column column in data.
+#' @param weights Optional column of weights, controlling the size of the jump
+#'   in the cumulative count curve at times with status == 1.
 #' @return Data.frame containing `time` and `mcf`.
 MCFPlotFrame <- function(
   data,
@@ -117,7 +128,8 @@ MCFPlotFrame <- function(
   idx_name = "idx",
   status_name = "status",
   tau = NULL,
-  time_name = "time"
+  time_name = "time",
+  weights = NULL
 ) {
   
   # Data preparation.
@@ -129,7 +141,10 @@ MCFPlotFrame <- function(
       "status" = {{status_name}},
       "time" = {{time_name}}
     )
-  g <- df %>% MCFCurve()
+  
+  # Jump weights.
+  if (is.null(weights)) {weights <- 1}
+  g <- MCFCurve(data = df, weights = weights)
   
   # Time grid.
   if (is.null(tau)) {
@@ -158,6 +173,8 @@ MCFPlotFrame <- function(
 #' @param tau Truncation time.
 #' @param time_name Name of column column in data.
 #' @param title Plot title.
+#' @param weights Optional column of weights, controlling the size of the jump
+#'   in the cumulative count curve at times with status == 1.
 #' @param x_breaks X-axis breaks.
 #' @param x_lim X-axis limits.
 #' @param x_name X-axis label.
@@ -176,6 +193,7 @@ PlotOneSampleMCF <- function(
   tau = NULL,
   time_name = "time",
   title = NULL,
+  weights = NULL,
   x_breaks = NULL,
   x_lim = NULL,
   x_name = "Time",
@@ -196,6 +214,10 @@ PlotOneSampleMCF <- function(
     )
   data <- ConvertIdxToInt(data)
   
+  # Jump weights.
+  if (is.null(weights)) {weights <- 1}
+  data$weights <- weights
+  
   # Truncation.
   if (is.null(x_lim[2])) {
     x_max <- max(data$time)
@@ -207,10 +229,11 @@ PlotOneSampleMCF <- function(
   }
   
   # Calculate marginal MCF.
-  mcf <- MCC::CalcMCF(
+  mcf <- CalcMCF(
     idx = data$idx,
     status = data$status,
-    time = data$time
+    time = data$time,
+    weights = data$weights
   )
   
   # MCF function.
@@ -231,7 +254,7 @@ PlotOneSampleMCF <- function(
     ggplot2::theme(
       panel.grid.major = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
-      legend.position = c(0.2, 0.8)
+      legend.position.inside = c(0.2, 0.8)
     ) + 
     ggplot2::geom_step(
       data = df, 
@@ -302,6 +325,8 @@ PlotOneSampleMCF <- function(
 #' @param tau Truncation time for shading.
 #' @param time_name Name of column column in data.
 #' @param title Plot title.
+#' @param weights Optional column of weights, controlling the size of the jump
+#'   in the cumulative count curve at times with status == 1.
 #' @param x_breaks X-axis breaks.
 #' @param x_lim X-axis limits.
 #' @param x_name X-axis label.
@@ -320,6 +345,7 @@ PlotOneSampleAUMCF <- function(
   time_name = "time",
   title = NULL,
   tau = NULL,
+  weights = NULL,
   x_breaks = NULL,
   x_lim = NULL,
   x_name = "Time",
@@ -340,6 +366,10 @@ PlotOneSampleAUMCF <- function(
     )
   data <- ConvertIdxToInt(data)
   
+  # Jump weights.
+  if (is.null(weights)) {weights <- 1}
+  data$weights <- weights
+  
   # Truncation.
   if (is.null(x_lim[2])) {
     x_max <- max(data$time)
@@ -354,7 +384,8 @@ PlotOneSampleAUMCF <- function(
   fit_mcf <- MCC::CalcMCF(
     idx = data$idx,
     status = data$status,
-    time = data$time
+    time = data$time,
+    weights = data$weights
   )
   
   # MCF function.
@@ -377,7 +408,7 @@ PlotOneSampleAUMCF <- function(
     ggplot2::theme(
       panel.grid.major = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
-      legend.position = c(0.2, 0.8)
+      legend.position.inside = c(0.2, 0.8)
     ) + 
     ggplot2::geom_ribbon(
       data = df_shade,
@@ -453,7 +484,6 @@ PlotOneSampleAUMCF <- function(
 #' @param x_max X-axis upper limit.
 #' @param y_lab Y-axis tick label.
 #' @return ggplot.
-#' @importFrom dplyr "%>%"
 #' @export
 PlotOneSampleNAR <- function(
   data,

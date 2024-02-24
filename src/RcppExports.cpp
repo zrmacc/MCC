@@ -11,24 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// PsiAUC
-SEXP PsiAUC(const arma::colvec event_rate, const arma::colvec idx, const arma::colvec haz, const arma::colvec nar, const arma::colvec status, const arma::colvec surv, const double tau, const arma::colvec time);
-RcppExport SEXP _MCC_PsiAUC(SEXP event_rateSEXP, SEXP idxSEXP, SEXP hazSEXP, SEXP narSEXP, SEXP statusSEXP, SEXP survSEXP, SEXP tauSEXP, SEXP timeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec >::type event_rate(event_rateSEXP);
-    Rcpp::traits::input_parameter< const arma::colvec >::type idx(idxSEXP);
-    Rcpp::traits::input_parameter< const arma::colvec >::type haz(hazSEXP);
-    Rcpp::traits::input_parameter< const arma::colvec >::type nar(narSEXP);
-    Rcpp::traits::input_parameter< const arma::colvec >::type status(statusSEXP);
-    Rcpp::traits::input_parameter< const arma::colvec >::type surv(survSEXP);
-    Rcpp::traits::input_parameter< const double >::type tau(tauSEXP);
-    Rcpp::traits::input_parameter< const arma::colvec >::type time(timeSEXP);
-    rcpp_result_gen = Rcpp::wrap(PsiAUC(event_rate, idx, haz, nar, status, surv, tau, time));
-    return rcpp_result_gen;
-END_RCPP
-}
 // CalcAugComp
 SEXP CalcAugComp(const arma::mat covars, const arma::rowvec mu, const arma::colvec psi);
 RcppExport SEXP _MCC_CalcAugComp(SEXP covarsSEXP, SEXP muSEXP, SEXP psiSEXP) {
@@ -57,26 +39,46 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// CalcMCF
-SEXP CalcMCF(const arma::colvec idx, const arma::colvec status, const arma::colvec time, const bool calc_var);
-RcppExport SEXP _MCC_CalcMCF(SEXP idxSEXP, SEXP statusSEXP, SEXP timeSEXP, SEXP calc_varSEXP) {
+// CalcMCFCpp
+SEXP CalcMCFCpp(const arma::colvec idx, const arma::colvec status, const arma::colvec time, const arma::colvec weights, const bool calc_var);
+RcppExport SEXP _MCC_CalcMCFCpp(SEXP idxSEXP, SEXP statusSEXP, SEXP timeSEXP, SEXP weightsSEXP, SEXP calc_varSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::colvec >::type idx(idxSEXP);
     Rcpp::traits::input_parameter< const arma::colvec >::type status(statusSEXP);
     Rcpp::traits::input_parameter< const arma::colvec >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type weights(weightsSEXP);
     Rcpp::traits::input_parameter< const bool >::type calc_var(calc_varSEXP);
-    rcpp_result_gen = Rcpp::wrap(CalcMCF(idx, status, time, calc_var));
+    rcpp_result_gen = Rcpp::wrap(CalcMCFCpp(idx, status, time, weights, calc_var));
+    return rcpp_result_gen;
+END_RCPP
+}
+// PsiAUC
+SEXP PsiAUC(const arma::colvec event_rate, const arma::colvec idx, const arma::colvec haz, const arma::colvec nar, const arma::colvec status, const arma::colvec surv, const double tau, const arma::colvec time, const arma::colvec weights);
+RcppExport SEXP _MCC_PsiAUC(SEXP event_rateSEXP, SEXP idxSEXP, SEXP hazSEXP, SEXP narSEXP, SEXP statusSEXP, SEXP survSEXP, SEXP tauSEXP, SEXP timeSEXP, SEXP weightsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::colvec >::type event_rate(event_rateSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type haz(hazSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type nar(narSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type status(statusSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type surv(survSEXP);
+    Rcpp::traits::input_parameter< const double >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type weights(weightsSEXP);
+    rcpp_result_gen = Rcpp::wrap(PsiAUC(event_rate, idx, haz, nar, status, surv, tau, time, weights));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_MCC_PsiAUC", (DL_FUNC) &_MCC_PsiAUC, 8},
     {"_MCC_CalcAugComp", (DL_FUNC) &_MCC_CalcAugComp, 3},
     {"_MCC_SimDataCpp", (DL_FUNC) &_MCC_SimDataCpp, 5},
-    {"_MCC_CalcMCF", (DL_FUNC) &_MCC_CalcMCF, 4},
+    {"_MCC_CalcMCFCpp", (DL_FUNC) &_MCC_CalcMCFCpp, 5},
+    {"_MCC_PsiAUC", (DL_FUNC) &_MCC_PsiAUC, 9},
     {NULL, NULL, 0}
 };
 

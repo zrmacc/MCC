@@ -68,7 +68,7 @@ test_that("Test MCF calculation.", {
       time = data$time
     )
   }
-  
+
   # Case 1.
   data <- data.frame(
     time = c(1, 2, 3),
@@ -122,5 +122,81 @@ test_that("Test MCF calculation.", {
   )
   observed <- GetMCF(data)
   expect_equal(observed$mcf, c(1/4, 1/4, 1/4, 1/4 + 1/2 * 1/2))
+  
+})
+
+
+# -----------------------------------------------------------------------------
+
+test_that("Test MCF weighting.", {
+  
+  GetMCF <- function(data){
+    CalcMCF(
+      idx = data$idx,
+      status = data$status,
+      time = data$time,
+      weights = data$weights
+    )
+  }
+  
+  # Case 1.
+  data <- data.frame(
+    time = c(1, 2, 3),
+    status = c(1, 1, 2),
+    idx = c(1, 1, 1),
+    weights = c(10, 1, 0)
+  )
+  observed <- GetMCF(data)
+  expect_equal(observed$mcf, c(10, 11, 11))
+  
+  # Case 2.
+  data <- data.frame(
+    time = c(1, 2, 3),
+    status = c(1, 1, 0),
+    idx = c(1, 1, 1),
+    weights = c(1, 2, 1)
+  )
+  observed <- GetMCF(data)
+  expect_equal(observed$mcf, c(1, 3, 3))
+  
+  # Case 3.
+  data <- data.frame(
+    time = c(1, 2, 3, 4),
+    status = c(1, 1, 0, 1),
+    idx = c(1, 2, 3, 4),
+    weights = c(1, 2, 1, 2)
+  )
+  observed <- GetMCF(data)
+  expect_equal(observed$mcf, c(1/4, 3/4, 3/4, 3/4 + 2/3))
+  
+  # Case 4. 
+  data <- data.frame(
+    time = c(1, 2, 3, 4),
+    status = c(1, 0, 0, 1),
+    idx = c(1, 2, 3, 4),
+    weights = c(1, 2, 2, 1)
+  )
+  observed <- GetMCF(data)
+  expect_equal(observed$mcf, c(1/4, 1/4, 1/4, 1/4 + 1/2))
+  
+  # Case 5.
+  data <- data.frame(
+    time = c(1, 2, 3, 4),
+    status = c(1, 0, 2, 1),
+    idx = c(1, 2, 3, 4),
+    weights = c(2, 1, 0, 2)
+  )
+  observed <- GetMCF(data)
+  expect_equal(observed$mcf, c(2/4, 2/4, 2/4, 2/4 + 2/2 * 2/3))
+  
+  # Case 6.
+  data <- data.frame(
+    time = c(1, 2, 3, 4),
+    status = c(1, 2, 2, 1),
+    idx = c(1, 2, 3, 4),
+    weights = c(0, 0, 0, 0)
+  )
+  observed <- GetMCF(data)
+  expect_equal(observed$mcf, c(0, 0, 0, 0))
   
 })

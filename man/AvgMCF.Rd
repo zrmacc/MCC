@@ -4,12 +4,12 @@
 \alias{AvgMCF}
 \title{Calculate Average MCF Curve}
 \usage{
-AvgMCF(curve_list, weights)
+AvgMCF(curve_list, strat_weights)
 }
 \arguments{
 \item{curve_list}{List of tabulated MCFs as returned by \code{\link{CalcMCF}}.}
 
-\item{weights}{Numeric vector of weights.}
+\item{strat_weights}{Numeric vector of stratum weights.}
 }
 \value{
 Data.frame containing `Time` and the averaged MCF `Avg_MCF`.

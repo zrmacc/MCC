@@ -4,7 +4,13 @@
 \alias{MCFCurve}
 \title{MCF Curve}
 \usage{
-MCFCurve(data, idx_name = "idx", status_name = "status", time_name = "time")
+MCFCurve(
+  data,
+  idx_name = "idx",
+  status_name = "status",
+  time_name = "time",
+  weights = NULL
+)
 }
 \arguments{
 \item{data}{Data.frame.}
@@ -14,6 +20,9 @@ MCFCurve(data, idx_name = "idx", status_name = "status", time_name = "time")
 \item{status_name}{Name of status column in data.}
 
 \item{time_name}{Name of column column in data.}
+
+\item{weights}{Optional column of weights, controlling the size of the jump
+in the cumulative count curve at times with status == 1.}
 }
 \value{
 stepfun.

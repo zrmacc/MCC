@@ -1,6 +1,5 @@
 # Purpose: Construct bootstrap confidence intervals.
-# Updated: 2022-05-19
-
+# Updated: 2024-02-24
 
 #' Bootstrap Confidence Intervals
 #'
@@ -9,33 +8,56 @@
 #' @param alpha Type I error.
 #' @return Data.frame containing the equi-tailed and highest-density bootstrap
 #'   confidence intervals.
-
 BootCIs <- function(
   sim,
   obs_stats,
   alpha = 0.05
 ) {
-  # CI for difference.
-  alpha2 <- alpha / 2
-  ci_diff <- stats::quantile(
-    x = sim$boot_diff,
-    probs = c(alpha2, 1 - alpha2)
-  )
-  names(ci_diff) <- NULL
   
-  # Output.
-  out <- data.frame(
-    method = "bootstrap",
-    contrast = "A1-A0",
-    observed = obs_stats$observed[1],
-    se = stats::sd(sim$boot_diff),
-    lower = ci_diff[1],
-    upper = ci_diff[2]
-  )
-  
-  if (!is.null(sim$boot_ratio)) {
+  # CI for area.
+  if (!is.null(sim$area)) {
+    alpha2 <- alpha / 2
+    ci_area <- stats::quantile(
+      x = sim$area,
+      probs = c(alpha2, 1 - alpha2)
+    )
+    names(ci_area) <- NULL
     
-    # CI for ratio.
+    # Output.
+    out <- data.frame(
+      method = "bootstrap",
+      contrast = "A0",
+      observed = obs_stats$observed[1],
+      se = stats::sd(sim$area),
+      lower = ci_area[1],
+      upper = ci_area[2]
+    ) 
+    return(out)
+  }
+  
+  # CI for difference.
+  if (!is.null(sim$boot_diff)) {
+    alpha2 <- alpha / 2
+    ci_diff <- stats::quantile(
+      x = sim$boot_diff,
+      probs = c(alpha2, 1 - alpha2)
+    )
+    names(ci_diff) <- NULL
+    
+    # Output.
+    out <- data.frame(
+      method = "bootstrap",
+      contrast = "A1-A0",
+      observed = obs_stats$observed[1],
+      se = stats::sd(sim$boot_diff),
+      lower = ci_diff[1],
+      upper = ci_diff[2]
+    ) 
+  }
+  
+  # CI for ratio.
+  if (!is.null(sim$boot_ratio)) {
+  
     log_ratios <- log(sim$boot_ratio)
     finite_log_ratios <- log_ratios[is.finite(log_ratios)]
     ci_ratio <- stats::quantile(

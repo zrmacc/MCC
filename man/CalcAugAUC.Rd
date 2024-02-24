@@ -7,7 +7,7 @@
 CalcAugAUC(data, tau, alpha = 0.05, return_areas = FALSE)
 }
 \arguments{
-\item{data}{Data.frame containing {arm, idx, status, time}.}
+\item{data}{Data.frame containing {arm, idx, status, time, weights}.}
 
 \item{tau}{Truncation time.}
 

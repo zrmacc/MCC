@@ -13,6 +13,7 @@ PlotOneSampleAUMCF(
   time_name = "time",
   title = NULL,
   tau = NULL,
+  weights = NULL,
   x_breaks = NULL,
   x_lim = NULL,
   x_name = "Time",
@@ -37,6 +38,9 @@ PlotOneSampleAUMCF(
 \item{title}{Plot title.}
 
 \item{tau}{Truncation time for shading.}
+
+\item{weights}{Optional column of weights, controlling the size of the jump
+in the cumulative count curve at times with status == 1.}
 
 \item{x_breaks}{X-axis breaks.}
 

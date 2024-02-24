@@ -11,7 +11,6 @@
 #' @param p Vector of 1/0 rejection indicators.
 #' @return Numeric p-value.
 #' @noRd
-
 CalcP <- function(p) {
   p1 <- c(1, p)
   mu <- mean(p1)
@@ -41,7 +40,6 @@ CalcP <- function(p) {
 #'   \item Indicators that the permutation difference or ratio was as or more extreme
 #'     than the observed difference or ratio.
 #' }
-
 PermSimStrat <- function(
   data,
   obs_stats,
@@ -114,7 +112,6 @@ PermSimStrat <- function(
 #'   \item Indicators that the permutation difference or ratio was as or more extreme
 #'     than the observed difference or ratio.
 #' }
-
 PermSimAug <- function(
   data,
   obs_stats,

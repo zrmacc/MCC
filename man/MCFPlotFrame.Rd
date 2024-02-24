@@ -10,7 +10,8 @@ MCFPlotFrame(
   idx_name = "idx",
   status_name = "status",
   tau = NULL,
-  time_name = "time"
+  time_name = "time",
+  weights = NULL
 )
 }
 \arguments{
@@ -25,6 +26,9 @@ MCFPlotFrame(
 \item{tau}{Truncation time.}
 
 \item{time_name}{Name of column column in data.}
+
+\item{weights}{Optional column of weights, controlling the size of the jump
+in the cumulative count curve at times with status == 1.}
 }
 \value{
 Data.frame containing `time` and `mcf`.

@@ -11,8 +11,7 @@
 #'
 #' @param data Data.frame containing `idx`.
 #' @return Bootstrapped data.frame.
-
-GroupBoot <- function (data) {
+GroupBoot <- function(data) {
   ids <- sort(unique(data$idx))
   n <- length(ids)
 
@@ -44,7 +43,6 @@ GroupBoot <- function (data) {
 #' 
 #' @param data Data.frame containing `idx` and `strata`.
 #' @return Bootstrapped data.frame.
-
 StratGroupBoot <- function(data) {
   out <- lapply(split(x = data, f = data$strata), GroupBoot)
   out <- do.call(rbind, out)
@@ -60,7 +58,6 @@ StratGroupBoot <- function(data) {
 #'
 #' @param data Data.frame containing: arm and idx.
 #' @return Data.frame with permuted treatment arm.
-
 PermData <- function(data) {
   
   # Observed assignments.

@@ -19,6 +19,8 @@
 #' @param time_name Name of column column in data.
 #' @param title Plot title.
 #' @param trt_color Color for treatment arm.
+#' @param weights Optional column of weights, controlling the size of the jump
+#'   in the cumulative count curve at times with status == 1.
 #' @param x_breaks X-axis breaks.
 #' @param x_lim X-axis limits.
 #' @param x_name X-axis label.
@@ -26,9 +28,7 @@
 #' @param y_lim Y-axis limits.
 #' @param y_name Y-axis label.
 #' @return ggplot object.
-#' @importFrom dplyr "%>%"
 #' @export
-
 PlotMCFs <- function(
   data,
   arm_name = "arm",
@@ -41,6 +41,7 @@ PlotMCFs <- function(
   time_name = "time",
   title = NULL,
   trt_color = "#6385B8",
+  weights = NULL,
   x_breaks = NULL,
   x_lim = NULL,
   x_name = "Time",
@@ -64,6 +65,10 @@ PlotMCFs <- function(
       "time" = {{time_name}}
     )
   data <- ConvertIdxToInt(data)
+
+  # Jump weights.
+  if (is.null(weights)) {weights <- 1}
+  data$weights <- weights
   
   # Strata.
   if (!is.null(strata_name)) {
@@ -122,7 +127,7 @@ PlotMCFs <- function(
     ggplot2::theme(
       panel.grid.major = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
-      legend.position = c(0.2, 0.8)
+      legend.position.inside = c(0.2, 0.8)
     ) + 
     ggplot2::geom_step(
       data = df, 
@@ -196,6 +201,8 @@ PlotMCFs <- function(
 #' @param tau Truncation time for shading.
 #' @param time_name Name of column column in data.
 #' @param title Plot title.
+#' @param weights Optional column of weights, controlling the size of the jump
+#'   in the cumulative count curve at times with status == 1.
 #' @param x_breaks X-axis breaks.
 #' @param x_lim X-axis limits.
 #' @param x_name X-axis label.
@@ -217,6 +224,7 @@ PlotAUMCFs <- function(
   time_name = "time",
   title = NULL,
   tau = NULL,
+  weights = NULL,
   x_breaks = NULL,
   x_lim = NULL,
   x_name = "Time",
@@ -236,6 +244,10 @@ PlotAUMCFs <- function(
       "time" = {{time_name}}
     )
   data <- ConvertIdxToInt(data)
+
+  # Jump weights.
+  if (is.null(weights)) {weights <- 1}
+  data$weights <- weights
   
   # Strata.
   if (!is.null(strata_name)) {
@@ -262,10 +274,11 @@ PlotAUMCFs <- function(
   fit_mcf <- CalcMargMCF(data) %>% dplyr::filter(arm == which_arm)
   
   # Estimate mean cumulative function (MCF).
-  fit_mcf <- MCC::CalcMCF(
+  fit_mcf <- CalcMCF(
     idx = data$idx,
     status = data$status,
-    time = data$time
+    time = data$time,
+    weights = data$weights
   )
   
   # MCF function.
@@ -289,7 +302,7 @@ PlotAUMCFs <- function(
     ggplot2::theme(
       panel.grid.major = ggplot2::element_blank(),
       panel.grid.minor = ggplot2::element_blank(),
-      legend.position = c(0.2, 0.8)
+      legend.position.inside = c(0.2, 0.8)
     ) + 
     ggplot2::geom_ribbon(
       data = df_shade,
@@ -414,9 +427,7 @@ TwoSampleNARFrame <- function(
 #' @param x_max X-axis upper limit.
 #' @param y_labs Y-axis tick labels.
 #' @return ggplot.
-#' @importFrom dplyr "%>%"
 #' @export
-
 PlotNARs <- function(
   data,
   x_breaks,

@@ -1,5 +1,5 @@
 # Purpose: Inference on the difference and ratio of AUCs.
-# Updated: 2022-05-15
+# Updated: 2024-02-24
 
 #' Contrast AUCs
 #' 
@@ -10,11 +10,26 @@
 #' @param alpha Type I error.
 #' @return Data.frame containing the difference and ratio of areas, together
 #'   with the confidence interval and p-value.
-
 ContrastAreas <- function(
   marg_areas,
   alpha = 0.05
 ) {
+  
+  # Critical value.
+  crit <- stats::qnorm(p = 1 - alpha / 2)
+  
+  # Single-arm case.
+  if (nrow(marg_areas) == 1) {
+    out <- data.frame(
+      contrast = "A0",
+      observed = marg_areas$area,
+      se = marg_areas$se
+    )
+    out$lower <- out$observed - crit * out$se
+    out$upper <- out$observed + crit * out$se
+    out$p <- 2 * stats::pnorm(q = out$observed / out$se, lower.tail = FALSE)
+    return(out)
+  }
   
   # Unpack.
   area0 <- marg_areas$area[marg_areas$arm == 0]
@@ -34,9 +49,6 @@ ContrastAreas <- function(
   )
   
   if (!is.null(se1) & !is.null(se0)) {
-    
-    # Critical value.
-    crit <- stats::qnorm(p = 1 - alpha / 2)
     
     # Inference for delta.
     se_diff <- sqrt(se1^2 + se0^2)

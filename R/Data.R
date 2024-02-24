@@ -30,10 +30,7 @@
 #'     event, 2 for death.
 #'  \item The `true_death_rate`, `true_event_rate`, and `frailty`, which are subject-specific.
 #' }
-#' 
-#' @importFrom dplyr "%>%" 
 #' @export
-
 GenData <- function(
   base_death_rate = 0.25,
   base_event_rate = 1.0,

@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.6.3
+Version: 0.7.0
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -31,5 +31,5 @@ Suggests:
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 VignetteEngine: knitr::rmarkdown
-VignetteIndexEntry: "Plotting"
-VignetteSource: vignettes/plotting.Rmd
+VignetteIndexEntry: "Plotting", "Calibration"
+VignetteSource: vignettes/plotting.Rmd, vignettes/calibration.Rmd

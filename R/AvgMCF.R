@@ -6,10 +6,9 @@
 #' Calculates the weighted average of MCF curves for a stratified analysis.
 #'
 #' @param curve_list List of tabulated MCFs as returned by \code{\link{CalcMCF}}.
-#' @param weights Numeric vector of weights.
+#' @param strat_weights Numeric vector of stratum weights.
 #' @return Data.frame containing `Time` and the averaged MCF `Avg_MCF`.
-
-AvgMCF <- function(curve_list, weights) {
+AvgMCF <- function(curve_list, strat_weights) {
 
   # Extract event times.
   time <- lapply(curve_list, function(x) {x$time})
@@ -23,7 +22,7 @@ AvgMCF <- function(curve_list, weights) {
   }
   mcfs <- lapply(curve_list, aux)
   mcfs <- do.call(cbind, mcfs)
-  avg_mcf <- mcfs %*% weights
+  avg_mcf <- mcfs %*% strat_weights
 
   # Standard errors.
   aux <- function(x) {
@@ -32,7 +31,7 @@ AvgMCF <- function(curve_list, weights) {
   }
   vars <- lapply(curve_list, aux)
   vars <- do.call(cbind, vars)
-  avg_var <- vars %*% (weights^2)
+  avg_var <- vars %*% (strat_weights^2)
 
   # Output table.
   out <- data.frame(
@@ -55,17 +54,15 @@ AvgMCF <- function(curve_list, weights) {
 #' weights proportional to the total number of subjects (across arms)
 #' belonging to that stratum. 
 #'
-#' @param data Data.frame containing {arm, idx, status, strata, time}.
-#' @importFrom dplyr "%>%"
+#' @param data Data.frame containing {arm, idx, status, strata, time, weights}.
 #' @return Data.frame.
 #' @export 
-
 CalcMargMCF <- function(data) {
   
   # Format data.
-  arm <- idx <- status <- strata <- time <- NULL
+  arm <- idx <- status <- strata <- time <- weights <- NULL
   data <- data %>%
-    dplyr::select(arm, idx, status, strata, time)
+    dplyr::select(arm, idx, status, strata, time, weights)
   
   # Stratum sizes.
   n0 <- n1 <- n <- w <- NULL
@@ -91,11 +88,11 @@ CalcMargMCF <- function(data) {
     dplyr::filter(arm == 1) %>%
     dplyr::group_by(strata) %>%
     dplyr::reframe(
-      CalcMCF(idx = idx, status = status, time = time, calc_var = TRUE)
+      CalcMCF(idx = idx, status = status, time = time, weights = weights, calc_var = TRUE)
     ) %>%
     dplyr::group_by(strata) %>%
     dplyr::group_split()
-  avg_mcf1 <- AvgMCF(mcf1, weights = stratum_sizes$w1[stratum_sizes$w1 != 0])
+  avg_mcf1 <- AvgMCF(mcf1, strat_weights = stratum_sizes$w1[stratum_sizes$w1 != 0])
   avg_mcf1$arm <- 1
   
   # Marginal MCF for arm 0.
@@ -103,11 +100,11 @@ CalcMargMCF <- function(data) {
     dplyr::filter(arm == 0) %>%
     dplyr::group_by(strata) %>%
     dplyr::reframe(
-      CalcMCF(idx = idx, status = status, time = time)
+      CalcMCF(idx = idx, status = status, time = time, weights = weights, calc_var = TRUE)
     ) %>%
     dplyr::group_by(strata) %>%
     dplyr::group_split()
-  avg_mcf0 <- AvgMCF(mcf0, weights = stratum_sizes$w0[stratum_sizes$w0 != 0])
+  avg_mcf0 <- AvgMCF(mcf0, strat_weights = stratum_sizes$w0[stratum_sizes$w0 != 0])
   avg_mcf0$arm <- 0
   
   avg_mcf <- rbind(avg_mcf1, avg_mcf0)

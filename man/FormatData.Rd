@@ -12,7 +12,8 @@ FormatData(
   idx_name = "idx",
   status_name = "status",
   strata = NULL,
-  time_name = "time"
+  time_name = "time",
+  weights = NULL
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ observation-terminating event, either censoring or death.}
 covariate matrix is provided.}
 
 \item{time_name}{Name of column containing the observation time.}
+
+\item{weights}{Optional column of weights.}
 }
 \value{
 Formatted data.frame.

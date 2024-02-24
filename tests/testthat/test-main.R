@@ -3,7 +3,8 @@ test_that("Reused subject IDs raises error.", {
     time = c(1, 1),
     status = c(1, 2),
     idx = c(1, 1),
-    arm = c(1, 0)
+    arm = c(1, 0),
+    weights = c(1, 1)
   )
   
   expect_error(CompareAUCs(data, tau = 1))
@@ -24,10 +25,9 @@ test_that("Test AUC comparison.", {
         data,
         tau = tau,
         cens_after_last = FALSE
-      )
-    )
+      ))
+    return(out)
   }
-  
   
   # Case 1.
   data1 <- data.frame(

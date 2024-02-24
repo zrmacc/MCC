@@ -6,7 +6,8 @@ test_that("Expect no change in the case of correctly formatted data.", {
     arm = c(1, 1),
     status = c(1, 0),
     time = c(1, 2),
-    strata = c(1, 1)
+    strata = c(1, 1),
+    weights = c(1, 1)
   )
   
   out <- MCC::FormatData(
@@ -32,7 +33,8 @@ test_that("Check addition of censoring time when missing.", {
     arm = c(1, 1),
     status = c(1, 1),
     time = c(1, 2),
-    strata = c(1, 1)
+    strata = c(1, 1),
+    weights = c(1, 1)
   )
   
   # Censor after last set to FALSE.
@@ -89,7 +91,9 @@ test_that("Character index converted to integer.", {
     idx = c("a", "b"),
     arm = c(1, 1),
     status = c(0, 0),
-    time = c(1, 2)
+    time = c(1, 2),
+    strata = c(1, 1),
+    weights = c(1, 1)
   )
   
   out <- MCC::FormatData(
@@ -99,7 +103,6 @@ test_that("Character index converted to integer.", {
   )
   
   data$idx <- c(1, 2)
-  data$strata <- c(1, 1)
   expect_equal(data, out)
   
 })

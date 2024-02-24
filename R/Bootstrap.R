@@ -1,4 +1,5 @@
 # Purpose: Functions for bootstrap simulation.
+# Updated: 2024-02-24
 
 # -----------------------------------------------------------------------------
 # Bootstrap/permutation
@@ -19,7 +20,6 @@
 #'   \item An indicator that the bootstrap difference was of the opposite
 #'     sign, 'is_diff_sign'.
 #' }
-
 BootSimStrat <- function(
   data,
   obs_stats,
@@ -30,8 +30,8 @@ BootSimStrat <- function(
   
   # Partition data.
   arm <- NULL
-  data1 <- subset(x = data, arm == 1)
-  data0 <- subset(x = data, arm == 0)
+  data1 <- data %>% dplyr::filter(arm == 1)
+  data0 <- data %>% dplyr::filter(arm == 0)
   
   # Bootstrap function.
   Loop <- function(b) {
@@ -64,7 +64,12 @@ BootSimStrat <- function(
   
   sim <- lapply(seq_len(reps), Loop)
   sim <- data.frame(do.call(rbind, sim))
-  colnames(sim) <- c("boot_diff", "boot_ratio", "is_diff_sign")
+  if (nrow(obs_stats) == 2) {
+    colnames(sim) <- c("boot_diff", "boot_ratio", "is_diff_sign")
+  } else {
+    colnames(sim) <- c("area", "is_diff_sign")
+    sim <- sim[, c("area"), drop = FALSE]
+  }
   return(sim)
 }
 
@@ -87,7 +92,6 @@ BootSimStrat <- function(
 #'   \item An indicator that the bootstrap difference was of the opposite
 #'     sign, '1side_boot_diff'.
 #' }
-
 BootSimAug <- function(
   data,
   obs_stats,
@@ -98,8 +102,8 @@ BootSimAug <- function(
   
   # Partition data.
   arm <- NULL
-  data1 <- subset(x = data, arm == 1)
-  data0 <- subset(x = data, arm == 0)
+  data1 <- data %>% dplyr::filter(arm == 1)
+  data0 <- data %>% dplyr::filter(arm == 0)
   
   # Bootstrap function.
   Loop <- function(b) {

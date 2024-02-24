@@ -1,5 +1,5 @@
 # Purpose: Augmentation estimator of AUC.
-# Updated: 2022-05-18
+# Updated: 2024-02-19
 
 # -----------------------------------------------------------------------------
 # Calculated Augmented AUC.
@@ -9,7 +9,7 @@
 #' 
 #' Calculate test statistics for augmentation estimator.
 #'
-#' @param data Data.frame containing {arm, idx, status, time}.
+#' @param data Data.frame containing {arm, idx, status, time, weights}.
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
@@ -19,9 +19,7 @@
 #'   \item 'mcf', mean cumulative function for each strata.
 #'   \item 'contrasts', including the augmented difference of areas.
 #' }
-#' @importFrom dplyr "%>%"
 #' @export 
-
 CalcAugAUC <- function(
   data,
   tau, 
@@ -32,7 +30,7 @@ CalcAugAUC <- function(
   # Summarize to per-subject covariate data.
   arm <- idx <- NULL
   covars <- data %>% 
-    dplyr::select(-c("time", "status")) %>%
+    dplyr::select(-c("time", "status", "weights")) %>%
     dplyr::group_by(arm, idx) %>%
     dplyr::summarise_all(.funs = mean, .groups = "drop") %>%
     as.data.frame()
@@ -117,7 +115,7 @@ CalcAugAUC <- function(
 
 #' Calculate Augmentation Components for a Single Arm
 #'
-#' @param data Data.frame including {idx, status, time}.
+#' @param data Data.frame including {idx, status, time, weights}.
 #' @param covars Per-subject covariate data.
 #' @param mu Grand mean.
 #' @param tau Truncation time. 
@@ -131,7 +129,6 @@ CalcAugAUC <- function(
 #'   \item 'mean_resid', \eqn{\frac{1}{n}\sum_{i=1}^{n}(X_{i}-\mu)}.
 #' }
 #' @noRd
-
 AugAUC <- function(
   data,
   covars,
@@ -145,6 +142,7 @@ AugAUC <- function(
     idx = data$idx,
     status = data$status,
     time = data$time,
+    weights = data$weights,
     calc_var = calc_var
   )
   
@@ -200,7 +198,6 @@ AugAUC <- function(
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
-#' @importFrom dplyr "%>%"
 #' @return Object of class CompareAugAUCs with these slots:
 #' \itemize{
 #'   \item `@Areas`: Marginal AUC for each arm.
@@ -233,7 +230,6 @@ AugAUC <- function(
 #' )
 #' show(aucs)
 #' }
-
 CompareAugAUCs <- function(
   data,
   tau,

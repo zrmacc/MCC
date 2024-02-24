@@ -17,7 +17,8 @@ CompareAUCs(
   status_name = "status",
   strata = NULL,
   tau = NULL,
-  time_name = "time"
+  time_name = "time",
+  weights = NULL
 )
 }
 \arguments{
@@ -52,6 +53,9 @@ covariate matrix is provided.}
 \item{tau}{Numeric truncation time.}
 
 \item{time_name}{Name of column containing the observation time.}
+
+\item{weights}{Optional column of weights, controlling the size of the jump
+in the cumulative count curve at times with status == 1.}
 }
 \value{
 Object of class compAUCs with these slots:

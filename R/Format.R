@@ -1,5 +1,5 @@
 # Purpose: Format input data.
-# Updated: 2022-05-15
+# Updated: 2024-02-19
 
 #' Format Data for a Single Subject
 #' 
@@ -8,7 +8,6 @@
 #'   be censored after their last observed event? 
 #' @return Data.frame with an added censoring event.
 #' @noRd
-
 FormatSubj <- function(df, cens_after_last = TRUE) {
   obs_end <- sum(df$obs_end)
   out <- df
@@ -74,10 +73,9 @@ ConvertIdxToInt <- function(data) {
 #' @param strata Optional stratification factor. Should not be provided if a
 #'   covariate matrix is provided.
 #' @param time_name Name of column containing the observation time.
+#' @param weights Optional column of weights.
 #' @return Formatted data.frame.
-#' @importFrom dplyr "%>%"
 #' @export 
-
 FormatData <- function(
   data,
   arm_name = "arm",
@@ -86,20 +84,36 @@ FormatData <- function(
   idx_name = "idx",
   status_name = "status",
   strata = NULL,
-  time_name = "time"
+  time_name = "time",
+  weights = NULL
 ) {
   
   # Rename columns as necessary.
-  arm <- idx <- status <- time <- NULL
-  key_cols <- c(arm_name, idx_name, status_name, time_name)
-  data <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      arm = {{arm_name}},
-      idx = {{idx_name}},
-      status = {{status_name}},
-      time = {{time_name}}
-    )
+  if (!is.null(arm_name)) {
+    # Two-sample case.
+    arm <- idx <- status <- time <- NULL
+    key_cols <- c(arm_name, idx_name, status_name, time_name)
+    data <- data %>%
+      dplyr::select(dplyr::all_of(key_cols)) %>%
+      dplyr::rename(
+        arm = {{arm_name}},
+        idx = {{idx_name}},
+        status = {{status_name}},
+        time = {{time_name}}
+      )
+  } else {
+    # Single-sample case.
+    idx <- status <- time <- NULL
+    key_cols <- c(idx_name, status_name, time_name)
+    data <- data %>%
+      dplyr::select(dplyr::all_of(key_cols)) %>%
+      dplyr::rename(
+        idx = {{idx_name}},
+        status = {{status_name}},
+        time = {{time_name}}
+      )
+  }
+
   
   # Ensure index is an integer.
   data <- ConvertIdxToInt(data)
@@ -113,8 +127,15 @@ FormatData <- function(
     data$strata <- strata
   }
   
+  # Add jump weights.
+  if (is.null(weights)) {
+    data$weights <- 1
+  } else {
+    data$weights <- weights
+  }
+  
   # Crate an indicator of an observation-terminating event.
-  # Sory by index > time > terminal indicator.
+  # Sort by index > time > terminal indicator.
   data <- data %>%
     dplyr::mutate(obs_end = 1 * (status != 1)) %>%
     dplyr::arrange(idx, time, obs_end)
