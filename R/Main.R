@@ -198,7 +198,8 @@ CompareAUCs <- function(
       idx = {{idx_name}},
       status = {{status_name}},
       time = {{time_name}}
-    )
+    ) %>%
+    dplyr::select(arm, idx, status, time)
   
   # Check that no patient are in both arms.
   arm1_idx <- unique(data$idx[data$arm == 1])

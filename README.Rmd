@@ -10,7 +10,7 @@ output:
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
 Zachary R. McCaw <br>
-Updated: 2024-02-24
+Updated: 2024-10-02
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE)
@@ -180,7 +180,7 @@ Here:
 
 Weights may be supplied to control the size of the jump in the cumulative count curve at each event time (i.e. each time with `status == 1`). The following example weights each event by how many events a patient has experienced. For example, if a patient has 3 events before censoring, the first contributes a jump of size 1, the second a jump of size 2, and the third a jump of size 3. Other weighting schemes are of course possible. Note that the weights assigned to censoring (`status == 0`) and terminal event (`status == 2`) records are not used, and may be set to any value. 
 
-```{r}
+```{r, results = "hold"}
 data <- data %>%
   dplyr::group_by(idx) %>%
   dplyr::mutate(weights = dplyr::row_number()) %>%
@@ -271,28 +271,43 @@ aucs@Pvals
 
 The previous estimator allows for stratification, but a different approach is needed to accommodate continuous covariates. If covariates are provided, then `CompareAUCs` uses an augmentation estimator to adjust for differences between the treatment groups. Note that strata and covariates should not both be provided. If adjustment for both is needed, use `model.matrix` to generate a design matrix including both covariates and stratum indicators, e.g. `model.matrix(~ 0 + covar + strata, data = data)`, then supply the design matrix `covar` argument.
 
-```{r}
+```{r, results = "hold"}
+set.seed(100)
+
 # Generate data with a continuous covariate.
+n <- 1000
 covariates <- data.frame(
-  arm = c(rep(1, 100), rep(0, 100)),
-  covar = stats::rnorm(200)
+  arm = c(rep(1, n), rep(0, n)),
+  x1 = c(stats::rnorm(n, mean = -1), stats::rnorm(n, mean = 1)),
+  x2 = c(stats::rnorm(n, mean = 1), stats::rnorm(n, mean = -1))
 )
 data <- MCC::GenData(
-  beta_event = c(log(0.8), log(1.2)),
+  beta_event = c(log(0.5), log(0.8), log(1.2)),
   covariates = covariates,
+  base_death_rate = 0.25,
+  base_event_rate = 1,
   frailty_variance = 0.2,
   tau = 4
 )
 
-aucs <- MCC::CompareAUCs(
+# Unadjusted.
+paste("Unadjusted AUCs:")
+unadj_aucs <- MCC::CompareAUCs(
   data,
   tau = 4,
-  boot = TRUE,
-  perm = TRUE,
-  reps = 200,
   alpha = 0.05
 )
-show(aucs)
+show(unadj_aucs)
+
+# Adjusted.
+paste("Adjusted AUCs:")
+adj_aucs <- MCC::CompareAUCs(
+  data,
+  tau = 4,
+  alpha = 0.05,
+  covar = data %>% dplyr::select(x1, x2)
+)
+show(adj_aucs)
 ```
 
 ### Plotting

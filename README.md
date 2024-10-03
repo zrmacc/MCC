@@ -1,7 +1,7 @@
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
 Zachary R. McCaw <br>
-Updated: 2024-02-24
+Updated: 2024-10-02
 
 
 
@@ -230,19 +230,13 @@ data <- data %>%
   dplyr::ungroup()
 
 cat("Visualization of weights for the first 10 records.\n")
-```
-
-```
-## Visualization of weights for the first 10 records.
-```
-
-```r
 data %>%
   dplyr::select(idx, time, status, weights) %>%
   dplyr::slice(1:10)
 ```
 
 ```
+## Visualization of weights for the first 10 records.
 ## # A tibble: 10 × 4
 ##      idx   time status weights
 ##    <dbl>  <dbl>  <dbl>   <int>
@@ -432,52 +426,79 @@ The previous estimator allows for stratification, but a different approach is ne
 
 
 ```r
+set.seed(100)
+
 # Generate data with a continuous covariate.
+n <- 1000
 covariates <- data.frame(
-  arm = c(rep(1, 100), rep(0, 100)),
-  covar = stats::rnorm(200)
+  arm = c(rep(1, n), rep(0, n)),
+  x1 = c(stats::rnorm(n, mean = -1), stats::rnorm(n, mean = 1)),
+  x2 = c(stats::rnorm(n, mean = 1), stats::rnorm(n, mean = -1))
 )
 data <- MCC::GenData(
-  beta_event = c(log(0.8), log(1.2)),
+  beta_event = c(log(0.5), log(0.8), log(1.2)),
   covariates = covariates,
+  base_death_rate = 0.25,
+  base_event_rate = 1,
   frailty_variance = 0.2,
   tau = 4
 )
 
-aucs <- MCC::CompareAUCs(
+# Unadjusted.
+paste("Unadjusted AUCs:")
+unadj_aucs <- MCC::CompareAUCs(
   data,
   tau = 4,
-  boot = TRUE,
-  perm = TRUE,
-  reps = 200,
   alpha = 0.05
 )
-show(aucs)
+show(unadj_aucs)
+
+# Adjusted.
+paste("Adjusted AUCs:")
+adj_aucs <- MCC::CompareAUCs(
+  data,
+  tau = 4,
+  alpha = 0.05,
+  covar = data %>% dplyr::select(x1, x2)
+)
+show(adj_aucs)
 ```
 
 ```
+## [1] "Unadjusted AUCs:"
 ## Marginal Areas:
-##   arm   n area    se tau
-## 1   0 100 5.32 0.600   4
-## 2   1 100 5.11 0.674   4
+##   arm    n area    se tau
+## 1   0 1000 3.74 0.147   4
+## 2   1 1000 4.11 0.153   4
 ## 
 ## 
 ## CIs:
-##       method contrast observed    se  lower upper
-## 1 asymptotic    A1-A0   -0.215 0.903 -1.980  1.56
-## 3  bootstrap    A1-A0   -0.215 0.806 -1.640  1.58
-## 2 asymptotic    A1/A0    0.960 0.167  0.683  1.35
-## 4  bootstrap    A1/A0    0.960 0.147  0.710  1.32
+##       method contrast observed     se   lower upper
+## 1 asymptotic    A1-A0    0.377 0.2120 -0.0388 0.794
+## 2 asymptotic    A1/A0    1.100 0.0597  0.9900 1.220
 ## 
 ## 
 ## P-values:
-##        method contrast observed     p
-## 1  asymptotic    A1-A0   -0.215 0.812
-## 3   bootstrap    A1-A0   -0.215 0.726
-## 5 permutation    A1-A0   -0.215 0.726
-## 2  asymptotic    A1/A0    0.960 0.812
-## 4   bootstrap    A1/A0    0.960 0.726
-## 6 permutation    A1/A0    0.960 0.726
+##       method contrast observed      p
+## 1 asymptotic    A1-A0    0.377 0.0755
+## 2 asymptotic    A1/A0    1.100 0.0757
+## 
+## 
+## [1] "Adjusted AUCs:"
+## Marginal Areas:
+##   arm    n tau area    se
+## 1   0 1000   4 3.74 0.147
+## 2   1 1000   4 4.11 0.153
+## 
+## 
+## CIs:
+##       method contrast observed   se lower upper
+## 1 asymptotic    A1-A0   -0.622 0.21 -1.03 -0.21
+## 
+## 
+## P-values:
+##       method contrast observed       p
+## 1 asymptotic    A1-A0   -0.622 0.00312
 ```
 
 ### Plotting
