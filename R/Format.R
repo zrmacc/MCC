@@ -50,8 +50,7 @@ ConvertIdxToInt <- function(data) {
   
   data <- merge(x = data, y = idx_data, by = "orig_idx")
   out <- data %>%
-    dplyr::relocate(idx, .after = "orig_idx") %>%
-    dplyr::select(-orig_idx)
+    dplyr::relocate(idx, .after = "orig_idx")
   
   return(out)
 }

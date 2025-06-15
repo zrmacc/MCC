@@ -1,3 +1,8 @@
+## Version 0.8.0
+
+* Added pseudo-value calcuation.
+
+
 ## Version 0.7.0
 
 * Added the option to supply weights. 

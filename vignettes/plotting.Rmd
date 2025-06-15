@@ -6,7 +6,7 @@ output:
   pdf_document
 vignette: >
   %\VignetteEngine{knitr::knitr}
-  %\VignetteIndexEntry{Perturbation Bootstrap}
+  %\VignetteIndexEntry{Plotting}
   %\usepackage[UTF-8]{inputenc}
 --- 
 

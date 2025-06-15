@@ -1,5 +1,6 @@
 # Purpose: Calculations of the AUC.
-# Updated: 2025-06-08
+# Updated: 2025-06-14
+
 
 #' Generate Pseudovalues
 #'
@@ -27,7 +28,7 @@ GenPseudo <- function(
 ) {
   
   # Rename columns as necessary.
-  idx <- time <- status <- NULL
+  idx <- orig_idx <-  time <- status <- NULL
   data <- data %>%
     dplyr::rename(
       idx = {{idx_name}},
@@ -42,6 +43,9 @@ GenPseudo <- function(
     cens_after_last = cens_after_last,
     weights = weights
   )
+  idx_map <- data %>%
+    dplyr::select(orig_idx, idx) %>%
+    unique()
   
   # Truncation time.
   if (is.null(tau)) {
@@ -82,5 +86,13 @@ GenPseudo <- function(
   
   # Output.
   out$pseudo <- param + out$psi
+  
+  # Restore original index.
+  out <- out %>%
+    dplyr::inner_join(idx_map, by = "idx") %>%
+    dplyr::select(-idx) %>%
+    dplyr::relocate(orig_idx) %>%
+    dplyr::rename(idx = orig_idx)
+  
   return(out)
 }

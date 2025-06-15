@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.7.1
+Version: 0.8.0
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -8,7 +8,7 @@ Authors@R:
            email = "zmccaw@alumni.harvard.edu",
            comment = c(ORCID = "0000-0002-2006-9828"))
 Description: Provides functions for estimating the mean cumulative count curve, using the method of Ghosh and Lin (2000) <doi:10.1111/j.0006-341X.2000.00554.x>, and for comparing two treatment arms with respect to the difference and ratio in areas under the mean cumulative count curve.
-Depends: R (>= 3.4.0)
+Depends: R (>= 3.5.0)
 License: GPL-3
 Encoding: UTF-8
 Imports:
@@ -25,11 +25,11 @@ LinkingTo:
 RoxygenNote: 7.2.3
 Suggests: 
   cowplot,
+  ggsci,
   knitr,
   testthat (>= 3.0.0),
   withr
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 VignetteEngine: knitr::rmarkdown
-VignetteIndexEntry: "Plotting", "Calibration"
-VignetteSource: vignettes/plotting.Rmd, vignettes/calibration.Rmd
+
