@@ -27,9 +27,10 @@ Suggests:
   cowplot,
   ggsci,
   knitr,
+  rmarkdown,
   testthat (>= 3.0.0),
   withr
 Config/testthat/edition: 3
-VignetteBuilder: knitr
+VignetteBuilder: knitr, rmarkdown
 VignetteEngine: knitr::rmarkdown
-
+URL: https://github.com/zrmacc/MCC/

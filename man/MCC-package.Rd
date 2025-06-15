@@ -8,6 +8,13 @@
 \description{
 Provides functions for estimating the mean cumulative count curve, using the method of Ghosh and Lin (2000) \doi{10.1111/j.0006-341X.2000.00554.x}, and for comparing two treatment arms with respect to the difference and ratio in areas under the mean cumulative count curve.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/zrmacc/MCC/}
+}
+
+}
 \author{
 \strong{Maintainer}: Zachary McCaw \email{zmccaw@alumni.harvard.edu} (\href{https://orcid.org/0000-0002-2006-9828}{ORCID})
 
