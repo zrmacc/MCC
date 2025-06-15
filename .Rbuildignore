@@ -2,6 +2,7 @@
 ^\.Rproj\.user$
 .pre-commit-config.yaml
 inst/.redun
-vignettes/.redun
 LICENSE.md
 README
+^doc$
+^Meta$

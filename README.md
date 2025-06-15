@@ -14,8 +14,8 @@ This package provides functions for inference on the difference and ratio in AUC
 ## Installation
 
 
-```r
-devtools::install_github(repo = 'zrmacc/MCC')
+``` r
+remotes::install_github("zrmacc/MCC", build_vignettes = TRUE)
 ```
 
 ## Methods
