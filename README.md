@@ -23,8 +23,9 @@ remotes::install_github("zrmacc/MCC", build_vignettes = TRUE)
 ### Estimation of the mean cumulative count curve
 
 For each study arm, the MCC is estimated as follows. Define $N(\cdot)$ as the counting process for events of interest, both terminal and non-terminal, $Y(\cdot)$ as the number of subjects who remain at risk, and $S(\cdot)$ as the probability of not having experienced a terminal event. The MCC $\mu(t)$ at time $t$ is estimated by:
+
 $$
-\mu(t) = \int_{0}^{t} \hat{S}(u) \frac{ dN(u) }{ Y(u) }
+\mu(t) = \int_{0}^{t} \hat{S}(u)\, \frac{ dN(u) }{ Y(u) }
 $$
 
 Here $\hat{S}(u)$ is the Kaplan-Meier estimate of the probability of being terminal event-free, estimated from *all* terminal events, both those of interest and those regarded as a competing risk; $dN(u)$ is the number of events of interest, both non-terminal and terminal, occurring at time $u$; and $Y(u)$ is the number of subjects who remain at risk, which are subjects who have neither been censored nor experienced a terminal event.
