@@ -10,13 +10,31 @@
 #' @param times Time points.
 #' @param values Values.
 #' @param tau Truncation time.
-#' @param subdiv Subdivisions for integration.
 #' @return Numeric area under the curve.
 #' @export
-AUC <- function(times, values, tau, subdiv = 1e4) {
-  g <- stats::stepfun(x = times,y = c(0, values))
-  area <- stats::integrate(f = g, lower = 0, upper = tau, subdivisions = subdiv)
-  return(area$value)
+AUC <- function(times, values, tau) {
+  
+  # Extend times to include 0 and tau.
+  times_ext <- c(0, times, tau)
+  values_ext <- c(0, values)
+  deltas <- diff(values_ext)
+  if (any(deltas < 0)) {
+    stop("The values supplied to AUC should be monotone increasing.")
+  }
+  
+  # Step intervals.
+  lefts <- head(times_ext, -1)
+  rights <- tail(times_ext, -1)
+  heights <- values_ext
+  
+  # Clip intervals to [0, tau].
+  lefts <- pmax(lefts, 0)
+  rights <- pmin(rights, tau)
+  
+  # Compute widths and contribution
+  widths <- rights - lefts
+  area <- sum(widths[widths > 0] * heights[widths > 0])
+  return(area)
 }
 
 
