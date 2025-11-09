@@ -23,8 +23,8 @@ AUC <- function(times, values, tau) {
   }
   
   # Step intervals.
-  lefts <- head(times_ext, -1)
-  rights <- tail(times_ext, -1)
+  lefts <- utils::head(times_ext, -1)
+  rights <- utils::tail(times_ext, -1)
   heights <- values_ext
   
   # Clip intervals to [0, tau].
@@ -40,7 +40,7 @@ AUC <- function(times, values, tau) {
 
 #' Calculate Variance of AUC
 #' 
-#' @param data Data.frame containing {idx, status, time}.
+#' @param data Data.frame containing (idx, status, time).
 #' @param tau Truncation time.
 #' @param mcf Tabulated MCF, if already computed.
 #' @param return_psi Return influence function contributions?

@@ -54,7 +54,7 @@ AvgMCF <- function(curve_list, strat_weights) {
 #' weights proportional to the total number of subjects (across arms)
 #' belonging to that stratum. 
 #'
-#' @param data Data.frame containing {arm, idx, status, strata, time, weights}.
+#' @param data Data.frame containing (arm, idx, status, strata, time, weights).
 #' @return Data.frame.
 #' @export 
 CalcMargMCF <- function(data) {

@@ -29,7 +29,7 @@ CalcP <- function(p) {
 
 #' Permutation Inference for Stratified Estimator
 #'
-#' @param data Data.frame containing: {arm, idx, status, strata time}.
+#' @param data Data.frame containing: (arm, idx, status, strata time).
 #' @param obs_stats Observed contrasts.
 #' @param tau Truncation time.
 #' @param alpha Type I error.
@@ -101,7 +101,7 @@ PermSimStrat <- function(
 
 #' Permutation Inference for Augmentation Estimator
 #'
-#' @param data Data.frame containing: idx, time, status, arm, covars.
+#' @param data Data.frame containing: (idx, time, status, arm, covars).
 #' @param obs_stats Observed contrasts.
 #' @param tau Truncation time.
 #' @param alpha Type I error.

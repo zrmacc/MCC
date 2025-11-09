@@ -4,7 +4,7 @@ author: "Zachary McCaw"
 date: "2024-02-24"
 output: pdf_document
 vignette: >
-  %\VignetteEngine{knitr::knitr}
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Calibration}
   %\usepackage[UTF-8]{inputenc}
 ---

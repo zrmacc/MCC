@@ -7,7 +7,7 @@
 PermSimAug(data, obs_stats, tau, alpha = 0.05, reps = 2000)
 }
 \arguments{
-\item{data}{Data.frame containing: idx, time, status, arm, covars.}
+\item{data}{Data.frame containing: (idx, time, status, arm, covars).}
 
 \item{obs_stats}{Observed contrasts.}
 

@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: 
   pdf_document
 vignette: >
-  %\VignetteEngine{knitr::knitr}
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteIndexEntry{Plotting}
   %\usepackage[UTF-8]{inputenc}
 --- 

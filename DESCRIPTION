@@ -19,7 +19,8 @@ Imports:
   MASS,
   Rcpp,
   stats,
-  tidyr
+  tidyr,
+  utils
 LinkingTo: 
   Rcpp,
   RcppArmadillo

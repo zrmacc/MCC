@@ -7,7 +7,7 @@
 PermSimStrat(data, obs_stats, tau, alpha = 0.05, reps = 2000)
 }
 \arguments{
-\item{data}{Data.frame containing: {arm, idx, status, strata time}.}
+\item{data}{Data.frame containing: (arm, idx, status, strata time).}
 
 \item{obs_stats}{Observed contrasts.}
 

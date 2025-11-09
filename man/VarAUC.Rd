@@ -7,7 +7,7 @@
 VarAUC(data, tau, mcf = NULL, return_psi = FALSE, weights = NULL)
 }
 \arguments{
-\item{data}{Data.frame containing {idx, status, time}.}
+\item{data}{Data.frame containing (idx, status, time).}
 
 \item{tau}{Truncation time.}
 

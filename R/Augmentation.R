@@ -9,7 +9,7 @@
 #' 
 #' Calculate test statistics for augmentation estimator.
 #'
-#' @param data Data.frame containing {arm, idx, status, time, weights}.
+#' @param data Data.frame containing (arm, idx, status, time, weights).
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
@@ -115,7 +115,7 @@ CalcAugAUC <- function(
 
 #' Calculate Augmentation Components for a Single Arm
 #'
-#' @param data Data.frame including {idx, status, time, weights}.
+#' @param data Data.frame including (idx, status, time, weights).
 #' @param covars Per-subject covariate data.
 #' @param mu Grand mean.
 #' @param tau Truncation time. 
