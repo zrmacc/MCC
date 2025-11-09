@@ -200,3 +200,4 @@ test_that("Test MCF weighting.", {
   expect_equal(observed$mcf, c(0, 0, 0, 0))
   
 })
+

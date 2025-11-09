@@ -1,5 +1,5 @@
 # Purpose: Format input data.
-# Updated: 2024-02-19
+# Updated: 2025-11-08
 
 #' Format Data for a Single Subject
 #' 
@@ -14,8 +14,8 @@ FormatSubj <- function(df, cens_after_last = TRUE) {
   
   # Check for multiple observation terminating events.
   if (obs_end > 1) {
-    stop(paste0("Subject ", unique(df$idx), 
-                " has multiple observation terminating events."))
+    which_idx <- unique(df$orig_idx)
+    stop(glue::glue("Subject {which_idx} has multiple observation terminating events."))
   }
   
   # Add censoring if no observation terminating event is present.
@@ -31,13 +31,17 @@ FormatSubj <- function(df, cens_after_last = TRUE) {
 }
 
 
-#' Convert Index to Integer
+#' Map Original Index to an Integer
 #' 
+#' Data is expected to have an integer index. This function creates
+#' an internal index in case the original index is provided in another
+#' format.
+#'
 #' @param data Data.Frame.
-#' @return Data.frame with `idx` converted to an integer.
+#' @return List containing the data.frame with idx converted to an 
+#'   integer plus the mapping from the original to the new index.
 #' @noRd
 ConvertIdxToInt <- function(data) {
-  
   idx <- orig_idx <- NULL
   data$orig_idx <- data$idx
   data$idx <- NULL
@@ -45,18 +49,19 @@ ConvertIdxToInt <- function(data) {
   idx_data <- data %>% 
     dplyr::select(orig_idx) %>% 
     unique()
-
+  
   idx_data$idx <- seq_len(nrow(idx_data))
-  
-  data <- merge(x = data, y = idx_data, by = "orig_idx")
-  out <- data %>%
-    dplyr::relocate(idx, .after = "orig_idx")
-  
+  out <- merge(x = data, y = idx_data, by = "orig_idx")
+  out <- out %>% dplyr::relocate(idx)
   return(out)
 }
 
 
 #' Format Data
+#' 
+#' Subsets the key columns for analysis, converts the index to an integer,
+#' adds placeholders for `strata` and `weights` if not specified, checks
+#' to ensure each unique index has 1 and only 1 o
 #' 
 #' @param data Data.frame.
 #' @param arm_name Name of column containing treatment arm. Must be coded as 1
@@ -66,6 +71,7 @@ ConvertIdxToInt <- function(data) {
 #' @param covars Optional covariate matrix. Rows should correspond with the
 #'   subject index `idx`. Factor and interaction terms should be expanded.
 #' @param idx_name Name of column containing a unique subject index.
+#' @param keep_orig_idx Keep the original index? 
 #' @param status_name Name of column containing the status. Must be coded as 0 for
 #'   censoring, 1 for event, 2 for death. Each subject should have an 
 #'   observation-terminating event, either censoring or death.
@@ -81,6 +87,7 @@ FormatData <- function(
   cens_after_last = TRUE,
   covars = NULL,
   idx_name = "idx",
+  keep_orig_idx = FALSE,
   status_name = "status",
   strata = NULL,
   time_name = "time",
@@ -113,7 +120,6 @@ FormatData <- function(
       )
   }
 
-  
   # Ensure index is an integer.
   data <- ConvertIdxToInt(data)
   
@@ -139,26 +145,28 @@ FormatData <- function(
     dplyr::mutate(obs_end = 1 * (status != 1)) %>%
     dplyr::arrange(idx, time, obs_end)
   
-  # Format data.
+  # Format each subject.
   split_data <- split(x = data, f = data$idx)
   format_data <- lapply(split_data, function(x) {
     FormatSubj(x, cens_after_last = cens_after_last)
   })
-  final_data <- do.call(rbind, format_data)
-  rownames(final_data) <- NULL
+  data <- do.call(rbind, format_data)
+  rownames(data) <- NULL
   
   # Ensure each subject has exactly 1 terminal event.
-  obs_end <- NULL
-  check <- final_data %>%
+  check <- data %>%
     dplyr::group_by(idx) %>%
     dplyr::summarise(
       n_obs_end = sum(obs_end)
     )
-  
   if (any(check$n_obs_end != 1)) {
-    warning("Patients without censoring times were found.")
+    warning("Patients without observation terminating events were found.")
   }
+  data$obs_end <- NULL
   
-  final_data$obs_end <- NULL
-  return(final_data)
+  # Format.
+  if (!keep_orig_idx) {
+    data$orig_idx <- NULL
+  }
+  return(data)
 }

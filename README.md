@@ -1,7 +1,7 @@
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
 Zachary R. McCaw <br>
-Updated: 2025-06-15
+Updated: 2025-11-08
 
 
 
@@ -39,7 +39,7 @@ See the [calibration vignette](https://github.com/zrmacc/MCC/blob/master/vignett
 The function `GenData` simulates example data in the format expected by this package. The recurrent event times are generated from a Poisson process that continues until censoring or death, whichever occurs first. Optionally, a gamma `frailty_variance` may be specified such that the patient-specific event and death rates are correlated. The example data includes 100 patients in each of the treatment and control arms. The maximum duration of follow-up is `tau = 4` (e.g. years). The rate of recurrent events for patients in the treatment arm is 80% the rate for patients in the control arm. 
 
 
-```r
+``` r
 library(MCC)
 covariates <- data.frame(
   arm = c(rep(1, 100), rep(0, 100))
@@ -54,13 +54,13 @@ head(data)
 ```
 
 ```
-##   idx status       time arm cens_rate death_rate event_rate   frailty
-## 1   1      1 0.08845737   1      0.25  0.1888051  0.6041762 0.7552202
-## 2   1      2 0.23565323   1      0.25  0.1888051  0.6041762 0.7552202
-## 3   2      1 0.16410134   1      0.25  0.1884027  0.6028886 0.7536108
-## 4   2      1 0.66910083   1      0.25  0.1884027  0.6028886 0.7536108
-## 5   2      2 0.87297407   1      0.25  0.1884027  0.6028886 0.7536108
-## 6   3      2 0.02295830   1      0.25  0.3140817  1.0050614 1.2563267
+##   idx status     time arm cens_rate death_rate event_rate   frailty
+## 1   1      2 1.702496   1      0.25 0.33900579  1.0848185 1.3560232
+## 2   2      1 2.298376   1      0.25 0.12134480  0.3883034 0.4853792
+## 3   2      0 3.251790   1      0.25 0.12134480  0.3883034 0.4853792
+## 4   3      1 1.135041   1      0.25 0.06972523  0.2231207 0.2789009
+## 5   3      0 4.000000   1      0.25 0.06972523  0.2231207 0.2789009
+## 6   4      1 2.415929   1      0.25 0.11716896  0.3749407 0.4686758
 ```
 
 The essential data are:
@@ -142,7 +142,7 @@ Although censoring (`status = 0`) and a terminal event (`status = 2`) both remov
 
 To calculate the areas under the mean cumulative count curve for a single arm up to time $\tau = 4$:
 
-```r
+``` r
 auc <- MCC::SingleArmAUC(
   data %>% dplyr::filter(arm == 0),
   boot = TRUE,
@@ -155,25 +155,25 @@ show(auc)
 ```
 ## Marginal Areas:
 ##   arm   n area    se tau
-## 1   0 100 6.29 0.568   4
+## 1   0 100 5.05 0.621   4
 ## 
 ## 
 ## CIs:
 ##       method contrast observed    se lower upper
-## 1 asymptotic       A0     6.29 0.568  5.18  7.40
-## 2  bootstrap       A0     6.29 0.641  5.31  7.65
+## 1 asymptotic       A0     5.05 0.621  3.83  6.27
+## 2  bootstrap       A0     5.05 0.637  3.84  6.35
 ## 
 ## 
 ## P-values:
 ##       method contrast observed        p
-## 1 asymptotic       A0     6.29 1.55e-28
+## 1 asymptotic       A0     5.05 4.26e-16
 ```
 
 ### AUCs
 
 To compare the AUCs of two treatment arms up to time $\tau = 4$: 
 
-```r
+``` r
 aucs <- MCC::CompareAUCs(
   data,
   tau = 4,
@@ -188,26 +188,26 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n area    se tau
-## 1   0 100 6.29 0.568   4
-## 2   1 100 4.31 0.476   4
+## 1   0 100 5.05 0.621   4
+## 2   1 100 4.21 0.462   4
 ## 
 ## 
 ## CIs:
-##       method contrast observed     se  lower  upper
-## 1 asymptotic    A1-A0   -1.980 0.7410 -3.430 -0.530
-## 3  bootstrap    A1-A0   -1.980 0.7120 -3.350 -0.616
-## 2 asymptotic    A1/A0    0.685 0.0978  0.518  0.906
-## 4  bootstrap    A1/A0    0.685 0.0980  0.525  0.881
+##       method contrast observed    se  lower upper
+## 1 asymptotic    A1-A0   -0.839 0.775 -2.360 0.679
+## 3  bootstrap    A1-A0   -0.839 0.771 -2.320 0.504
+## 2 asymptotic    A1/A0    0.834 0.137  0.604 1.150
+## 4  bootstrap    A1/A0    0.834 0.139  0.615 1.120
 ## 
 ## 
 ## P-values:
-##        method contrast observed       p
-## 1  asymptotic    A1-A0   -1.980 0.00748
-## 3   bootstrap    A1-A0   -1.980 0.01990
-## 5 permutation    A1-A0   -1.980 0.00995
-## 2  asymptotic    A1/A0    0.685 0.00801
-## 4   bootstrap    A1/A0    0.685 0.01990
-## 6 permutation    A1/A0    0.685 0.00995
+##        method contrast observed     p
+## 1  asymptotic    A1-A0   -0.839 0.279
+## 3   bootstrap    A1-A0   -0.839 0.318
+## 5 permutation    A1-A0   -0.839 0.308
+## 2  asymptotic    A1/A0    0.834 0.271
+## 4   bootstrap    A1/A0    0.834 0.318
+## 6 permutation    A1/A0    0.834 0.308
 ```
 
 Here:
@@ -224,7 +224,7 @@ Here:
 Weights may be supplied to control the size of the jump in the cumulative count curve at each event time (i.e. each time with `status == 1`). The following example weights each event by how many events a patient has experienced. For example, if a patient has 3 events before censoring, the first contributes a jump of size 1, the second a jump of size 2, and the third a jump of size 3. Other weighting schemes are of course possible. Note that the weights assigned to censoring (`status == 0`) and terminal event (`status == 2`) records are not used, and may be set to any value. 
 
 
-```r
+``` r
 data <- data %>%
   dplyr::group_by(idx) %>%
   dplyr::mutate(weights = dplyr::row_number()) %>%
@@ -239,22 +239,22 @@ data %>%
 ```
 ## Visualization of weights for the first 10 records.
 ## # A tibble: 10 × 4
-##      idx   time status weights
-##    <dbl>  <dbl>  <dbl>   <int>
-##  1     1 0.0885      1       1
-##  2     1 0.236       2       2
-##  3     2 0.164       1       1
-##  4     2 0.669       1       2
-##  5     2 0.873       2       3
-##  6     3 0.0230      2       1
-##  7     4 0.0975      0       1
-##  8     5 0.257       0       1
-##  9     6 0.0402      1       1
-## 10     6 1.29        1       2
+##      idx  time status weights
+##    <dbl> <dbl>  <dbl>   <int>
+##  1     1 1.70       2       1
+##  2     2 2.30       1       1
+##  3     2 3.25       0       2
+##  4     3 1.14       1       1
+##  5     3 4          0       2
+##  6     4 2.42       1       1
+##  7     4 3.41       1       2
+##  8     4 3.81       0       3
+##  9     5 2.23       0       1
+## 10     6 0.173      1       1
 ```
 
 
-```r
+``` r
 aucs <- MCC::CompareAUCs(
   data,
   tau = 4,
@@ -267,20 +267,20 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n  area   se tau
-## 1   0 100 13.70 1.97   4
-## 2   1 100  8.42 1.37   4
+## 1   0 100 12.40 2.56   4
+## 2   1 100  8.24 1.44   4
 ## 
 ## 
 ## CIs:
-##       method contrast observed    se  lower  upper
-## 1 asymptotic    A1-A0   -5.250 2.400 -9.960 -0.541
-## 2 asymptotic    A1/A0    0.616 0.134  0.402  0.944
+##       method contrast observed    se  lower upper
+## 1 asymptotic    A1-A0   -4.170 2.940 -9.930  1.58
+## 2 asymptotic    A1/A0    0.664 0.179  0.391  1.13
 ## 
 ## 
 ## P-values:
-##       method contrast observed      p
-## 1 asymptotic    A1-A0   -5.250 0.0289
-## 2 asymptotic    A1/A0    0.616 0.0260
+##       method contrast observed     p
+## 1 asymptotic    A1-A0   -4.170 0.155
+## 2 asymptotic    A1/A0    0.664 0.129
 ```
 
 #### Stratified Analysis
@@ -288,7 +288,7 @@ show(aucs)
 `CompareAUCs` also allows for stratified analysis. Consider a data set, similar to that described previously, but with the additional of a binary stratification factor. The event rate for individuals in stratum 1 is increased by 20%.
 
 
-```r
+``` r
 # Generate data with strata.
 covariates <- data.frame(
   arm = c(rep(1, 100), rep(0, 100)),
@@ -317,26 +317,26 @@ show(aucs)
 ```
 ## Marginal Areas:
 ##   arm   n area    se tau
-## 1   0 100 4.53 0.505   4
-## 2   1 100 5.22 0.497   4
+## 1   0 100 5.31 0.572   4
+## 2   1 100 4.94 0.510   4
 ## 
 ## 
 ## CIs:
 ##       method contrast observed    se  lower upper
-## 1 asymptotic    A1-A0    0.694 0.709 -0.695  2.08
-## 3  bootstrap    A1-A0    0.694 0.696 -0.877  1.89
-## 2 asymptotic    A1/A0    1.150 0.169  0.865  1.54
-## 4  bootstrap    A1/A0    1.150 0.163  0.819  1.47
+## 1 asymptotic    A1-A0   -0.371 0.766 -1.870  1.13
+## 3  bootstrap    A1-A0   -0.371 0.807 -1.960  1.30
+## 2 asymptotic    A1/A0    0.930 0.139  0.694  1.25
+## 4  bootstrap    A1/A0    0.930 0.150  0.688  1.29
 ## 
 ## 
 ## P-values:
 ##        method contrast observed     p
-## 1  asymptotic    A1-A0    0.694 0.327
-## 3   bootstrap    A1-A0    0.694 0.348
-## 5 permutation    A1-A0    0.694 0.318
-## 2  asymptotic    A1/A0    1.150 0.331
-## 4   bootstrap    A1/A0    1.150 0.348
-## 6 permutation    A1/A0    1.150 0.318
+## 1  asymptotic    A1-A0   -0.371 0.628
+## 3   bootstrap    A1-A0   -0.371 0.627
+## 5 permutation    A1-A0   -0.371 0.657
+## 2  asymptotic    A1/A0    0.930 0.627
+## 4   bootstrap    A1/A0    0.930 0.627
+## 6 permutation    A1/A0    0.930 0.657
 ```
 
 #### Outputs
@@ -345,78 +345,78 @@ The output of `CompareAUCs` is an object with these slots.
 
 * `@StratumAreas` containing the stratum-specific AUCs for each arm.
 
-```r
+``` r
 aucs@StratumAreas
 ```
 
 ```
 ##   arm strata  n tau     area var_area   se_area strat_weight
-## 1   0      0 79   4 4.475710 26.88668 0.5833847         0.81
-## 2   0      1 21   4 4.762774 18.28877 0.9332170         0.19
-## 3   1      0 83   4 4.629344 22.07835 0.5157560         0.81
-## 4   1      1 17   4 7.760514 34.30218 1.4204843         0.19
+## 1   0      0 77   4 5.196358 27.22296 0.5945965        0.775
+## 2   0      1 23   4 5.684820 52.25091 1.5072420        0.225
+## 3   1      0 78   4 4.625223 22.23865 0.5339577        0.775
+## 4   1      1 22   4 6.002449 38.54160 1.3235902        0.225
 ```
 
 * `@MargAreas` containing the AUCs for each arm, marginalized over any strata. 
 
 
-```r
+``` r
 aucs@MargAreas
 ```
 
 ```
 ##   arm   n     area        se tau
-## 1   0 100 4.530252 0.5047126   4
-## 2   1 100 5.224266 0.4973601   4
+## 1   0 100 5.306262 0.5721510   4
+## 2   1 100 4.935099 0.5098374   4
 ```
 
 * `@CIs` containing confindence intervals for the difference and ratio of AUCs.
 
 
-```r
+``` r
 aucs@CIs
 ```
 
 ```
-##       method contrast  observed        se      lower    upper
-## 1 asymptotic    A1-A0 0.6940141 0.7085915 -0.6947997 2.082828
-## 3  bootstrap    A1-A0 0.6940141 0.6960016 -0.8768036 1.890103
-## 2 asymptotic    A1/A0 1.1531955 0.1689951  0.8652937 1.536888
-## 4  bootstrap    A1/A0 1.1531955 0.1630228  0.8191117 1.473231
+##       method contrast   observed        se      lower    upper
+## 1 asymptotic    A1-A0 -0.3711627 0.7663491 -1.8731793 1.130854
+## 3  bootstrap    A1-A0 -0.3711627 0.8073335 -1.9563046 1.299140
+## 2 asymptotic    A1/A0  0.9300519 0.1388833  0.6940625 1.246281
+## 4  bootstrap    A1/A0  0.9300519 0.1502174  0.6876104 1.288097
 ```
 
 * `@MCF` containing the per arm mean cumulative count curve, averaged across strata.
 
 
-```r
+``` r
 head(aucs@MCF)
 ```
 
 ```
-##           time        mcf     var_mcf     se_mcf arm
-## 1 2.029460e-06 0.01117647 0.001998616 0.04470588   1
-## 2 3.797853e-04 0.02235294 0.003747405 0.06121605   1
-## 3 3.983363e-03 0.03352941 0.005246367 0.07243181   1
-## 4 1.167436e-02 0.04328845 0.013055947 0.11426262   1
-## 5 1.297160e-02 0.04328845 0.013055947 0.11426262   1
-## 6 1.868159e-02 0.05316650 0.020860825 0.14443277   1
+##          time         mcf     var_mcf     se_mcf arm
+## 1 0.004224988 0.009935897 0.007601598 0.08718715   1
+## 2 0.010225384 0.009935897 0.007601598 0.08718715   1
+## 3 0.010676543 0.009935897 0.007601598 0.08718715   1
+## 4 0.017781209 0.019871795 0.015005687 0.12249770   1
+## 5 0.018633194 0.019871795 0.015005687 0.12249770   1
+## 6 0.030559808 0.029807692 0.022212267 0.14903780   1
 ```
 
 * `@Pvals` containing the bootstrap and permutation p-values.
 
 
-```r
+``` r
 aucs@Pvals
 ```
 
 ```
-##        method contrast  observed         p
-## 1  asymptotic    A1-A0 0.6940141 0.3273687
-## 3   bootstrap    A1-A0 0.6940141 0.3482587
-## 5 permutation    A1-A0 0.6940141 0.3184080
-## 2  asymptotic    A1/A0 1.1531955 0.3307283
-## 4   bootstrap    A1/A0 1.1531955 0.3482587
-## 6 permutation    A1/A0 1.1531955 0.3184080
+##        method contrast   observed         p
+## 1  asymptotic    A1-A0 -0.3711627 0.6281546
+## 3   bootstrap    A1-A0 -0.3711627 0.6268657
+## 5 permutation    A1-A0 -0.3711627 0.6567164
+## 2  asymptotic    A1/A0  0.9300519 0.6272464
+## 4   bootstrap    A1/A0  0.9300519 0.6268657
+## 6 permutation    A1/A0  0.9300519 0.6567164
 ```
 
 * `@Reps` is a list containing the bootstrap and permutation test statistics.
@@ -426,7 +426,7 @@ aucs@Pvals
 The previous estimator allows for stratification, but a different approach is needed to accommodate continuous covariates. If covariates are provided, then `CompareAUCs` uses an augmentation estimator to adjust for differences between the treatment groups. Note that strata and covariates should not both be provided. If adjustment for both is needed, use `model.matrix` to generate a design matrix including both covariates and stratum indicators, e.g. `model.matrix(~ 0 + covar + strata, data = data)`, then supply the design matrix `covar` argument.
 
 
-```r
+``` r
 set.seed(100)
 
 # Generate data with a continuous covariate.
@@ -499,7 +499,7 @@ show(adj_aucs)
 ## 
 ## P-values:
 ##       method contrast observed       p
-## 1 asymptotic    A1-A0   -0.622 0.00312
+## 1 asymptotic    A1-A0   -0.622 0.00311
 ```
 
 ### Plotting

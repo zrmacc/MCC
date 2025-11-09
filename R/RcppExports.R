@@ -54,6 +54,8 @@ CalcMCFCpp <- function(idx, status, time, weights, calc_var = TRUE) {
 #' Calculate AUC Influence Function Contributions 
 #'
 #' @param event_rate Event rate. 
+#' @param grid_time Times at which the (event_rate, haz, nar, surv) are
+#'   evaluated.
 #' @param idx Unique subject index. 
 #' @param haz Hazard.
 #' @param nar Number at risk.
@@ -63,7 +65,7 @@ CalcMCFCpp <- function(idx, status, time, weights, calc_var = TRUE) {
 #' @param weights Jump weights.
 #' @return Numeric variance.
 #' @noRd 
-PsiAUC <- function(event_rate, idx, haz, nar, status, surv, tau, time, weights) {
-    .Call(`_MCC_PsiAUC`, event_rate, idx, haz, nar, status, surv, tau, time, weights)
+PsiAUC <- function(event_rate, grid_time, idx, haz, nar, status, surv, tau, time, weights) {
+    .Call(`_MCC_PsiAUC`, event_rate, grid_time, idx, haz, nar, status, surv, tau, time, weights)
 }
 

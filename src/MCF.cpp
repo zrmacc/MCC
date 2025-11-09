@@ -1,5 +1,6 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 #include <RcppArmadillo.h>
+#include <unordered_map>
 
 // For debugging: Rcpp::Rcout << << std::endl; 
 
@@ -39,65 +40,68 @@ arma::colvec VarMCF(
   
   // Variance vector.
   arma::colvec var = arma::zeros(n_times);
+
+  // Left-continuous versions for integration.
+  arma::colvec surv_left = arma::shift(surv, 1); 
+  surv_left(0) = 1.0;
+
+  arma::colvec mcf_left  = arma::shift(mcf, 1); 
+  mcf_left(0)  = 0.0;
+
+  // Safe version of proportion at risk:
+  // Summand is set to zero where proportion at risk is zero.
+  arma::colvec prop_risk_safe = prop_risk;
+  prop_risk_safe.elem(arma::find(prop_risk_safe == 0.0)).fill(arma::datum::inf);
+
+  // Time -> index map.
+  std::unordered_map<double, arma::uword> time_pos;
+  time_pos.reserve(static_cast<size_t>(n_times));
+  for (arma::uword j = 0; j < static_cast<arma::uword>(n_times); ++j) {
+    time_pos.emplace(unique_times(j), j);
+  }
+
+  // Initialize.
+  arma::colvec event(n_times);
+  arma::colvec death(n_times);
+  arma::colvec ind_risk(n_times);
   
-  // Calculation of martingales. 
-  // Note: ensure consistency with PsiAUC.cpp
   // Loop over subjects.
   for(int i=0; i<n; i++) {
+
+    // Zero event, death, and ind_risk.
+    event.zeros();
+    death.zeros();
+    ind_risk.zeros();
     
     // Current subject.
     const int key = unique_idx(i);
+    const arma::uvec indices = arma::find(idx == key);
     
     // Subject's time and status.
-    const arma::uvec indices = arma::find(idx == key);
     const arma::colvec subj_time = time.elem(indices);
     const arma::colvec subj_status = status.elem(indices);
     const arma::colvec subj_weight = weights.elem(indices);
+    
+    // Find index for last time the subject was at risk.
+    const double t_last = subj_time(subj_time.n_elem - 1);
+    const arma::uword j_star = time_pos[t_last];
+    ind_risk.subvec(0, j_star).ones();
 
-    const arma::uvec subj_status_0 = (subj_status == 0.0);
-    const arma::uvec subj_status_1 = (subj_status == 1.0);
-    const arma::uvec subj_status_2 = (subj_status == 2.0);
-    
-    // Subject-specific event and status indicators.
-    arma::colvec event = arma::zeros(n_times);
-    arma::colvec death = arma::zeros(n_times);
-    
-    // At risk indicator.
-    arma::colvec ind_risk = arma::zeros(n_times);
-    double at_risk = 1.0;
-    
-    // Loop over unique times.
-    for(int j=0; j<n_times; j++) {
-      
-      // Current time.
-      const double current_time = unique_times(j);
-      
-      // Risk status.
-      ind_risk(j) = at_risk;
-      if (at_risk == 0.0) {
+    // Find positions of subject's events.
+    for (arma::uword r = 0; r < subj_status.n_elem; ++r) {
+      if (subj_status(r) == 1.0) {
+        const arma::uword k = time_pos[subj_time(r)];
+        event(k) += subj_weight(r);
+      }
+    }
+
+    // Set death, if present.
+    for (arma::uword r = 0; r < subj_status.n_elem; ++r) {
+      if (subj_status(r) == 2.0) {
+        const arma::uword k = time_pos[subj_time(r)];
+        death(k) = 1.0;
         break;
       }
-
-      // Subject time equatls current time.
-      const arma::uvec obs_time = (subj_time == current_time);
-      
-      // Check if subject is censored.
-      if (arma::any(obs_time && subj_status_0)) {
-        at_risk = 0.0;
-      }     
-      
-      // Check if subject has an event.
-      const arma::uvec event_time = (obs_time && subj_status_1);
-      if (arma::any(event_time)) {
-        event(j) = arma::accu(subj_weight % event_time);
-      }
-      
-      // Check if subject dies.
-      if (arma::any(obs_time && subj_status_2)) {
-        death(j) = 1.0;
-        at_risk = 0.0;
-      }
-      
     }
     
     // Event martingale.
@@ -105,16 +109,25 @@ arma::colvec VarMCF(
     
     // Death martingale.
     const arma::colvec dm_death = death - ind_risk % haz;
-    
+
     // Influence function.
-    const arma::colvec psi = arma::cumsum(surv / prop_risk % dm_event) \
-      - mcf % arma::cumsum(dm_death / prop_risk)                       \
-      + arma::cumsum(mcf % dm_death / prop_risk);
+    const arma::colvec psi = arma::cumsum(surv_left / prop_risk_safe % dm_event) \
+      - mcf % arma::cumsum(dm_death / prop_risk_safe)                       \
+      + arma::cumsum(mcf_left % dm_death / prop_risk_safe);
       
       // Variance contribution.
       var += (psi % psi) / n;
   }
-  return var;
+
+  // Enforce monotonicity.
+  arma::colvec var_mon = var;
+  double run_max = var_mon(0);
+  for (arma::uword j = 1; j < var_mon.n_elem; ++j) {
+    if (var_mon(j) < run_max) var_mon(j) = run_max;
+    else run_max = var_mon(j);
+  }
+
+  return var_mon;
 }
 
 
@@ -208,6 +221,10 @@ SEXP CalcMCFCpp(
 	// Survival probability.
 	const arma::colvec surv = arma::cumprod(1 - haz);
 
+	// Left continuous version of survival function.
+	arma::colvec surv_left = arma::shift(surv, 1);
+	surv_left(0) = 1.0;
+
 	// Event rate.
 	const arma::colvec event_rate = event / nar;
 
@@ -215,7 +232,7 @@ SEXP CalcMCFCpp(
 	const arma::colvec weighted_event_rate = event_weighted / nar;
 
 	// Mean cumulative function.
-	const arma::colvec mcf = arma::cumsum(surv % weighted_event_rate);
+	const arma::colvec mcf = arma::cumsum(surv_left % weighted_event_rate);
 
 	// Proportion at risk.
 	const arma::colvec prop_risk = nar / nar(0);

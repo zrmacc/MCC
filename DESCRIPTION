@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.8.1
+Version: 0.8.2
 Authors@R: 
     person(given = "Zachary",
            family = "McCaw",
@@ -14,6 +14,7 @@ Encoding: UTF-8
 Imports:
   dplyr,
   ggplot2,
+  glue,
   methods,
   MASS,
   Rcpp,
@@ -22,7 +23,7 @@ Imports:
 LinkingTo: 
   Rcpp,
   RcppArmadillo
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 Suggests: 
   cowplot,
   ggsci,

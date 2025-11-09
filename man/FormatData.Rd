@@ -10,6 +10,7 @@ FormatData(
   cens_after_last = TRUE,
   covars = NULL,
   idx_name = "idx",
+  keep_orig_idx = FALSE,
   status_name = "status",
   strata = NULL,
   time_name = "time",
@@ -30,6 +31,8 @@ subject index `idx`. Factor and interaction terms should be expanded.}
 
 \item{idx_name}{Name of column containing a unique subject index.}
 
+\item{keep_orig_idx}{Keep the original index?}
+
 \item{status_name}{Name of column containing the status. Must be coded as 0 for
 censoring, 1 for event, 2 for death. Each subject should have an 
 observation-terminating event, either censoring or death.}
@@ -45,5 +48,7 @@ covariate matrix is provided.}
 Formatted data.frame.
 }
 \description{
-Format Data
+Subsets the key columns for analysis, converts the index to an integer,
+adds placeholders for `strata` and `weights` if not specified, checks
+to ensure each unique index has 1 and only 1 o
 }

@@ -167,3 +167,4 @@ test_that("Overall test of stratified analysis.", {
   # Expect no error.
   expect_error(Run(), NA)
 })
+

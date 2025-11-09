@@ -2,7 +2,6 @@ test_that("Expect no change in the case of correctly formatted data.", {
   
   # Correctly formatted data.
   data <- data.frame(
-    orig_idx = c(1, 1),
     idx = c(1, 1),
     arm = c(1, 1),
     status = c(1, 0),
@@ -30,7 +29,6 @@ test_that("Check addition of censoring time when missing.", {
   
   # Data without censoring time.
   data <- data.frame(
-    orig_idx = c(1, 1),
     idx = c(1, 1),
     arm = c(1, 1),
     status = c(1, 1),
@@ -68,7 +66,6 @@ test_that("Check addition of censoring time when missing.", {
 test_that("Multiple censoring times triggers an error.", {
   
   data <- data.frame(
-    orig_idx = c(1, 1),
     idx = c(1, 1),
     time = c(1, 2),
     status = c(0, 0),
@@ -105,9 +102,7 @@ test_that("Character index converted to integer.", {
     cens_after_last = TRUE
   )
   
-  data$orig_idx <- data$idx
   data$idx <- c(1, 2)
-  data <- data %>% dplyr::relocate(orig_idx)
   expect_equal(data, out)
   
 })

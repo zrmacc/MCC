@@ -10,7 +10,7 @@ output:
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
 Zachary R. McCaw <br>
-Updated: 2025-06-15
+Updated: 2025-11-08
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE)

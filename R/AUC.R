@@ -1,5 +1,5 @@
 # Purpose: Calculations of the AUC.
-# Updated: 2024-02-19
+# Updated: 2025-11-08
 
 # -----------------------------------------------------------------------------
 # Area under the mean cumulative function.
@@ -63,22 +63,18 @@ VarAUC <- function(data, tau, mcf = NULL, return_psi = FALSE, weights = NULL) {
     )
   }
   
-  # Truncate.
-  time <- NULL
-  data_tau <- data %>% dplyr::filter(time <= tau)
-  mcf_tau <- mcf %>% dplyr::filter(time <= tau)
-  
   # Variance calculation.
   out <- PsiAUC(
-    event_rate = mcf_tau$weighted_event_rate,
-    idx = data_tau$idx,
-    haz = mcf_tau$haz,
-    nar = mcf_tau$nar,
-    status = data_tau$status,
-    surv = mcf_tau$surv,
+    event_rate = mcf$weighted_event_rate,
+    grid_time = mcf$time,
+    idx = data$idx,
+    haz = mcf$haz,
+    nar = mcf$nar,
+    status = data$status,
+    surv = mcf$surv,
     tau = tau,
-    time = data_tau$time,
-    weights = data_tau$weights
+    time = data$time,
+    weights = data$weights
   )
   
   if (return_psi) {
