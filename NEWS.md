@@ -1,3 +1,8 @@
+## Version 0.8.3
+
+* Updated augmentation weight.
+
+
 ## Version 0.8.2
 
 * Added pseudo-value calcuation.

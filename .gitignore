@@ -1,8 +1,30 @@
-.Rproj.user
-**/.Rhistory
+# RStudio / R session
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# OS
 .DS_Store
-vignettes/*_cache/
-/doc/
-/Meta/
+
+# Package build products
+*.tar.gz
+*.Rcheck/
+
+# pkgdown / docs (if you use them)
+doc/
+Meta/
+
+# README knitting artifacts
 README_cache/
 README_files/
+
+# Vignette knitting artifacts
+vignettes/*_cache/
+vignettes/*_files/
+
+# Compiled objects / shared libraries
+src/*.o
+src/*.so
+src/*.dll
+src/*.dylib

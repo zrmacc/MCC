@@ -12,15 +12,14 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // CalcAugComp
-SEXP CalcAugComp(const arma::mat covars, const arma::rowvec mu, const arma::colvec psi);
-RcppExport SEXP _MCC_CalcAugComp(SEXP covarsSEXP, SEXP muSEXP, SEXP psiSEXP) {
+SEXP CalcAugComp(const arma::mat covars, const arma::colvec psi);
+RcppExport SEXP _MCC_CalcAugComp(SEXP covarsSEXP, SEXP psiSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat >::type covars(covarsSEXP);
-    Rcpp::traits::input_parameter< const arma::rowvec >::type mu(muSEXP);
     Rcpp::traits::input_parameter< const arma::colvec >::type psi(psiSEXP);
-    rcpp_result_gen = Rcpp::wrap(CalcAugComp(covars, mu, psi));
+    rcpp_result_gen = Rcpp::wrap(CalcAugComp(covars, psi));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -76,7 +75,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_MCC_CalcAugComp", (DL_FUNC) &_MCC_CalcAugComp, 3},
+    {"_MCC_CalcAugComp", (DL_FUNC) &_MCC_CalcAugComp, 2},
     {"_MCC_SimDataCpp", (DL_FUNC) &_MCC_SimDataCpp, 5},
     {"_MCC_CalcMCFCpp", (DL_FUNC) &_MCC_CalcMCFCpp, 5},
     {"_MCC_PsiAUC", (DL_FUNC) &_MCC_PsiAUC, 10},

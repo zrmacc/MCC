@@ -4,12 +4,11 @@
 #' Calculate Augmentation Components
 #'
 #' @param covars One row per subject.
-#' @param mu Grand mean.
 #' @param psi Influence functions.
 #' @return List.
 #' @noRd 
-CalcAugComp <- function(covars, mu, psi) {
-    .Call(`_MCC_CalcAugComp`, covars, mu, psi)
+CalcAugComp <- function(covars, psi) {
+    .Call(`_MCC_CalcAugComp`, covars, psi)
 }
 
 #' Simulate Data for Multiple Subjects

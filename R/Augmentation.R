@@ -1,5 +1,5 @@
 # Purpose: Augmentation estimator of AUC.
-# Updated: 2024-02-19
+# Updated: 2025-02-04
 
 # -----------------------------------------------------------------------------
 # Calculated Augmented AUC.
@@ -35,23 +35,16 @@ CalcAugAUC <- function(
     dplyr::summarise_all(.funs = mean, .groups = "drop") %>%
     as.data.frame()
   
-  mu <- covars %>%
-    dplyr::select(-c("arm", "idx")) %>%
-    dplyr::summarise_all(.funs = mean) %>%
-    as.numeric()
-  
   # Areas. 
   a1 <- AugAUC(
     data = data %>% dplyr::filter(arm == 1),
     covars = covars %>% dplyr::filter(arm == 1) %>% dplyr::select(-arm),
-    mu = mu,
     tau = tau,
     calc_var = return_areas
   )
   a0 <- AugAUC(
     data = data %>% dplyr::filter(arm == 0),
     covars = covars %>% dplyr::filter(arm == 0) %>% dplyr::select(-arm),
-    mu = mu,
     tau = tau,
     calc_var = return_areas
   )
@@ -59,14 +52,14 @@ CalcAugAUC <- function(
   # Augmentation difference.
   sigma <- a1$sigma + a0$sigma
   gamma <- a1$gamma + a0$gamma
+  imbalance <- a1$xbar - a0$xbar
   omega <- MASS::ginv(sigma) %*% gamma
-  correction <- as.numeric(
-    t(omega) %*% (a1$mean_resid - a0$mean_resid)
-  )
+  correction <- as.numeric(crossprod(omega, imbalance))
   delta <- a1$area - a0$area - correction
   var_delta <- a1$var_area / a1$n + 
     a0$var_area / a0$n - 
-    as.numeric(t(omega) %*% gamma)
+    as.numeric(crossprod(omega, gamma))
+  var_delta <- max(var_delta, 0)
   se_delta <- sqrt(var_delta)
   
   # Contrast data.frame.
@@ -117,22 +110,19 @@ CalcAugAUC <- function(
 #'
 #' @param data Data.frame including (idx, status, time, weights).
 #' @param covars Per-subject covariate data.
-#' @param mu Grand mean.
 #' @param tau Truncation time. 
 #' @param calc_var Calculate analytical variance of MCF?
 #' @return List containing:
 #' \itemize{
 #'   \item Tabulated mean cumulative function 'mcf'.
 #'   \item Estimated 'area' and its variance 'var_area'.
-#'   \item 'sigma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\mu)(X_{i}-\mu)'}.
-#'   \item 'gamma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\mu)\xi_{i}}.
-#'   \item 'mean_resid', \eqn{\frac{1}{n}\sum_{i=1}^{n}(X_{i}-\mu)}.
+#'   \item 'sigma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\bar{X})(X_{i}-\bar{X})'}.
+#'   \item 'gamma', \eqn{\frac{1}{n^2}\sum_{i=1}^{n}(X_{i}-\bar{X})\xi_{i}}.
 #' }
 #' @noRd
 AugAUC <- function(
   data,
   covars,
-  mu,
   tau,
   calc_var = TRUE
 ) { 
@@ -156,27 +146,27 @@ AugAUC <- function(
   # Calculate influence contributions.
   psi <- VarAUC(data, tau, mcf = mcf, return_psi = TRUE)
   
+  # Find variance of area.
+  var_area <- mean(psi$psi^2)
+  
   # Covariates.
   covars <- covars %>% 
     dplyr::inner_join(psi, by = "idx") %>%
     dplyr::select(-c("idx", "psi")) %>%
     data.matrix()
   
-  # Find variance of area.
-  var_area <- mean(psi$psi^2)
-  
   # Calculate remaining augmentation components.
-  aug_comp <- CalcAugComp(covars, mu, psi$psi)
+  aug_comp <- CalcAugComp(covars, psi$psi)
   
   # Output.
   out <- list(
     area = area,
     gamma = aug_comp$gamma,
     n = aug_comp$n,
-    mean_resid = aug_comp$mean_resid,
     mcf = mcf,
     sigma = aug_comp$sigma,
-    var_area = var_area
+    var_area = var_area,
+    xbar = aug_comp$xbar
   )
   return(out)
 }
