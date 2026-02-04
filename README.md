@@ -3,10 +3,6 @@
 Zachary R. McCaw <br>
 Updated: 2026-02-04
 
-<!-- badges: start -->
-[![R-CMD-check](https://github.com/zrmacc/MCC/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zrmacc/MCC/actions/workflows/R-CMD-check.yaml)
-<!-- badges: end -->
-
 
 
 ### Description
