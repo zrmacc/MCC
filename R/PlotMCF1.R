@@ -1,7 +1,48 @@
 # Purpose: Function to plot the mean cumulative function for one treatment arm.
-# Updated: 2024-02-19
+# Updated: 2026-02-04
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
+#' Normalize Data for One Sample Plotting
+#' 
+#' @param data Data.frame.
+#' @param idx_name Name of index (subject identifier) column in data.
+#' @param status_name Name of status column in data.
+#' @param time_name Name of column column in data.
+#' @param weights Optional column of weights, controlling the size of the jump
+#'   in the cumulative count curve at times with status == 1.
+#' @return data.frame.
+#' @noRd
+.NormDataOne <- function(
+    data, 
+    idx_name = "idx",
+    status_name = "status",
+    time_name = "time",
+    weights = NULL
+) {
+  
+  # Rename columns.
+  key_cols <- c(idx_name, status_name, time_name)
+  df <- data %>% 
+    dplyr::select(dplyr::all_of(key_cols)) %>%
+    dplyr::rename(
+      "idx" = {{idx_name}},
+      "status" = {{status_name}},
+      "time" = {{time_name}}
+    )
+  
+  # Convert index to integer.
+  df <- ConvertIdxToInt(df)
+  
+  # Add placeholding weights.
+  if (is.null(weights)) {weights <- 1}
+  df$weights <- weights
+  
+  return(df)
+}
+
+# ------------------------------------------------------------------------------
+
 
 #' MCF Curve
 #' 
@@ -25,19 +66,13 @@ MCFCurve <- function(
 ) {
   
   # Data preparation.
-  key_cols <- c(idx_name, status_name, time_name)
-  df <- data %>% 
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  df <- ConvertIdxToInt(df)
-  
-  # Jump weights.
-  if (is.null(weights)) {weights <- 1}
-  df$weights <- weights
+  df <- .NormDataOne(
+    data = data,
+    idx_name = idx_name,
+    status_name = status_name,
+    time_name = time_name,
+    weights = weights
+  )
   
   # Construct MCF.
   mcf <- CalcMCF(
@@ -75,22 +110,20 @@ NARCurve <- function(
 ) {
   
   # Data preparation.
-  key_cols <- c(idx_name, status_name, time_name)
-  df <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
+  df <- .NormDataOne(
+    data = data,
+    idx_name = idx_name,
+    status_name = status_name,
+    time_name = time_name,
+    weights = NULL
+  )
   
   # Fit cumulative incidence curve.
-  data$weights <- 1
   fit <- CalcMCF(
-    idx = data$idx,
-    status = data$status,
-    time = data$time,
-    weights = data$weights,
+    idx = df$idx,
+    status = df$status,
+    time = df$time,
+    weights = df$weights,
     calc_var = FALSE
   )
   
@@ -102,7 +135,8 @@ NARCurve <- function(
   
   g <- stats::stepfun(
     x = fit$time, 
-    y = c(length(unique(df$idx)), fit$nar))
+    y = c(length(unique(df$idx)), fit$nar)
+  )
   return(g)
 }
 
@@ -133,28 +167,23 @@ MCFPlotFrame <- function(
 ) {
   
   # Data preparation.
-  key_cols <- c(idx_name, status_name, time_name)
-  df <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
+  df <- .NormDataOne(
+    data = data,
+    idx_name = idx_name,
+    status_name = status_name,
+    time_name = time_name,
+    weights = weights
+  )
   
-  # Jump weights.
-  if (is.null(weights)) {weights <- 1}
-  g <- MCFCurve(data = df, weights = weights)
+  # MCF curve.
+  g <- MCFCurve(data = df, weights = df$weights)
   
   # Time grid.
   if (is.null(tau)) {
     tau <- max(df$time)
   }
   times <- seq(from = 0, to = tau, length.out = eval_points)
-  out <- data.frame(
-    time = times,
-    mcf = g(times)
-  )
+  out <- data.frame(time = times, mcf = g(times))
   return(out)
 }
 
@@ -203,20 +232,13 @@ PlotOneSampleMCF <- function(
 ) {
   
   # Data preparation.
-  key_cols <- c(idx_name, status_name, time_name) 
-  
-  data <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  data <- ConvertIdxToInt(data)
-  
-  # Jump weights.
-  if (is.null(weights)) {weights <- 1}
-  data$weights <- weights
+  data <- .NormDataOne(
+    data = data,
+    idx_name = idx_name,
+    status_name = status_name,
+    time_name = time_name,
+    weights = weights
+  )
   
   # Truncation.
   if (is.null(x_lim[2])) {
@@ -355,20 +377,13 @@ PlotOneSampleAUMCF <- function(
 ) {
   
   # Data preparation.
-  key_cols <- c(idx_name, status_name, time_name) 
-  
-  data <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  data <- ConvertIdxToInt(data)
-  
-  # Jump weights.
-  if (is.null(weights)) {weights <- 1}
-  data$weights <- weights
+  data <- .NormDataOne(
+    data = data,
+    idx_name = idx_name,
+    status_name = status_name,
+    time_name = time_name,
+    weights = weights
+  )
   
   # Truncation.
   if (is.null(x_lim[2])) {
@@ -505,16 +520,14 @@ PlotOneSampleNAR <- function(
     x_max = max(x_breaks)
   }
   
-  # Data prep.
-  key_cols <- c(idx_name, status_name, time_name) 
-  df <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    ) %>%
-    ConvertIdxToInt()
+  # Data preparation.
+  df <- .NormDataOne(
+    data = data,
+    idx_name = idx_name,
+    status_name = status_name,
+    time_name = time_name,
+    weights = NULL
+  )
   
   # NAR data frame.
   g <- NARCurve(data = df)

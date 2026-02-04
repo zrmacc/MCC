@@ -1,8 +1,66 @@
 # Purpose: Function to plot the mean cumulative functions,
 # comparing two treatment arms.
-# Updated: 2024-01-18
+# Updated: 2026-02-04
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+
+#' Normalize Data for Two Sample Plotting
+#' 
+#' @param data Data.frame.
+#' @param arm_name Name of arm column in data.
+#' @param idx_name Name of index (subject identifier) column in data.
+#' @param status_name Name of status column in data.
+#' @param strata_name Name of stratum column in data. 
+#' @param time_name Name of column column in data.
+#' @param weights Optional column of weights, controlling the size of the jump
+#'   in the cumulative count curve at times with status == 1.
+#' @return data.frame.
+#' @noRd
+.NormDataTwo <- function(
+    data, 
+    arm_name = "arm",
+    idx_name = "idx",
+    status_name = "status",
+    strata_name = NULL,
+    time_name = "time",
+    weights = NULL
+) {
+  
+  # Rename columns.
+  key_cols <- c(arm_name, idx_name, status_name, time_name) 
+  if (!is.null(strata_name)) {
+    key_cols <- c(key_cols, strata_name)
+  }
+  data <- data %>%
+    dplyr::select(dplyr::all_of(key_cols)) %>%
+    dplyr::rename(
+      "arm" = {{arm_name}},
+      "idx" = {{idx_name}},
+      "status" = {{status_name}},
+      "time" = {{time_name}}
+    )
+  
+  # Convert index to integer.
+  data <- ConvertIdxToInt(data)
+  
+  # Add placeholding weights.
+  if (is.null(weights)) {weights <- 1}
+  data$weights <- weights
+  
+  # Add placeholding strata.
+  if (!is.null(strata_name)) {
+    data <- data %>%
+      dplyr::rename(
+        "strata" = {{strata_name}}
+      )
+  } else {
+    data$strata <- 1
+  }
+  
+  return(data)
+}
+
+# ------------------------------------------------------------------------------
 
 #' Plot Two Sample Mean Cumulative Function
 #' 
@@ -51,34 +109,15 @@ PlotMCFs <- function(
 ) {
   
   # Data preparation.
-  key_cols <- c(arm_name, idx_name, status_name, time_name) 
-  if (!is.null(strata_name)) {
-    key_cols <- c(key_cols, strata_name)
-  }
-  
-  data <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "arm" = {{arm_name}},
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  data <- ConvertIdxToInt(data)
-
-  # Jump weights.
-  if (is.null(weights)) {weights <- 1}
-  data$weights <- weights
-  
-  # Strata.
-  if (!is.null(strata_name)) {
-    data <- data %>%
-      dplyr::rename(
-        "strata" = {{strata_name}}
-      )
-  } else {
-    data$strata <- 1
-  }
+  data <- .NormDataTwo(
+    data = data,
+    arm_name = arm_name,
+    idx_name = idx_name,
+    status_name = status_name,
+    strata_name = strata_name,
+    time_name = time_name,
+    weights = weights
+  )
   
   # Truncation.
   if (is.null(x_lim[2])) {
@@ -212,7 +251,7 @@ PlotMCFs <- function(
 #' @return ggplot object.
 #' @importFrom dplyr "%>%"
 #' @export
-PlotAUMCFs <- function(
+PlotAUMCF <- function(
   data,
   which_arm,
   arm_label = "Placebo",
@@ -234,30 +273,15 @@ PlotAUMCFs <- function(
 ) {
   
   # Data preparation.
-  key_cols <- c(arm_name, idx_name, status_name, time_name)
-  data <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "arm" = {{arm_name}},
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  data <- ConvertIdxToInt(data)
-
-  # Jump weights.
-  if (is.null(weights)) {weights <- 1}
-  data$weights <- weights
-  
-  # Strata.
-  if (!is.null(strata_name)) {
-    data <- data %>%
-      dplyr::rename(
-        "strata" = {{strata_name}}
-      )
-  } else {
-    data$strata <- 1
-  }
+  data <- .NormDataTwo(
+    data = data,
+    arm_name = arm_name,
+    idx_name = idx_name,
+    status_name = status_name,
+    strata_name = strata_name,
+    time_name = time_name,
+    weights = weights
+  )
   
   # Truncation.
   if (is.null(x_lim[2])) {
@@ -272,14 +296,6 @@ PlotAUMCFs <- function(
   # Split data.
   arm <- NULL
   fit_mcf <- CalcMargMCF(data) %>% dplyr::filter(arm == which_arm)
-  
-  # Estimate mean cumulative function (MCF).
-  fit_mcf <- CalcMCF(
-    idx = data$idx,
-    status = data$status,
-    time = data$time,
-    weights = data$weights
-  )
   
   # MCF function.
   g <- stats::stepfun(
@@ -387,17 +403,16 @@ TwoSampleNARFrame <- function(
   time_name = "time"
 ) {
   
-  # Prepare data.
-  key_cols <- c(arm_name, idx_name, status_name, time_name) 
-  df <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "arm" = {{arm_name}},
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  df <- ConvertIdxToInt(df)
+  # Data preparation.
+  df <- .NormDataTwo(
+    data = data,
+    arm_name = arm_name,
+    idx_name = idx_name,
+    status_name = status_name,
+    strata_name = NULL,
+    time_name = time_name,
+    weights = NULL
+  )
   
   # NAR functions.
   arm <- NULL
@@ -449,20 +464,20 @@ PlotNARs <- function(
     x_max = max(x_breaks)
   }
   
-  # Data prep.
+  # Data preparation.
+  df <- .NormDataTwo(
+    data = data,
+    arm_name = arm_name,
+    idx_name = idx_name,
+    status_name = status_name,
+    strata_name = NULL,
+    time_name = time_name,
+    weights = NULL
+  )
+  
   nar_ctrl <- NULL
   nar_trt <- NULL
-  key_cols <- c(arm_name, idx_name, status_name, time_name) 
-  df <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "arm" = {{arm_name}},
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    ) %>%
-    ConvertIdxToInt() %>%
-    TwoSampleNARFrame(x_breaks = x_breaks) %>%
+  df <- TwoSampleNARFrame(df, x_breaks = x_breaks) %>%
     tidyr::pivot_longer(
       cols = c(nar_ctrl, nar_trt),
       names_to = "arm",
@@ -498,4 +513,3 @@ PlotNARs <- function(
     )
   return(q)
 }
-
