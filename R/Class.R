@@ -123,7 +123,7 @@ setClass(
 # Print Method
 # -----------------------------------------------------------------------------
 
-#' Print Method for Compre AUCs Object.
+#' Print Method for Compare Stratified AUCs Object.
 #'
 #' Print method for objects of class \code{CompareStratAUCs}.
 #'
