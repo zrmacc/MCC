@@ -1,3 +1,8 @@
+## Version 0.8.4
+
+* Reviewed code and added tests using Cursor.
+
+
 ## Version 0.8.3
 
 * Updated augmentation weight.

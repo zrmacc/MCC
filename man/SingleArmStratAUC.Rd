@@ -18,7 +18,7 @@ SingleArmStratAUC(data, tau, alpha = 0.05, boot = FALSE, reps = 2000)
 \item{reps}{Replicates for bootstrap/permutation inference.}
 }
 \value{
-Object of class compAUCs with these slots:
+Object of class \code{CompStratAUCs} with these slots:
 \itemize{
   \item `@Areas`: The AUC for each arm.
   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.

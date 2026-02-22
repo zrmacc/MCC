@@ -188,7 +188,7 @@ AugAUC <- function(
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
-#' @return Object of class CompareAugAUCs with these slots:
+#' @return Object of class \code{CompAugAUCs} with these slots:
 #' \itemize{
 #'   \item `@Areas`: Marginal AUC for each arm.
 #'   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.
@@ -228,8 +228,6 @@ CompareAugAUCs <- function(
   perm = FALSE,
   reps = 2000
 ) {
-  
-  # Observed test stats.
   obs <- CalcAugAUC(
     data = data,
     tau = tau,
@@ -237,93 +235,35 @@ CompareAugAUCs <- function(
     return_areas = TRUE
   )
   obs_stats <- obs$contrasts
-  
-  # CIs.
-  cis <- obs_stats %>% dplyr::select(-c("p"))
-  cis <- data.frame(method = "asymptotic", cis)
-  
-  # P-values.
-  pvals <- obs_stats %>% dplyr::select(c("contrast", "observed", "p"))
-  pvals <- cbind(method = "asymptotic", pvals)
-  
-  # Simulation replicates.
-  sim_reps <- list()
-  
-  # -------------------------------------------------------
-  
-  # Bootstrap inference.
-  if (boot) {
-    
-    # Simulate.
-    boot_sim <- BootSimAug(
-      data = data,
-      obs_stats = obs_stats,
-      tau = tau,
-      alpha = alpha,
-      reps = reps
-    )
-    sim_reps$boot_sim <- boot_sim
-    
-    # Confidence intervals.
-    boot_cis <- BootCIs(
-      sim = boot_sim,
-      obs_stats = obs_stats,
-      alpha = alpha
-    )
-    cis <- rbind(
-      cis,
-      boot_cis
-    )
-    cis <- cis[order(cis$contrast), ]
-    
-    # P-value.
-    boot_p <- CalcP(boot_sim$is_diff_sign)
-    boot_pvals <- data.frame(
-      method = "bootstrap",
-      pvals %>% dplyr::select("contrast", "observed"),
-      p = boot_p
-    )
-    pvals <- rbind(pvals, boot_pvals)
-  }
-  
-  # -------------------------------------------------------
-  
-  # Permutation inference.
-  if (perm) {
-    
-    # Simulate.
-    perm_sim <- PermSimAug(
-      data = data,
-      obs_stats = obs_stats,
-      tau = tau,
-      alpha = alpha,
-      reps = reps
-    )
-    sim_reps$perm_sim <- perm_sim
-    
-    # Permutation p-values.
-    perm_pval <- CalcP(perm_sim$perm_1sided)
-    perm_pvals <- data.frame(
+
+  format_perm_pvals_aug <- function(perm_sim, obs_stats) {
+    data.frame(
       method = "permutation",
       contrast = "A1-A0",
       observed = obs_stats$observed[1],
-      p = perm_pval
-    )
-    pvals <- rbind(
-      pvals,
-      perm_pvals
+      p = CalcP(perm_sim$perm_1sided)
     )
   }
-  
-  # -------------------------------------------------------
-  
-  # Output
-  out <- methods::new(
+
+  res <- .AddResamplingResults(
+    obs_stats = obs_stats,
+    data = data,
+    tau = tau,
+    alpha = alpha,
+    boot = boot,
+    perm = perm,
+    reps = reps,
+    boot_sim_fun = BootSimAug,
+    perm_sim_fun = PermSimAug,
+    format_perm_pvals = format_perm_pvals_aug
+  )
+
+  methods::new(
     Class = "CompAugAUCs",
     Areas = obs$marg_areas,
-    CIs = cis,
+    CIs = res$cis,
     MCF = obs$mcf,
-    Reps = sim_reps,
-    Pvals = pvals
+    Reps = res$sim_reps,
+    Pvals = res$pvals
   )
 }

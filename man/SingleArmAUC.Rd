@@ -46,7 +46,7 @@ observation-terminating event, either censoring or death.}
 in the cumulative count curve at times with status == 1.}
 }
 \value{
-Object of class compAUCs with these slots:
+Object of class \code{CompStratAUCs} with these slots:
 \itemize{
   \item `@Areas`: The AUC for each arm.
   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.

@@ -2,7 +2,46 @@
 # Updated: 2024-02-24
 
 # -----------------------------------------------------------------------------
-# Bootstrap/permutation
+# Grouped bootstrap (from Resampling.R)
+# -----------------------------------------------------------------------------
+
+#' Grouped Bootstrap.
+#'
+#' Bootstrap observations grouped by an index.
+#'
+#' @param data Data.frame containing `idx`.
+#' @return Bootstrapped data.frame.
+#' @noRd
+GroupBoot <- function(data) {
+  ids <- sort(unique(data$idx))
+  n <- length(ids)
+  split_data <- split(data, data$idx)
+  key <- sample(x = n, size = n, replace = TRUE)
+  out <- split_data[key]
+  Relab <- function(i) {
+    sub <- out[[i]]
+    sub$idx <- ids[i]
+    return(sub)
+  }
+  out <- lapply(seq_len(n), Relab)
+  out <- do.call(rbind, out)
+  rownames(out) <- NULL
+  return(out)
+}
+
+#' Stratified, Grouped Bootstrap.
+#'
+#' @param data Data.frame containing `idx` and `strata`.
+#' @return Bootstrapped data.frame.
+#' @noRd
+StratGroupBoot <- function(data) {
+  out <- lapply(split(x = data, f = data$strata), GroupBoot)
+  out <- do.call(rbind, out)
+  return(out)
+}
+
+# -----------------------------------------------------------------------------
+# Bootstrap inference
 # -----------------------------------------------------------------------------
 
 #' Bootstrap Inference for Stratified Estimator

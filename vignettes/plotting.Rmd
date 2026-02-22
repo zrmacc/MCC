@@ -115,7 +115,7 @@ show(q_main)
 ### Plot areas under the MCFs with NARs
 ```{r, fig.align='center'}
 # Control arm.
-q0 <- MCC::PlotAUMCFs(
+q0 <- MCC::PlotAUMCF(
   data = data,
   which_arm = 0,
   arm_label = "Control"
@@ -134,7 +134,7 @@ q0_main <- cowplot::plot_grid(
 )
 
 # Treatment arm.
-q1 <- MCC::PlotAUMCFs(
+q1 <- MCC::PlotAUMCF(
   data = data,
   which_arm = 1,
   color = "#6385B8",

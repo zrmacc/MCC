@@ -27,7 +27,7 @@ CompareAugAUCs(
 \item{reps}{Replicates for bootstrap/permutation inference.}
 }
 \value{
-Object of class CompareAugAUCs with these slots:
+Object of class \code{CompAugAUCs} with these slots:
 \itemize{
   \item `@Areas`: Marginal AUC for each arm.
   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.

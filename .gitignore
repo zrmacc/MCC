@@ -29,3 +29,6 @@ src/*.so
 src/*.dll
 src/*.dylib
 src/symbols.rds
+
+# Test output
+**/Rplots.pdf

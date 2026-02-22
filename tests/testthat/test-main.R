@@ -168,3 +168,48 @@ test_that("Overall test of stratified analysis.", {
   expect_error(Run(), NA)
 })
 
+# -----------------------------------------------------------------------------
+# SingleArmAUC
+# -----------------------------------------------------------------------------
+
+test_that("SingleArmAUC returns object with expected slots and area matches AUC.", {
+  # Each subject has a terminal event (censor or death) so no warning.
+  data <- data.frame(
+    time = c(1, 2, 2, 2, 3, 3, 3, 4, 4),
+    status = c(1, 1, 0, 1, 0, 1, 0, 1, 0),
+    idx = c(1, 1, 1, 2, 2, 3, 3, 4, 4)
+  )
+  tau <- 4
+  out <- SingleArmAUC(data, tau = tau, boot = FALSE, cens_after_last = FALSE)
+  expect_s4_class(out, "CompStratAUCs")
+  expect_true("MargAreas" %in% slotNames(out))
+  area_from_slot <- out@MargAreas$area[1]
+  mcf <- CalcMCF(idx = data$idx, status = data$status, time = data$time, calc_var = FALSE)
+  area_from_auc <- AUC(mcf$time, mcf$mcf, tau)
+  expect_equal(area_from_slot, area_from_auc, tolerance = 1e-9)
+})
+
+# -----------------------------------------------------------------------------
+# CalcMargMCF
+# -----------------------------------------------------------------------------
+
+test_that("CalcMargMCF returns data.frame with arm, time, mcf for two-arm stratified data.", {
+  withr::local_seed(301)
+  covariates <- data.frame(
+    arm = c(rep(1, 40), rep(0, 40)),
+    strata = rep(c(0, 1), 40)
+  )
+  data <- GenData(
+    beta_event = c(log(0.8), log(1.2)),
+    covariates = covariates,
+    tau = 3
+  )
+  data$weights <- 1
+  out <- CalcMargMCF(data)
+  expect_s3_class(out, "data.frame")
+  expect_true("arm" %in% names(out))
+  expect_true("time" %in% names(out))
+  expect_true("mcf" %in% names(out))
+  expect_equal(sort(unique(out$arm)), c(0, 1))
+})
+

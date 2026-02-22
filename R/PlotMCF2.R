@@ -4,64 +4,6 @@
 
 # ------------------------------------------------------------------------------
 
-#' Normalize Data for Two Sample Plotting
-#' 
-#' @param data Data.frame.
-#' @param arm_name Name of arm column in data.
-#' @param idx_name Name of index (subject identifier) column in data.
-#' @param status_name Name of status column in data.
-#' @param strata_name Name of stratum column in data. 
-#' @param time_name Name of column column in data.
-#' @param weights Optional column of weights, controlling the size of the jump
-#'   in the cumulative count curve at times with status == 1.
-#' @return data.frame.
-#' @noRd
-.NormDataTwo <- function(
-    data, 
-    arm_name = "arm",
-    idx_name = "idx",
-    status_name = "status",
-    strata_name = NULL,
-    time_name = "time",
-    weights = NULL
-) {
-  
-  # Rename columns.
-  key_cols <- c(arm_name, idx_name, status_name, time_name) 
-  if (!is.null(strata_name)) {
-    key_cols <- c(key_cols, strata_name)
-  }
-  data <- data %>%
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "arm" = {{arm_name}},
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  
-  # Convert index to integer.
-  data <- ConvertIdxToInt(data)
-  
-  # Add placeholding weights.
-  if (is.null(weights)) {weights <- 1}
-  data$weights <- weights
-  
-  # Add placeholding strata.
-  if (!is.null(strata_name)) {
-    data <- data %>%
-      dplyr::rename(
-        "strata" = {{strata_name}}
-      )
-  } else {
-    data$strata <- 1
-  }
-  
-  return(data)
-}
-
-# ------------------------------------------------------------------------------
-
 #' Plot Two Sample Mean Cumulative Function
 #' 
 #' Plot the mean cumulative functions comparing two treatment arms.
@@ -109,12 +51,12 @@ PlotMCFs <- function(
 ) {
   
   # Data preparation.
-  data <- .NormDataTwo(
+  data <- .NormDataForPlot(
     data = data,
     arm_name = arm_name,
+    strata_name = strata_name,
     idx_name = idx_name,
     status_name = status_name,
-    strata_name = strata_name,
     time_name = time_name,
     weights = weights
   )
@@ -273,12 +215,12 @@ PlotAUMCF <- function(
 ) {
   
   # Data preparation.
-  data <- .NormDataTwo(
+  data <- .NormDataForPlot(
     data = data,
     arm_name = arm_name,
+    strata_name = strata_name,
     idx_name = idx_name,
     status_name = status_name,
-    strata_name = strata_name,
     time_name = time_name,
     weights = weights
   )
@@ -404,12 +346,12 @@ TwoSampleNARFrame <- function(
 ) {
   
   # Data preparation.
-  df <- .NormDataTwo(
+  df <- .NormDataForPlot(
     data = data,
     arm_name = arm_name,
+    strata_name = NULL,
     idx_name = idx_name,
     status_name = status_name,
-    strata_name = NULL,
     time_name = time_name,
     weights = NULL
   )
@@ -465,12 +407,12 @@ PlotNARs <- function(
   }
   
   # Data preparation.
-  df <- .NormDataTwo(
+  df <- .NormDataForPlot(
     data = data,
     arm_name = arm_name,
+    strata_name = NULL,
     idx_name = idx_name,
     status_name = status_name,
-    strata_name = NULL,
     time_name = time_name,
     weights = NULL
   )

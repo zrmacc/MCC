@@ -58,7 +58,7 @@ covariate matrix is provided.}
 in the cumulative count curve at times with status == 1.}
 }
 \value{
-Object of class compAUCs with these slots:
+Object of class \code{CompStratAUCs} or \code{CompAugAUCs} with these slots:
 \itemize{
   \item `@Areas`: The AUC for each arm.
   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.

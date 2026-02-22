@@ -31,6 +31,59 @@ FormatSubj <- function(df, cens_after_last = TRUE) {
 }
 
 
+#' Normalize Data for Plotting
+#'
+#' Single helper for one- and two-sample plot data: select/rename columns,
+#' convert index to integer, add weights (and optional arm/strata).
+#'
+#' @param data Data.frame.
+#' @param arm_name Name of arm column, or NULL for one-sample.
+#' @param strata_name Name of stratum column, or NULL.
+#' @param idx_name,status_name,time_name Column names.
+#' @param weights Optional weights vector.
+#' @return Normalized data.frame (idx, status, time, weights; and arm, strata if two-sample).
+#' @noRd
+.NormDataForPlot <- function(
+  data,
+  arm_name = NULL,
+  strata_name = NULL,
+  idx_name = "idx",
+  status_name = "status",
+  time_name = "time",
+  weights = NULL
+) {
+  if (is.null(arm_name)) {
+    key_cols <- c(idx_name, status_name, time_name)
+    data <- data %>%
+      dplyr::select(dplyr::all_of(key_cols)) %>%
+      dplyr::rename(
+        "idx" = {{ idx_name }},
+        "status" = {{ status_name }},
+        "time" = {{ time_name }}
+      )
+  } else {
+    key_cols <- c(arm_name, idx_name, status_name, time_name)
+    if (!is.null(strata_name)) key_cols <- c(key_cols, strata_name)
+    data <- data %>%
+      dplyr::select(dplyr::all_of(key_cols)) %>%
+      dplyr::rename(
+        "arm" = {{ arm_name }},
+        "idx" = {{ idx_name }},
+        "status" = {{ status_name }},
+        "time" = {{ time_name }}
+      )
+    if (!is.null(strata_name)) {
+      data <- data %>% dplyr::rename("strata" = {{ strata_name }})
+    } else {
+      data$strata <- 1
+    }
+  }
+  data <- ConvertIdxToInt(data)
+  if (is.null(weights)) weights <- 1
+  data$weights <- weights
+  return(data)
+}
+
 #' Map Original Index to an Integer
 #' 
 #' Data is expected to have an integer index. This function creates

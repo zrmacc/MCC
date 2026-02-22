@@ -2,6 +2,26 @@
 # Updated: 2022-05-19
 
 # -----------------------------------------------------------------------------
+# Permute treatment assignments (from Resampling.R)
+# -----------------------------------------------------------------------------
+
+#' Permute Treatment Assignments.
+#'
+#' @param data Data.frame containing: arm and idx.
+#' @return Data.frame with permuted treatment arm.
+#' @noRd
+PermData <- function(data) {
+  obs_assignments <- unique(data[, c("idx", "arm")])
+  n <- nrow(obs_assignments)
+  perm_assignments <- obs_assignments
+  perm_assignments$arm <- obs_assignments$arm[sample(n, n, FALSE)]
+  perm_trt_arm <- perm_assignments$idx[perm_assignments$arm == 1]
+  data$arm <- 0
+  data$arm[data$idx %in% perm_trt_arm] <- 1
+  return(data)
+}
+
+# -----------------------------------------------------------------------------
 # P-value calculation.
 # -----------------------------------------------------------------------------
 

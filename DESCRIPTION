@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.8.3
+Version: 0.8.4
 Author: Zachary McCaw [aut, cre]
 Maintainer: Zachary McCaw <zmccaw@alumni.harvard.edu>
 Authors@R: 

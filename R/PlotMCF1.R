@@ -3,46 +3,6 @@
 
 # ------------------------------------------------------------------------------
 
-#' Normalize Data for One Sample Plotting
-#' 
-#' @param data Data.frame.
-#' @param idx_name Name of index (subject identifier) column in data.
-#' @param status_name Name of status column in data.
-#' @param time_name Name of column column in data.
-#' @param weights Optional column of weights, controlling the size of the jump
-#'   in the cumulative count curve at times with status == 1.
-#' @return data.frame.
-#' @noRd
-.NormDataOne <- function(
-    data, 
-    idx_name = "idx",
-    status_name = "status",
-    time_name = "time",
-    weights = NULL
-) {
-  
-  # Rename columns.
-  key_cols <- c(idx_name, status_name, time_name)
-  df <- data %>% 
-    dplyr::select(dplyr::all_of(key_cols)) %>%
-    dplyr::rename(
-      "idx" = {{idx_name}},
-      "status" = {{status_name}},
-      "time" = {{time_name}}
-    )
-  
-  # Convert index to integer.
-  df <- ConvertIdxToInt(df)
-  
-  # Add placeholding weights.
-  if (is.null(weights)) {weights <- 1}
-  df$weights <- weights
-  
-  return(df)
-}
-
-# ------------------------------------------------------------------------------
-
 
 #' MCF Curve
 #' 
@@ -65,16 +25,14 @@ MCFCurve <- function(
   weights = NULL
 ) {
   
-  # Data preparation.
-  df <- .NormDataOne(
+  df <- .NormDataForPlot(
     data = data,
+    arm_name = NULL,
     idx_name = idx_name,
     status_name = status_name,
     time_name = time_name,
     weights = weights
   )
-  
-  # Construct MCF.
   mcf <- CalcMCF(
     idx = df$idx,
     status = df$status, 
@@ -110,8 +68,9 @@ NARCurve <- function(
 ) {
   
   # Data preparation.
-  df <- .NormDataOne(
+  df <- .NormDataForPlot(
     data = data,
+    arm_name = NULL,
     idx_name = idx_name,
     status_name = status_name,
     time_name = time_name,
@@ -167,8 +126,9 @@ MCFPlotFrame <- function(
 ) {
   
   # Data preparation.
-  df <- .NormDataOne(
+  df <- .NormDataForPlot(
     data = data,
+    arm_name = NULL,
     idx_name = idx_name,
     status_name = status_name,
     time_name = time_name,
@@ -232,8 +192,9 @@ PlotOneSampleMCF <- function(
 ) {
   
   # Data preparation.
-  data <- .NormDataOne(
+  data <- .NormDataForPlot(
     data = data,
+    arm_name = NULL,
     idx_name = idx_name,
     status_name = status_name,
     time_name = time_name,
@@ -377,8 +338,9 @@ PlotOneSampleAUMCF <- function(
 ) {
   
   # Data preparation.
-  data <- .NormDataOne(
+  data <- .NormDataForPlot(
     data = data,
+    arm_name = NULL,
     idx_name = idx_name,
     status_name = status_name,
     time_name = time_name,
@@ -521,8 +483,9 @@ PlotOneSampleNAR <- function(
   }
   
   # Data preparation.
-  df <- .NormDataOne(
+  df <- .NormDataForPlot(
     data = data,
+    arm_name = NULL,
     idx_name = idx_name,
     status_name = status_name,
     time_name = time_name,

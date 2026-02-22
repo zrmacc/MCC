@@ -122,7 +122,43 @@ test_that("Test MCF calculation.", {
   )
   observed <- GetMCF(data)
   expect_equal(observed$mcf, c(1/4, 1/4, 1/4, 1/4 + 1/2 * 1/2))
-  
+})
+
+# -----------------------------------------------------------------------------
+
+test_that("CalcMCF with calc_var = TRUE returns se_mcf and var_mcf.", {
+  data <- data.frame(
+    time = c(1, 2, 3, 4),
+    status = c(1, 1, 0, 1),
+    idx = c(1, 2, 3, 4)
+  )
+  out <- CalcMCF(
+    idx = data$idx,
+    status = data$status,
+    time = data$time,
+    calc_var = TRUE
+  )
+  expect_true("se_mcf" %in% names(out))
+  expect_true("var_mcf" %in% names(out))
+  expect_true(all(out$se_mcf >= 0))
+  expect_true(all(out$var_mcf >= 0))
+})
+
+test_that("CalcMCF with calc_var = FALSE returns zero variance.", {
+  data <- data.frame(
+    time = c(1, 2),
+    status = c(1, 0),
+    idx = c(1, 2)
+  )
+  out <- CalcMCF(
+    idx = data$idx,
+    status = data$status,
+    time = data$time,
+    calc_var = FALSE
+  )
+  # Implementation always returns var_mcf and se_mcf; when calc_var = FALSE they are zero.
+  expect_equal(out$var_mcf, c(0, 0))
+  expect_equal(out$se_mcf, c(0, 0))
 })
 
 

@@ -22,7 +22,7 @@
 #' @param time_name Name of column containing the observation time.
 #' @param weights Optional column of weights, controlling the size of the jump
 #'   in the cumulative count curve at times with status == 1.
-#' @return Object of class compAUCs with these slots:
+#' @return Object of class \code{CompStratAUCs} with these slots:
 #' \itemize{
 #'   \item `@Areas`: The AUC for each arm.
 #'   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.
@@ -135,7 +135,7 @@ SingleArmAUC <- function(
 #' @param time_name Name of column containing the observation time.
 #' @param weights Optional column of weights, controlling the size of the jump
 #'   in the cumulative count curve at times with status == 1.
-#' @return Object of class compAUCs with these slots:
+#' @return Object of class \code{CompStratAUCs} or \code{CompAugAUCs} with these slots:
 #' \itemize{
 #'   \item `@Areas`: The AUC for each arm.
 #'   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.

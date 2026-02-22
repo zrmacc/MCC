@@ -9,8 +9,10 @@ output:
 
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
+[![R-CMD-check](https://github.com/zrmacc/MCC/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zrmacc/MCC/actions/workflows/R-CMD-check.yaml)
+
 Zachary R. McCaw <br>
-Updated: 2025-11-08
+Updated: 2026-02-21
 
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(cache = TRUE)

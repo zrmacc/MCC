@@ -188,6 +188,99 @@ MargAUC <- function(
 
 
 # -----------------------------------------------------------------------------
+# Average MCF and marginal MCF (from AvgMCF.R)
+# -----------------------------------------------------------------------------
+
+#' Calculate Average MCF Curve
+#'
+#' Calculates the weighted average of MCF curves for a stratified analysis.
+#'
+#' @param curve_list List of tabulated MCFs as returned by \code{\link{CalcMCF}}.
+#' @param strat_weights Numeric vector of stratum weights.
+#' @return Data.frame containing `Time` and the averaged MCF `Avg_MCF`.
+#' @noRd
+AvgMCF <- function(curve_list, strat_weights) {
+  time <- lapply(curve_list, function(x) { x$time })
+  time <- do.call(c, time)
+  time <- sort(unique(time))
+  aux <- function(x) {
+    g <- stats::stepfun(x$time, c(0, x$mcf), right = FALSE)
+    return(g(time))
+  }
+  mcfs <- lapply(curve_list, aux)
+  mcfs <- do.call(cbind, mcfs)
+  avg_mcf <- mcfs %*% strat_weights
+  aux <- function(x) {
+    g <- stats::stepfun(x$time, c(0, x$var_mcf), right = FALSE)
+    return(g(time))
+  }
+  vars <- lapply(curve_list, aux)
+  vars <- do.call(cbind, vars)
+  avg_var <- vars %*% (strat_weights^2)
+  out <- data.frame(
+    time = time,
+    mcf = avg_mcf,
+    var_mcf = avg_var
+  )
+  out$se_mcf <- sqrt(out$var_mcf)
+  return(out)
+}
+
+#' Calculate Marginal MCF
+#'
+#' Calculates the marginal MCF, averaged across strata, with stratum
+#' weights proportional to the total number of subjects (across arms)
+#' belonging to that stratum.
+#'
+#' @param data Data.frame containing (arm, idx, status, strata, time, weights).
+#' @return Data.frame.
+#' @export
+CalcMargMCF <- function(data) {
+  arm <- idx <- status <- strata <- time <- weights <- NULL
+  data <- data %>%
+    dplyr::select(arm, idx, status, strata, time, weights)
+  n0 <- n1 <- n <- w <- NULL
+  stratum_sizes <- data %>%
+    dplyr::group_by(strata) %>%
+    dplyr::summarise(
+      n0 = length(unique(idx[arm == 0])),
+      n1 = length(unique(idx[arm == 1])),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      n = n0 + n1,
+      w = n / sum(n),
+      w0 = w / sum(w[n0 != 0]),
+      w1 = w / sum(w[n1 != 0])
+    )
+  stratum_sizes$w1[stratum_sizes$n1 == 0] <- 0
+  stratum_sizes$w0[stratum_sizes$n0 == 0] <- 0
+  mcf1 <- data %>%
+    dplyr::filter(arm == 1) %>%
+    dplyr::group_by(strata) %>%
+    dplyr::reframe(
+      CalcMCF(idx = idx, status = status, time = time, weights = weights, calc_var = TRUE)
+    ) %>%
+    dplyr::group_by(strata) %>%
+    dplyr::group_split()
+  avg_mcf1 <- AvgMCF(mcf1, strat_weights = stratum_sizes$w1[stratum_sizes$w1 != 0])
+  avg_mcf1$arm <- 1
+  mcf0 <- data %>%
+    dplyr::filter(arm == 0) %>%
+    dplyr::group_by(strata) %>%
+    dplyr::reframe(
+      CalcMCF(idx = idx, status = status, time = time, weights = weights, calc_var = TRUE)
+    ) %>%
+    dplyr::group_by(strata) %>%
+    dplyr::group_split()
+  avg_mcf0 <- AvgMCF(mcf0, strat_weights = stratum_sizes$w0[stratum_sizes$w0 != 0])
+  avg_mcf0$arm <- 0
+  avg_mcf <- rbind(avg_mcf1, avg_mcf0)
+  return(avg_mcf)
+}
+
+
+# -----------------------------------------------------------------------------
 # Main function for single-arm stratified estimator.
 # -----------------------------------------------------------------------------
 
@@ -202,7 +295,7 @@ MargAUC <- function(
 #' @param alpha Alpha level.
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param reps Replicates for bootstrap/permutation inference.
-#' @return Object of class compAUCs with these slots:
+#' @return Object of class \code{CompStratAUCs} with these slots:
 #' \itemize{
 #'   \item `@Areas`: The AUC for each arm.
 #'   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.
@@ -302,7 +395,7 @@ SingleArmStratAUC <- function(
 #' @param boot Logical, construct bootstrap confidence intervals?
 #' @param perm Logical, perform permutation test?
 #' @param reps Replicates for bootstrap/permutation inference.
-#' @return Object of class compAUCs with these slots:
+#' @return Object of class \code{CompStratAUCs} with these slots:
 #' \itemize{
 #'   \item `@Areas`: The AUC for each arm.
 #'   \item `@CIs`: Observed difference and ratio in areas with confidence intervals.
@@ -344,8 +437,6 @@ CompareStratAUCs <- function(
   perm = FALSE,
   reps = 2000
 ) {
-
-  # Observed test stats.
   obs <- CalcStratAUC(
     data = data,
     alpha = alpha,
@@ -354,97 +445,43 @@ CompareStratAUCs <- function(
   )
   obs_stats <- obs$contrasts
 
-  # CIs.
-  cis <- obs_stats %>% dplyr::select(-c("p"))
-  cis <- data.frame(method = "asymptotic", cis)
-
-  # P-values.
-  pvals <- obs_stats %>% dplyr::select(c("contrast", "observed", "p"))
-  pvals <- data.frame(method = "asymptotic", pvals)
-
-  # Simulation replicates.
-  sim_reps <- list()
-
-  # -------------------------------------------------------
-
-  # Bootstrap inference.
-  if (boot) {
-
-    # Simulate.
-    boot_sim <- BootSimStrat(
-      data = data,
-      obs_stats = obs_stats,
-      tau = tau,
-      alpha = alpha,
-      reps = reps
-    )
-    sim_reps$boot_sim <- boot_sim
-
-    # Confidence intervals.
-    boot_cis <- BootCIs(
-      sim = boot_sim,
-      obs_stats = obs_stats,
-      alpha = alpha
-    )
-    cis <- rbind(
-      cis,
-      boot_cis
-    )
-    cis <- cis[order(cis$contrast), ]
-
-    # P-value.
-    boot_p <- CalcP(boot_sim$is_diff_sign)
-    boot_pvals <- cbind(
-      method = "bootstrap",
-      pvals %>% dplyr::select(c("contrast", "observed")),
-      p = boot_p
-    )
-    pvals <- rbind(pvals, boot_pvals)
-  }
-
-  # -------------------------------------------------------
-
-  # Permutation inference.
-  if (perm) {
-
-    # Simulate.
-    perm_sim <- PermSimStrat(
-      data = data,
-      obs_stats = obs_stats,
-      tau = tau,
-      alpha = alpha,
-      reps = reps
-    )
-    sim_reps$perm_sim <- perm_sim
-
-    # Permutation p-values.
+  format_perm_pvals_strat <- function(perm_sim, obs_stats) {
     perm_pvals <- perm_sim %>%
       dplyr::select("perm_diff_1sided", "perm_ratio_1sided") %>%
-      dplyr::summarise_all(CalcP) %>% as.numeric()
-      
-    perm_pvals <- data.frame(
+      dplyr::summarise(dplyr::across(dplyr::everything(), CalcP)) %>%
+      as.numeric()
+    out <- data.frame(
       method = "permutation",
       contrast = c("A1-A0", "A1/A0"),
       observed = obs_stats$observed,
       p = perm_pvals
     )
-    rownames(perm_pvals) <- NULL
-    pvals <- rbind(pvals, perm_pvals)
-    pvals <- pvals[order(pvals$observed), ]
+    rownames(out) <- NULL
+    out
   }
 
-  # -------------------------------------------------------
+  res <- .AddResamplingResults(
+    obs_stats = obs_stats,
+    data = data,
+    tau = tau,
+    alpha = alpha,
+    boot = boot,
+    perm = perm,
+    reps = reps,
+    boot_sim_fun = BootSimStrat,
+    perm_sim_fun = PermSimStrat,
+    format_perm_pvals = format_perm_pvals_strat
+  )
+  pvals <- res$pvals
+  pvals <- pvals[order(pvals$observed), ]
 
-  # Output
-  out <- methods::new(
+  methods::new(
     Class = "CompStratAUCs",
     StratumAreas = obs$stratum_areas,
     MargAreas = obs$marg_areas,
-    CIs = cis,
+    CIs = res$cis,
     MCF = obs$avg_mcf,
-    Reps = sim_reps,
+    Reps = res$sim_reps,
     Pvals = pvals
   )
-
-  return(out)
 }

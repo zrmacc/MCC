@@ -2,7 +2,7 @@
 % Please edit documentation in R/Class.R
 \name{print.CompStratAUCs}
 \alias{print.CompStratAUCs}
-\title{Print Method for Compre AUCs Object.}
+\title{Print Method for Compare Stratified AUCs Object.}
 \usage{
 \method{print}{CompStratAUCs}(x, ...)
 }
