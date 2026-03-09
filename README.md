@@ -414,8 +414,8 @@ aucs@MargAreas
     ## 1   0 100 5.908366 0.6736537   4
     ## 2   1 100 5.063561 0.5451197   4
 
-- `@CIs` containing confindence intervals for the difference and ratio
-  of AUCs.
+- `@CIs` containing confidence intervals for the difference and ratio of
+  AUCs.
 
 ``` r
 aucs@CIs
@@ -458,6 +458,63 @@ aucs@Pvals
 
 - `@Reps` is a list containing the bootstrap and permutation test
   statistics.
+
+### Influence function
+
+Let $\theta(\tau)$ denote the MCF or AUMCF at time $\tau$. The influence
+function $\psi_{i}(\tau)$ measures the contribution of subject $i$ to
+the estimation error:
+
+$$
+\hat{\theta}(\tau) - \theta(\tau) = \frac{1}{n}\sum_{i=1}^{n}\psi_{i}(\tau)
+$$
+
+The influence function contributions are useful for estimating the
+variance of $\hat{\theta}(\tau)$:
+
+$$
+\hat{\mathbb{V}}(\hat{\theta}) = \frac{1}{n^2}\sum_{i=1}^{n}\psi_{i}^{2}(\tau).
+$$
+
+`InfluenceFunction` can be used to calculate the influence contributions
+of each subject to the MCF (`type = "MCF"`) or AUMCF (`type = "AUC"`) at
+a given time $\tau$.
+
+``` r
+# Influence for AUC up to tau (one row per subject).
+psi_auc <- MCC::InfluenceFunction(
+  data %>% dplyr::filter(arm == 0),
+  tau = 4,
+  type = "AUC"
+)
+head(psi_auc)
+```
+
+    ##   idx        psi
+    ## 1 101  0.4459027
+    ## 2 102 -2.7169950
+    ## 3 103 -1.8083700
+    ## 4 104 -6.1644698
+    ## 5 105 -2.3703085
+    ## 6 106  0.3932801
+
+``` r
+# Influence for MCF at tau.
+psi_mcf <- MCC::InfluenceFunction(
+  data %>% dplyr::filter(arm == 0),
+  tau = 4,
+  type = "MCF"
+)
+head(psi_mcf)
+```
+
+    ##   idx         psi
+    ## 1 101  0.03212038
+    ## 2 102 -1.76936792
+    ## 3 103  1.48895373
+    ## 4 104 -2.58604980
+    ## 5 105 -0.39307438
+    ## 6 106 -0.86405517
 
 ### Adjusted AUCs
 
