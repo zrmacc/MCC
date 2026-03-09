@@ -108,3 +108,61 @@ test_that("VarAUC variance equals mean(psi^2) when return_psi = TRUE.", {
   out <- VarAUC(data, tau = 2, return_psi = TRUE)
   expect_equal(v_direct, mean(out$psi^2))
 })
+
+# -----------------------------------------------------------------------------
+# PsiAUC (influence function for AUC)
+# -----------------------------------------------------------------------------
+
+test_that("PsiAUC returns same influence as VarAUC(return_psi = TRUE).", {
+  withr::local_seed(205)
+  covar <- data.frame(arm = c(rep(1, 25), rep(0, 25)))
+  data <- GenData(beta_event = log(0.5), covariates = covar, tau = 3)
+  mcf <- CalcMCF(
+    idx = data$idx,
+    status = data$status,
+    time = data$time,
+    calc_var = FALSE
+  )
+  psi_via_var <- VarAUC(data, tau = 2, mcf = mcf, return_psi = TRUE)
+  psi_direct <- MCC:::PsiAUC(
+    event_rate = mcf$weighted_event_rate,
+    grid_time = mcf$time,
+    idx = data$idx,
+    haz = mcf$haz,
+    nar = mcf$nar,
+    status = data$status,
+    surv = mcf$surv,
+    tau = 2,
+    time = data$time,
+    weights = rep(1, nrow(data))
+  )
+  expect_equal(psi_via_var$idx, psi_direct$idx)
+  expect_equal(psi_via_var$psi, psi_direct$psi)
+})
+
+test_that("PsiAUC variance equals mean(psi^2).", {
+  withr::local_seed(206)
+  covar <- data.frame(arm = c(rep(1, 30), rep(0, 30)))
+  data <- GenData(beta_event = log(0.5), covariates = covar, tau = 3)
+  mcf <- CalcMCF(
+    idx = data$idx,
+    status = data$status,
+    time = data$time,
+    calc_var = FALSE
+  )
+  psi_out <- MCC:::PsiAUC(
+    event_rate = mcf$weighted_event_rate,
+    grid_time = mcf$time,
+    idx = data$idx,
+    haz = mcf$haz,
+    nar = mcf$nar,
+    status = data$status,
+    surv = mcf$surv,
+    tau = 2,
+    time = data$time,
+    weights = rep(1, nrow(data))
+  )
+  v_from_psi <- mean(psi_out$psi^2)
+  v_var_auc <- VarAUC(data, tau = 2, mcf = mcf)
+  expect_equal(v_from_psi, v_var_auc)
+})

@@ -49,4 +49,3 @@ CalcMCF <- function(
   return(out)
 }
 
-

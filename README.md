@@ -1,9 +1,18 @@
+---
+title: "README"
+author: "Zachary McCaw"
+date: "2026-03-08"
+output: 
+  html_document: 
+    keep_md: TRUE
+--- 
+
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
 
 [![R-CMD-check](https://github.com/zrmacc/MCC/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zrmacc/MCC/actions/workflows/R-CMD-check.yaml)
 
 Zachary R. McCaw <br>
-Updated: 2026-02-21
+Updated: 2026-03-08
 
 
 

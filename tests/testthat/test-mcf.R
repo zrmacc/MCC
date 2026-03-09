@@ -237,3 +237,60 @@ test_that("Test MCF weighting.", {
   
 })
 
+
+# -----------------------------------------------------------------------------
+# InfluenceFunction type = "MCF" (MCF influence at tau)
+# -----------------------------------------------------------------------------
+
+test_that("InfluenceFunction type MCF returns idx, psi at tau (one row per subject).", {
+  data <- data.frame(
+    time = c(1, 2, 3, 4),
+    status = c(1, 1, 0, 1),
+    idx = c(1, 2, 3, 4)
+  )
+  out <- InfluenceFunction(data, tau = 4, type = "MCF")
+  expect_s3_class(out, "data.frame")
+  expect_true("idx" %in% names(out))
+  expect_true("psi" %in% names(out))
+  expect_false("time" %in% names(out))
+  expect_equal(nrow(out), length(unique(data$idx)))
+})
+
+test_that("InfluenceFunction type MCF variance at tau; var_mcf is monotonicity-adjusted.", {
+  data <- data.frame(
+    time = c(1, 2, 3, 4),
+    status = c(1, 1, 0, 1),
+    idx = c(1, 2, 3, 4)
+  )
+  mcf <- CalcMCF(
+    idx = data$idx,
+    status = data$status,
+    time = data$time,
+    calc_var = TRUE
+  )
+  psi_df <- InfluenceFunction(data, tau = 4, type = "MCF", mcf = mcf)
+  n <- nrow(psi_df)
+  var_from_psi <- mean(psi_df$psi^2)
+  tau_eff <- max(mcf$time[mcf$time <= 4])
+  var_mcf_at_tau <- mcf$var_mcf[mcf$time == tau_eff][1]
+  expect_true(var_from_psi <= var_mcf_at_tau + 1e-10)
+  psi_first <- InfluenceFunction(data, tau = mcf$time[1], type = "MCF", mcf = mcf)
+  expect_equal(mean(psi_first$psi^2), mcf$var_mcf[1])
+})
+
+test_that("InfluenceFunction type MCF with mcf = NULL matches precomputed mcf.", {
+  withr::local_seed(207)
+  data <- GenData(n = 20, tau = 3)
+  mcf <- CalcMCF(
+    idx = data$idx,
+    status = data$status,
+    time = data$time,
+    calc_var = FALSE
+  )
+  out_null <- InfluenceFunction(data, tau = 2, type = "MCF")
+  out_mcf <- InfluenceFunction(data, tau = 2, type = "MCF", mcf = mcf)
+  expect_equal(out_null$idx, out_mcf$idx)
+  expect_equal(out_null$psi, out_mcf$psi)
+})
+
+

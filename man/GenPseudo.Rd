@@ -11,6 +11,7 @@ GenPseudo(
   status_name = "status",
   tau = NULL,
   time_name = "time",
+  type = c("MCF", "AUC"),
   weights = NULL
 )
 }
@@ -23,18 +24,22 @@ be censored after their last observed event?}
 \item{idx_name}{Name of column containing a unique subject index.}
 
 \item{status_name}{Name of column containing the status. Must be coded as 0 for
-censoring, 1 for event, 2 for death. Each subject should have an 
+censoring, 1 for event, 2 for death. Each subject should have an
 observation-terminating event, either censoring or death.}
 
 \item{tau}{Numeric truncation time.}
 
 \item{time_name}{Name of column containing the observation time.}
 
+\item{type}{Character. \code{"MCF"} for pseudo-values of the MCF at \code{tau},
+or \code{"AUC"} for pseudo-values of the area under the MCF up to \code{tau}.
+Both give one row per subject.}
+
 \item{weights}{Optional column of weights, controlling the size of the jump
 in the cumulative count curve at times with status == 1.}
 }
 \value{
-Data.frame with the influence and pseudo-value for each unique observation.
+Data.frame with \code{idx}, \code{psi}, and \code{pseudo} (one row per subject).
 }
 \description{
 Generate Pseudovalues

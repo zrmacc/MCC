@@ -133,6 +133,125 @@ arma::colvec VarMCF(
 
 // ----------------------------------------------------------------------------
 
+//' Calculate MCF Influence Function Contributions at Truncation Time
+//'
+//' Returns the influence function for the mean cumulative function (MCF) at
+//' the single time point tau. One row per subject. The variance of the MCF at
+//' tau is (1/n) * sum_i psi_i^2.
+//'
+//' @param idx Unique subject index.
+//' @param event_rate Event rate (weighted).
+//' @param haz Hazard (of death).
+//' @param mcf Mean cumulative function.
+//' @param prop_risk Proportion at risk.
+//' @param status Status indicators.
+//' @param surv Survival.
+//' @param time Observation times.
+//' @param weights Jump weights.
+//' @param tau Truncation time; influence at largest grid time <= tau.
+//' @return Data.frame with columns idx, psi (one row per subject).
+//' @noRd
+// [[Rcpp::export]]
+SEXP PsiMCF(
+    const arma::colvec idx,
+    const arma::colvec event_rate,
+    const arma::colvec haz,
+    const arma::colvec mcf,
+    const arma::colvec prop_risk,
+    const arma::colvec status,
+    const arma::colvec surv,
+    const arma::colvec time,
+    const arma::colvec weights,
+    const double tau
+) {
+
+  const arma::colvec unique_idx = arma::unique(idx);
+  const int n = unique_idx.size();
+
+  const arma::colvec unique_times = arma::unique(time);
+  const int n_times = unique_times.size();
+
+  arma::uword j_eff = 0;
+  for (arma::uword j = 0; j < static_cast<arma::uword>(n_times); ++j) {
+    if (unique_times(j) <= tau) {
+      j_eff = j;
+    }
+  }
+
+  arma::colvec surv_left = arma::shift(surv, 1);
+  surv_left(0) = 1.0;
+
+  arma::colvec mcf_left = arma::shift(mcf, 1);
+  mcf_left(0) = 0.0;
+
+  arma::colvec prop_risk_safe = prop_risk;
+  prop_risk_safe.elem(arma::find(prop_risk_safe == 0.0)).fill(arma::datum::inf);
+
+  std::unordered_map<double, arma::uword> time_pos;
+  time_pos.reserve(static_cast<size_t>(n_times));
+  for (arma::uword j = 0; j < static_cast<arma::uword>(n_times); ++j) {
+    time_pos.emplace(unique_times(j), j);
+  }
+
+  arma::colvec idx_out(n);
+  arma::colvec psi_out(n);
+
+  arma::colvec event(n_times);
+  arma::colvec death(n_times);
+  arma::colvec ind_risk(n_times);
+
+  for (int i = 0; i < n; ++i) {
+
+    event.zeros();
+    death.zeros();
+    ind_risk.zeros();
+
+    const double key = unique_idx(i);
+    const arma::uvec indices = arma::find(idx == key);
+
+    const arma::colvec subj_time = time.elem(indices);
+    const arma::colvec subj_status = status.elem(indices);
+    const arma::colvec subj_weight = weights.elem(indices);
+
+    const double t_last = subj_time(subj_time.n_elem - 1);
+    const arma::uword j_star = time_pos[t_last];
+    ind_risk.subvec(0, j_star).ones();
+
+    for (arma::uword r = 0; r < subj_status.n_elem; ++r) {
+      if (subj_status(r) == 1.0) {
+        const arma::uword k = time_pos[subj_time(r)];
+        event(k) += subj_weight(r);
+      }
+    }
+
+    for (arma::uword r = 0; r < subj_status.n_elem; ++r) {
+      if (subj_status(r) == 2.0) {
+        const arma::uword k = time_pos[subj_time(r)];
+        death(k) = 1.0;
+        break;
+      }
+    }
+
+    const arma::colvec dm_event = event - ind_risk % event_rate;
+    const arma::colvec dm_death = death - ind_risk % haz;
+
+    const arma::colvec psi = arma::cumsum(surv_left / prop_risk_safe % dm_event)
+      - mcf % arma::cumsum(dm_death / prop_risk_safe)
+      + arma::cumsum(mcf_left % dm_death / prop_risk_safe);
+
+    idx_out(i) = key;
+    psi_out(i) = psi(j_eff);
+  }
+
+  return Rcpp::DataFrame::create(
+    Rcpp::Named("idx") = idx_out,
+    Rcpp::Named("psi") = psi_out
+  );
+}
+
+
+// ----------------------------------------------------------------------------
+
 //' Calculate Mean Cumulative Function
 //' 
 //' Tabulates the mean cumulative function. See equation 2.1 of 

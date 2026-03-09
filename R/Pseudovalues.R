@@ -1,21 +1,24 @@
 # Purpose: Calculations of the AUC.
-# Updated: 2025-11-08
+# Updated: 2026-03-08
 
 
 #' Generate Pseudovalues
 #'
-#' @param data Data.frame. 
+#' @param data Data.frame.
 #' @param cens_after_last Should subjects who lack an explicit censoring time
-#'   be censored after their last observed event? 
+#'   be censored after their last observed event?
 #' @param idx_name Name of column containing a unique subject index.
 #' @param status_name Name of column containing the status. Must be coded as 0 for
-#'   censoring, 1 for event, 2 for death. Each subject should have an 
+#'   censoring, 1 for event, 2 for death. Each subject should have an
 #'   observation-terminating event, either censoring or death.
 #' @param tau Numeric truncation time.
 #' @param time_name Name of column containing the observation time.
+#' @param type Character. \code{"MCF"} for pseudo-values of the MCF at \code{tau},
+#'   or \code{"AUC"} for pseudo-values of the area under the MCF up to \code{tau}.
+#'   Both give one row per subject.
 #' @param weights Optional column of weights, controlling the size of the jump
 #'   in the cumulative count curve at times with status == 1.
-#' @return Data.frame with the influence and pseudo-value for each unique observation.
+#' @return Data.frame with \code{idx}, \code{psi}, and \code{pseudo} (one row per subject).
 #' @export
 GenPseudo <- function(
     data,
@@ -24,18 +27,21 @@ GenPseudo <- function(
     status_name = "status",
     tau = NULL,
     time_name = "time",
+    type = c("MCF", "AUC"),
     weights = NULL
 ) {
-  
+
+  type <- match.arg(type)
+
   # Rename columns as necessary.
-  idx <- orig_idx <-  time <- status <- NULL
+  idx <- orig_idx <- time <- status <- NULL
   data <- data %>%
     dplyr::rename(
       idx = {{idx_name}},
       status = {{status_name}},
       time = {{time_name}}
     )
-  
+
   # Format data.
   data <- FormatData(
     data,
@@ -47,50 +53,54 @@ GenPseudo <- function(
   idx_map <- data %>%
     dplyr::select(idx, orig_idx) %>%
     unique()
-  
+
   # Truncation time.
   if (is.null(tau)) {
     max_t <- NULL
-    tau <- data %>% 
-      dplyr::summarise(max_t = max(time)) %>% 
-      dplyr::pull(max_t) %>% min()
+    tau <- data %>%
+      dplyr::summarise(max_t = max(time)) %>%
+      dplyr::pull(max_t) %>%
+      min()
   }
-  
-  # Calculate AUC.
-  auc <- SingleArmAUC(data = data, tau = tau)
-  param <- auc@MargAreas$area[1]
-  
-  # Tabulate MCF.
+
+  # Tabulate MCF (needed for both types).
   mcf <- CalcMCF(
-    idx = data$idx, 
-    status = data$status, 
-    time = data$time, 
-    weights = data$weights, 
+    idx = data$idx,
+    status = data$status,
+    time = data$time,
+    weights = data$weights,
     calc_var = FALSE
   )
-  
-  out <- PsiAUC(
-    event_rate = mcf$weighted_event_rate,
-    grid_time = mcf$time,
-    idx = data$idx,
-    haz = mcf$haz,
-    nar = mcf$nar,
-    status = data$status,
-    surv = mcf$surv,
+
+  # Calculate influence function.
+  out <- InfluenceFunction(
+    data = data,
     tau = tau,
-    time = data$time,
+    type = type,
+    mcf = mcf,
     weights = data$weights
   )
-  
-  # Output.
+
+  # Calculate parameter.
+  if (type == "AUC") {
+    auc <- SingleArmAUC(data = data, tau = tau)
+    param <- auc@MargAreas$area[1]
+  } else {
+    tau_eff <- max(mcf$time[mcf$time <= tau], na.rm = TRUE)
+    if (!is.finite(tau_eff)) {
+      tau_eff <- min(mcf$time)
+    }
+    param <- mcf$mcf[mcf$time == tau_eff][1]
+  }
+
+  # Construct pseudovalues.
   out$pseudo <- param + out$psi
-  
-  # Restore original index.
+
+  # Format output.
   out <- out %>%
     dplyr::inner_join(idx_map, by = "idx") %>%
     dplyr::select(-idx) %>%
     dplyr::relocate(orig_idx) %>%
     dplyr::rename(idx = orig_idx)
-  
   return(out)
 }

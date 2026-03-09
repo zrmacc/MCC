@@ -21,7 +21,6 @@
 //' @return Numeric variance.
 //' @noRd 
 // [[Rcpp::export]]
-
 SEXP PsiAUC(
     const arma::colvec event_rate,
     const arma::colvec grid_time,

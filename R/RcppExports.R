@@ -23,6 +23,28 @@ SimDataCpp <- function(censoring_rate, death_rate, idx, event_rate, tau) {
     .Call(`_MCC_SimDataCpp`, censoring_rate, death_rate, idx, event_rate, tau)
 }
 
+#' Calculate MCF Influence Function Contributions at Truncation Time
+#'
+#' Returns the influence function for the mean cumulative function (MCF) at
+#' the single time point tau. One row per subject. The variance of the MCF at
+#' tau is (1/n) * sum_i psi_i^2.
+#'
+#' @param idx Unique subject index.
+#' @param event_rate Event rate (weighted).
+#' @param haz Hazard (of death).
+#' @param mcf Mean cumulative function.
+#' @param prop_risk Proportion at risk.
+#' @param status Status indicators.
+#' @param surv Survival.
+#' @param time Observation times.
+#' @param weights Jump weights.
+#' @param tau Truncation time; influence at largest grid time <= tau.
+#' @return Data.frame with columns idx, psi (one row per subject).
+#' @noRd
+PsiMCF <- function(idx, event_rate, haz, mcf, prop_risk, status, surv, time, weights, tau) {
+    .Call(`_MCC_PsiMCF`, idx, event_rate, haz, mcf, prop_risk, status, surv, time, weights, tau)
+}
+
 #' Calculate Mean Cumulative Function
 #' 
 #' Tabulates the mean cumulative function. See equation 2.1 of 
