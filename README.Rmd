@@ -1,10 +1,6 @@
 ---
-title: "README"
-author: "Zachary McCaw"
-date: "`r Sys.Date()`"
-output: 
-  html_document: 
-    keep_md: TRUE
+output:
+  github_document
 --- 
 
 # Comparison of mean cumulative count curves via the area under the curve (AUC)
