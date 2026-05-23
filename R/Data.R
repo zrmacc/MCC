@@ -16,7 +16,8 @@
 #' @param base_event_rate Baseline arrival rate for recurrent events.
 #' @param beta_death Numeric vector of log rate ratios for the death rate.
 #' @param beta_event Numeric vector of log rate ratios for the event rate.
-#' @param censoring_rate Arrival rate for the censoring time.
+#' @param censoring_rate Arrival rate for the censoring time. If zero, everyone is
+#'   administratively censored at \code{tau} (no random censoring before \code{tau}).
 #' @param covariates Numeric design matrix.
 #' @param frailty_variance Variance of the gamma frailty.
 #' @param min_death_rate Minimum subject-specific event rate. Must be positive.
