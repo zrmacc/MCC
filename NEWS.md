@@ -1,3 +1,13 @@
+## Version 0.9.0
+
+* Added `CompareMvAUCs` for multivariate AUC contrasts with asymptotic and bootstrap inference.
+* Added multivariate augmentation and process-specific eligibility weighting in influence functions.
+* Extended `GenData` to simulate multiple recurrent event types with shared frailty.
+* Added `PlotMvMCFs` and unified multivariate plotting via `PlotMCFs`.
+* **Breaking change:** renamed univariate `weights` to `jump_weights` (argument and formatted data column).
+* **Breaking change:** renamed multivariate contrast `weights` to `process_weights` in `CompareMvAUCs`.
+
+
 ## Version 0.8.4
 
 * Reviewed code and added tests using Cursor.

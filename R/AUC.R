@@ -44,21 +44,23 @@ AUC <- function(times, values, tau) {
 #' @param tau Truncation time.
 #' @param mcf Tabulated MCF, if already computed.
 #' @param return_psi Return influence function contributions?
-#' @param weights Optional column of weights, controlling the size of the jump
+#' @param jump_weights Optional column of jump weights, controlling the size of the jump
 #'   in the cumulative count curve at times with status == 1.
 #' @return Numeric variance.
 #' @export
-VarAUC <- function(data, tau, mcf = NULL, return_psi = FALSE, weights = NULL) {
+VarAUC <- function(data, tau, mcf = NULL, return_psi = FALSE, jump_weights = NULL) {
   
-  if (is.null(weights)) {weights <- 1}
-  data$weights <- weights
+  if (is.null(jump_weights)) {
+    jump_weights <- 1
+  }
+  data$jump_weights <- jump_weights
   
   if (is.null(mcf)) {
     mcf <- CalcMCF(
       idx = data$idx, 
       status = data$status, 
       time = data$time, 
-      weights = data$weights, 
+      jump_weights = data$jump_weights, 
       calc_var = FALSE
     )
   }
@@ -74,7 +76,7 @@ VarAUC <- function(data, tau, mcf = NULL, return_psi = FALSE, weights = NULL) {
     surv = mcf$surv,
     tau = tau,
     time = data$time,
-    weights = data$weights
+    weights = data$jump_weights
   )
   
   if (return_psi) {

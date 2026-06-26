@@ -2,22 +2,31 @@
 % Please edit documentation in R/PlotMCF2.R
 \name{PlotMCFs}
 \alias{PlotMCFs}
-\title{Plot Two Sample Mean Cumulative Function}
+\title{Plot Mean Cumulative Functions}
 \usage{
 PlotMCFs(
   data,
+  which_arm = NULL,
   arm_name = "arm",
   color_labs = c("Ctrl", "Trt"),
+  colors = NULL,
   ctrl_color = "#C65842",
+  trt_color = "#6385B8",
+  color = "#C65842",
+  color_lab = "Arm",
   idx_name = "idx",
   status_name = "status",
   strata_name = NULL,
   tau = NULL,
   time_name = "time",
   title = NULL,
-  trt_color = "#6385B8",
-  weights = NULL,
+  jump_weights = NULL,
+  show_nar = TRUE,
+  show_auc = FALSE,
+  show_mcf = TRUE,
   x_breaks = NULL,
+  x_labs = NULL,
+  x_max = NULL,
   x_lim = NULL,
   x_name = "Time",
   y_breaks = NULL,
@@ -28,11 +37,24 @@ PlotMCFs(
 \arguments{
 \item{data}{Data.frame.}
 
+\item{which_arm}{Optional arm code to plot a single arm; \code{NULL} plots
+all arms present.}
+
 \item{arm_name}{Name of arm column in data.}
 
-\item{color_labs}{Color labels.}
+\item{color_labs}{Legend labels for two-arm plots.}
 
-\item{ctrl_color}{Color for control arm.}
+\item{colors}{Line and fill colors for two-arm plots.}
+
+\item{ctrl_color}{Deprecated control color (used when \code{colors} is
+\code{NULL}).}
+
+\item{trt_color}{Deprecated treatment color (used when \code{colors} is
+\code{NULL}).}
+
+\item{color}{Line color when a single arm is plotted.}
+
+\item{color_lab}{Legend label when a single arm is plotted.}
 
 \item{idx_name}{Name of index (subject identifier) column in data.}
 
@@ -42,16 +64,23 @@ PlotMCFs(
 
 \item{tau}{Truncation time.}
 
-\item{time_name}{Name of column column in data.}
+\item{time_name}{Name of time column in data.}
 
 \item{title}{Plot title.}
 
-\item{trt_color}{Color for treatment arm.}
+\item{jump_weights}{Optional column of jump weights for one-arm MCF jumps.}
 
-\item{weights}{Optional column of weights, controlling the size of the jump
-in the cumulative count curve at times with status == 1.}
+\item{show_nar}{Include numbers at risk below the MCF panel?}
 
-\item{x_breaks}{X-axis breaks.}
+\item{show_auc}{Shade the area under each MCF curve from 0 to \code{tau}?}
+
+\item{show_mcf}{Include the MCF panel? Set \code{FALSE} for NAR-only output.}
+
+\item{x_breaks}{X-axis breaks for the NAR row.}
+
+\item{x_labs}{X-axis tick labels for the NAR row.}
+
+\item{x_max}{X-axis upper limit for the NAR row.}
 
 \item{x_lim}{X-axis limits.}
 
@@ -64,8 +93,20 @@ in the cumulative count curve at times with status == 1.}
 \item{y_name}{Y-axis label.}
 }
 \value{
-ggplot object.
+A \code{ggplot} object, or a cowplot layout when \code{show_nar =
+  TRUE} and \code{show_mcf = TRUE}.
 }
 \description{
-Plot the mean cumulative functions comparing two treatment arms.
+Plot mean cumulative functions for one or two treatment arms, with optional
+numbers at risk below the MCF panel (\code{show_nar = TRUE}) and optional
+area shading (\code{show_auc = TRUE}).
 }
+\section{Migration}{
+
+Prior releases returned an MCF-only \code{ggplot} from \code{PlotMCFs()}.
+The default is now a combined MCF + NAR layout. Pass \code{show_nar = FALSE}
+for MCF-only output. Legacy functions \code{PlotOneSampleMCF},
+\code{PlotOneSampleAUMCF}, \code{PlotOneSampleNAR}, \code{PlotAUMCF}, and
+\code{PlotNARs} remain as deprecated wrappers.
+}
+

@@ -23,6 +23,18 @@ SimDataCpp <- function(censoring_rate, death_rate, idx, event_rate, tau) {
     .Call(`_MCC_SimDataCpp`, censoring_rate, death_rate, idx, event_rate, tau)
 }
 
+#' Simulate multivariate recurrent event data for multiple subjects.
+#'
+#' @param censoring_rate Rate of censoring.
+#' @param death_rate Rate of terminal events.
+#' @param idx Subject index.
+#' @param event_rates Matrix of recurrent event rates (n subjects x K types).
+#' @param tau Truncation time.
+#' @return Long-format recurrent event data with event_type.
+SimMvDataCpp <- function(censoring_rate, death_rate, idx, event_rates, tau) {
+    .Call(`_MCC_SimMvDataCpp`, censoring_rate, death_rate, idx, event_rates, tau)
+}
+
 #' Calculate MCF Influence Function Contributions at Truncation Time
 #'
 #' Returns the influence function for the mean cumulative function (MCF) at

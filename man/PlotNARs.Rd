@@ -42,5 +42,6 @@ PlotNARs(
 ggplot.
 }
 \description{
-Plot Two Sample Number at Risk
+Deprecated: use \code{\link{PlotMCFs}} with \code{show_mcf = FALSE} and
+\code{show_nar = TRUE}.
 }

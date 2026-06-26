@@ -14,7 +14,8 @@
 #'   \code{"AUC"} for the AUC influence (area under the MCF up to \code{tau}).
 #' @param mcf Tabulated MCF as returned by \code{\link{CalcMCF}}. If \code{NULL},
 #'   computed from \code{data}.
-#' @param weights Optional numeric vector of weights (one per row of \code{data}).
+#' @param jump_weights Optional numeric vector of jump weights (one per row of
+#'   \code{data}).
 #' @return Data.frame with columns \code{idx}, \code{psi} (one row per subject).
 #' @export
 InfluenceFunction <- function(
@@ -22,22 +23,22 @@ InfluenceFunction <- function(
     tau,
     type = c("MCF", "AUC"),
     mcf = NULL,
-    weights = NULL
+    jump_weights = NULL
 ) {
 
   type <- match.arg(type)
 
-  if (is.null(weights)) {
-    weights <- rep(1, nrow(data))
+  if (is.null(jump_weights)) {
+    jump_weights <- rep(1, nrow(data))
   }
-  data$weights <- weights
+  data$jump_weights <- jump_weights
 
   if (is.null(mcf)) {
     mcf <- CalcMCF(
       idx = data$idx,
       status = data$status,
       time = data$time,
-      weights = data$weights,
+      jump_weights = data$jump_weights,
       calc_var = FALSE
     )
   }
@@ -53,7 +54,7 @@ InfluenceFunction <- function(
       surv = mcf$surv,
       tau = tau,
       time = data$time,
-      weights = data$weights
+      weights = data$jump_weights
     )
   } else {
     prop_risk <- mcf$nar / mcf$nar[1]
@@ -66,7 +67,7 @@ InfluenceFunction <- function(
       status = data$status,
       surv = mcf$surv,
       time = data$time,
-      weights = data$weights,
+      weights = data$jump_weights,
       tau = tau
     )
   }

@@ -20,7 +20,7 @@
 #' @param strata Optional stratification factor.
 #' @param tau Numeric truncation time.
 #' @param time_name Name of column containing the observation time.
-#' @param weights Optional column of weights, controlling the size of the jump
+#' @param jump_weights Optional column of jump weights, controlling the size of the jump
 #'   in the cumulative count curve at times with status == 1.
 #' @return Object of class \code{CompStratAUCs} with these slots:
 #' \itemize{
@@ -52,7 +52,7 @@ SingleArmAUC <- function(
     strata = NULL,
     tau = NULL,
     time_name = "time",
-    weights = NULL
+    jump_weights = NULL
 ) {
   
   # Rename columns as necessary.
@@ -70,7 +70,7 @@ SingleArmAUC <- function(
     arm_name = NULL,
     cens_after_last = cens_after_last,
     strata = strata,
-    weights = weights
+    jump_weights = jump_weights
   )
   
   # Truncation time.
@@ -133,7 +133,7 @@ SingleArmAUC <- function(
 #'   covariate matrix is provided.
 #' @param tau Numeric truncation time.
 #' @param time_name Name of column containing the observation time.
-#' @param weights Optional column of weights, controlling the size of the jump
+#' @param jump_weights Optional column of jump weights, controlling the size of the jump
 #'   in the cumulative count curve at times with status == 1.
 #' @return Object of class \code{CompStratAUCs} or \code{CompAugAUCs} with these slots:
 #' \itemize{
@@ -179,7 +179,7 @@ CompareAUCs <- function(
   strata = NULL,
   tau = NULL,
   time_name = "time",
-  weights = NULL
+  jump_weights = NULL
 ) {
   
   # Check that covariates and strata are not both provided.
@@ -219,7 +219,7 @@ CompareAUCs <- function(
     cens_after_last = cens_after_last,
     covars = covars,
     strata = strata,
-    weights = weights
+    jump_weights = jump_weights
   )
   
   # Truncation time.

@@ -9,7 +9,7 @@ InfluenceFunction(
   tau,
   type = c("MCF", "AUC"),
   mcf = NULL,
-  weights = NULL
+  jump_weights = NULL
 )
 }
 \arguments{
@@ -23,7 +23,8 @@ InfluenceFunction(
 \item{mcf}{Tabulated MCF as returned by \code{\link{CalcMCF}}. If \code{NULL},
 computed from \code{data}.}
 
-\item{weights}{Optional numeric vector of weights (one per row of \code{data}).}
+\item{jump_weights}{Optional numeric vector of jump weights (one per row of
+\code{data}).}
 }
 \value{
 Data.frame with columns \code{idx}, \code{psi} (one row per subject).

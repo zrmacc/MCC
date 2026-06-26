@@ -10,7 +10,7 @@
 #' @param status Status, coded as 0 for censoring, 1 for event, 2 for death. 
 #' @param time Observation time.
 #' @param calc_var Calculate variance of the MCF?
-#' @param weights Jump weights.
+#' @param jump_weights Jump weights.
 #' @return Data.frame with these columns:
 #' \itemize{
 #'    \item `times`, distinct observation times.
@@ -29,13 +29,13 @@ CalcMCF <- function(
   status,
   time,
   calc_var = TRUE,
-  weights = NULL
+  jump_weights = NULL
 ){
   
-  # Weights.
+  # Jump weights.
   n <- length(idx)
-  if (is.null(weights)) {
-    weights <- rep(1, n)
+  if (is.null(jump_weights)) {
+    jump_weights <- rep(1, n)
   }
   
   # Call MCF.
@@ -43,7 +43,7 @@ CalcMCF <- function(
     idx = idx,
     status = status,
     time = time,
-    weights = weights,
+    weights = jump_weights,
     calc_var = calc_var
   )
   return(out)

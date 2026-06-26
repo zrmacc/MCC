@@ -14,7 +14,7 @@ FormatData(
   status_name = "status",
   strata = NULL,
   time_name = "time",
-  weights = NULL
+  jump_weights = NULL
 )
 }
 \arguments{
@@ -42,13 +42,13 @@ covariate matrix is provided.}
 
 \item{time_name}{Name of column containing the observation time.}
 
-\item{weights}{Optional column of weights.}
+\item{jump_weights}{Optional column of jump weights.}
 }
 \value{
 Formatted data.frame.
 }
 \description{
 Subsets the key columns for analysis, converts the index to an integer,
-adds placeholders for `strata` and `weights` if not specified, checks
+adds placeholders for `strata` and `jump_weights` if not specified, checks
 to ensure each unique index has 1 and only 1 o
 }

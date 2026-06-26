@@ -16,7 +16,7 @@
 #' @param type Character. \code{"MCF"} for pseudo-values of the MCF at \code{tau},
 #'   or \code{"AUC"} for pseudo-values of the area under the MCF up to \code{tau}.
 #'   Both give one row per subject.
-#' @param weights Optional column of weights, controlling the size of the jump
+#' @param jump_weights Optional column of jump weights, controlling the size of the jump
 #'   in the cumulative count curve at times with status == 1.
 #' @return Data.frame with \code{idx}, \code{psi}, and \code{pseudo} (one row per subject).
 #' @export
@@ -28,7 +28,7 @@ GenPseudo <- function(
     tau = NULL,
     time_name = "time",
     type = c("MCF", "AUC"),
-    weights = NULL
+    jump_weights = NULL
 ) {
 
   type <- match.arg(type)
@@ -47,7 +47,7 @@ GenPseudo <- function(
     data,
     arm_name = NULL,
     cens_after_last = cens_after_last,
-    weights = weights,
+    jump_weights = jump_weights,
     keep_orig_idx = TRUE
   )
   idx_map <- data %>%
@@ -68,7 +68,7 @@ GenPseudo <- function(
     idx = data$idx,
     status = data$status,
     time = data$time,
-    weights = data$weights,
+    jump_weights = data$jump_weights,
     calc_var = FALSE
   )
 
@@ -78,7 +78,7 @@ GenPseudo <- function(
     tau = tau,
     type = type,
     mcf = mcf,
-    weights = data$weights
+    jump_weights = data$jump_weights
   )
 
   # Calculate parameter.

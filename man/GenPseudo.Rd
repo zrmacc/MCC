@@ -12,7 +12,7 @@ GenPseudo(
   tau = NULL,
   time_name = "time",
   type = c("MCF", "AUC"),
-  weights = NULL
+  jump_weights = NULL
 )
 }
 \arguments{
@@ -35,7 +35,7 @@ observation-terminating event, either censoring or death.}
 or \code{"AUC"} for pseudo-values of the area under the MCF up to \code{tau}.
 Both give one row per subject.}
 
-\item{weights}{Optional column of weights, controlling the size of the jump
+\item{jump_weights}{Optional column of jump weights, controlling the size of the jump
 in the cumulative count curve at times with status == 1.}
 }
 \value{

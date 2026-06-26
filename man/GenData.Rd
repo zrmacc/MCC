@@ -11,52 +11,72 @@ GenData(
   beta_event = NULL,
   censoring_rate = 0.25,
   covariates = NULL,
+  death_frailty_variance = NULL,
+  event_frailty_variance = NULL,
   frailty_variance = 0,
   min_death_rate = 0.05,
   min_event_rate = 0.05,
   n = 100,
+  n_event_types = 1L,
   tau = 4
 )
 }
 \arguments{
 \item{base_death_rate}{Baseline arrival rate for the terminal event.}
 
-\item{base_event_rate}{Baseline arrival rate for recurrent events.}
+\item{base_event_rate}{Baseline arrival rate for recurrent events. A scalar
+recycled to length \code{n_event_types}, or a length-\code{n_event_types}
+numeric vector.}
 
 \item{beta_death}{Numeric vector of log rate ratios for the death rate.}
 
-\item{beta_event}{Numeric vector of log rate ratios for the event rate.}
+\item{beta_event}{Numeric vector of log rate ratios shared across event types,
+or a \code{p x n_event_types} matrix of type-specific log rate ratios.}
 
-\item{censoring_rate}{Arrival rate for the censoring time.}
+\item{censoring_rate}{Arrival rate for the censoring time. If zero, everyone is
+administratively censored at \code{tau} (no random censoring before \code{tau}).}
 
 \item{covariates}{Numeric design matrix.}
 
-\item{frailty_variance}{Variance of the gamma frailty.}
+\item{death_frailty_variance}{Variance of the gamma frailty linking recurrent
+and terminal events. When \code{n_event_types = 1}, \code{frailty_variance}
+aliases this argument.}
 
-\item{min_death_rate}{Minimum subject-specific event rate. Must be positive.}
+\item{event_frailty_variance}{Variance of the shared gamma frailty among
+recurrent event types. Ignored when \code{n_event_types = 1}.}
+
+\item{frailty_variance}{Legacy alias for frailty variance. When
+\code{n_event_types = 1}, aliases \code{death_frailty_variance}. When
+\code{n_event_types > 1} and positive, maps to both frailty variances
+unless explicit values are supplied.}
+
+\item{min_death_rate}{Minimum subject-specific death rate. Must be positive.}
 
 \item{min_event_rate}{Minimum subject-specific event rate. Must be positive.}
 
 \item{n}{Number of subjects. Overwritten by `nrow(covariates)` if covariates are provided.}
 
+\item{n_event_types}{Number of recurrent event types.}
+
 \item{tau}{Truncation time.}
 }
 \value{
-Data.frame, containing:
-\itemize{
- \item The subject identifier `idx` (index).
- \item `time` and `status` of the event: 0 for censoring, 1 for an 
-    event, 2 for death.
- \item The `true_death_rate`, `true_event_rate`, and `frailty`, which are subject-specific.
-}
+Data.frame. When \code{n_event_types = 1}, columns match the legacy
+  format (`idx`, `time`, `status`, covariates, `cens_rate`, `death_rate`,
+  `event_rate`, `frailty`). When \code{n_event_types > 1}, data are in long
+  format with an `event_type` column on every row, global terminal rows
+  (`status` 0 or 2) having `event_type = NA`, plus `death_frailty` and
+  `event_frailty`.
 }
 \description{
-Simulate recurrent events data using exponential censoring, gap, and death 
+Simulate recurrent events data using exponential censoring, gap, and death
 times. Status is coded as 0 for censoring, 1 for event, 2 for death.
 \itemize{
-  \item The subject-specific death rate is calculated as frailty x base_death_rate x 
-  exp(beta_death x covariates).
-  \item The subject-specific event rate is calculated as frailty x base_event_rate x
-  exp(beta_event x covariates).
+  \item The subject-specific death rate is calculated as death_frailty x
+  base_death_rate x exp(beta_death x covariates).
+  \item The subject-specific event rate is calculated as death_frailty x
+  event_frailty x base_event_rate x exp(beta_event x covariates) when
+  \code{n_event_types > 1}, and death_frailty x base_event_rate x
+  exp(beta_event x covariates) when \code{n_event_types = 1}.
 }
 }

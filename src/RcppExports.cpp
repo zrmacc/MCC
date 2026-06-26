@@ -38,6 +38,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// SimMvDataCpp
+SEXP SimMvDataCpp(const arma::colvec censoring_rate, const arma::colvec death_rate, const arma::colvec idx, const arma::mat event_rates, const double tau);
+RcppExport SEXP _MCC_SimMvDataCpp(SEXP censoring_rateSEXP, SEXP death_rateSEXP, SEXP idxSEXP, SEXP event_ratesSEXP, SEXP tauSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::colvec >::type censoring_rate(censoring_rateSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type death_rate(death_rateSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type event_rates(event_ratesSEXP);
+    Rcpp::traits::input_parameter< const double >::type tau(tauSEXP);
+    rcpp_result_gen = Rcpp::wrap(SimMvDataCpp(censoring_rate, death_rate, idx, event_rates, tau));
+    return rcpp_result_gen;
+END_RCPP
+}
 // PsiMCF
 SEXP PsiMCF(const arma::colvec idx, const arma::colvec event_rate, const arma::colvec haz, const arma::colvec mcf, const arma::colvec prop_risk, const arma::colvec status, const arma::colvec surv, const arma::colvec time, const arma::colvec weights, const double tau);
 RcppExport SEXP _MCC_PsiMCF(SEXP idxSEXP, SEXP event_rateSEXP, SEXP hazSEXP, SEXP mcfSEXP, SEXP prop_riskSEXP, SEXP statusSEXP, SEXP survSEXP, SEXP timeSEXP, SEXP weightsSEXP, SEXP tauSEXP) {
@@ -97,6 +112,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_MCC_CalcAugComp", (DL_FUNC) &_MCC_CalcAugComp, 2},
     {"_MCC_SimDataCpp", (DL_FUNC) &_MCC_SimDataCpp, 5},
+    {"_MCC_SimMvDataCpp", (DL_FUNC) &_MCC_SimMvDataCpp, 5},
     {"_MCC_PsiMCF", (DL_FUNC) &_MCC_PsiMCF, 10},
     {"_MCC_CalcMCFCpp", (DL_FUNC) &_MCC_CalcMCFCpp, 5},
     {"_MCC_PsiAUC", (DL_FUNC) &_MCC_PsiAUC, 10},

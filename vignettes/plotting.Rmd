@@ -31,21 +31,11 @@ data <- MCC::GenData(n = 100)
 \newpage
 ### Plot the MCF with NARs
 ```{r, fig.align='center'}
-q <- MCC::PlotOneSampleMCF(
+q_main <- MCC::PlotMCFs(
   data = data,
-  color_lab = "Single Arm"
-)
-q_nar <- MCC::PlotOneSampleNAR(
-  data = data,
+  tau = 4,
   x_breaks = seq(from = 0, to = 4),
-  y_lab = "Single Arm"
-)
-q_main <- cowplot::plot_grid(
-  plotlist = list(q, q_nar),
-  nrow = 2,
-  align = "v",
-  axis = "l",
-  rel_heights = c(3, 1)
+  color_lab = "Single Arm"
 )
 show(q_main)
 ```
@@ -53,21 +43,12 @@ show(q_main)
 \newpage
 ### Plot area under the MCF with NARs
 ```{r, fig.align='center'}
-q <- MCC::PlotOneSampleAUMCF(
+q_main <- MCC::PlotMCFs(
   data = data,
-  color_lab = "Single Arm"
-)
-q_nar <- MCC::PlotOneSampleNAR(
-  data = data,
+  tau = 4,
   x_breaks = seq(from = 0, to = 4),
-  y_lab = "Single Arm"
-)
-q_main <- cowplot::plot_grid(
-  plotlist = list(q, q_nar),
-  nrow = 2,
-  align = "v",
-  axis = "l",
-  rel_heights = c(3, 1)
+  color_lab = "Single Arm",
+  show_auc = TRUE
 )
 show(q_main)
 ```
@@ -92,72 +73,71 @@ data <- MCC::GenData(
 \newpage
 ### Plot the MCFs with NARs
 ```{r, fig.align='center'}
-q <- MCC::PlotMCFs(
+q_main <- MCC::PlotMCFs(
   data = data,
-  color_labs = c("Control", "Treatment")
-)
-q_nar <- MCC::PlotNARs(
-  data = data,
+  tau = 4,
   x_breaks = seq(from = 0, to = 4),
-  y_labs = c("Control", "Treatment")
-)
-q_main <- cowplot::plot_grid(
-  plotlist = list(q, q_nar),
-  nrow = 2,
-  align = "v",
-  axis = "l",
-  rel_heights = c(3, 1)
+  color_labs = c("Control", "Treatment")
 )
 show(q_main)
 ```
 
 \newpage
-### Plot areas under the MCFs with NARs
+### Plot one arm with area under the MCF
 ```{r, fig.align='center'}
-# Control arm.
-q0 <- MCC::PlotAUMCF(
+q_main <- MCC::PlotMCFs(
   data = data,
   which_arm = 0,
-  arm_label = "Control"
-)
-q0_nar <- MCC::PlotOneSampleNAR(
-  data = data %>% dplyr::filter(arm == 0),
-  x_breaks = seq(from = 0, to = 4),
-  y_lab = "Control"
-)
-q0_main <- cowplot::plot_grid(
-  plotlist = list(q0, q0_nar),
-  nrow = 2,
-  align = "v",
-  axis = "l",
-  rel_heights = c(3, 1)
-)
-
-# Treatment arm.
-q1 <- MCC::PlotAUMCF(
-  data = data,
-  which_arm = 1,
-  color = "#6385B8",
-  arm_label = "Treatment"
-)
-q1_nar <- MCC::PlotOneSampleNAR(
-  data = data %>% dplyr::filter(arm == 1),
-  x_breaks = seq(from = 0, to = 4),
-  y_lab = "Treatment"
-)
-q1_main <- cowplot::plot_grid(
-  plotlist = list(q1, q1_nar),
-  nrow = 2,
-  align = "v",
-  axis = "l",
-  rel_heights = c(3, 1)
-)
-
-# Overall figure.
-q_main <- cowplot::plot_grid(
-  plotlist = list(q0_main, q1_main),
-  nrow = 1
+  tau = 4,
+  show_nar = FALSE,
+  show_auc = TRUE,
+  color_lab = "Control"
 )
 show(q_main)
 ```
 
+\newpage
+## Multivariate recurrent events
+
+### Simulate multivariate data for plotting
+```{r}
+mv_covariates <- data.frame(
+  arm = c(rep(1, 100), rep(0, 100))
+)
+mv_plot_data <- MCC::GenData(
+  beta_event = c(log(0.8)),
+  covariates = mv_covariates,
+  n_event_types = 2L,
+  death_frailty_variance = 0.2,
+  event_frailty_variance = 0.2,
+  tau = 4
+)
+```
+
+\newpage
+### Plot multivariate MCFs with NARs
+```{r, fig.align='center'}
+q_mv_main <- MCC::PlotMvMCFs(
+  data = mv_plot_data,
+  tau = 4,
+  x_breaks = seq(from = 0, to = 4),
+  color_labs = c("Control", "Treatment"),
+  event_type_labs = c("Hospitalization", "Heart failure")
+)
+show(q_mv_main)
+```
+
+\newpage
+### Plot one arm with area under the MCF
+```{r, fig.align='center'}
+q_mv_auc <- MCC::PlotMvMCFs(
+  data = mv_plot_data,
+  which_arm = 0,
+  tau = 4,
+  show_nar = FALSE,
+  show_auc = TRUE,
+  color_lab = "Control",
+  event_type_labs = c("Hospitalization", "Heart failure")
+)
+show(q_mv_auc)
+```

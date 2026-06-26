@@ -7,7 +7,7 @@
 
 #' Calculate Test Statistics for Stratified Estimator
 #'
-#' @param data Data.frame containing: {arm, idx, status, strata, time, weights}.
+#' @param data Data.frame containing: {arm, idx, status, strata, time, jump_weights}.
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
@@ -28,7 +28,7 @@ CalcStratAUC <- function(
 ) {
   
   # Stratum sizes.
-  idx <- time <- status <- arm <- strata <- weights <- NULL
+  idx <- time <- status <- arm <- strata <- jump_weights <- NULL
   stratum_sizes <- data %>%
     dplyr::group_by(strata) %>%
     dplyr::summarise("n" = length(unique(idx)), .groups = "drop") %>%
@@ -39,7 +39,7 @@ CalcStratAUC <- function(
   stratum_areas <- data %>%
     dplyr::group_by(arm, strata) %>%
     dplyr::reframe(
-      StratumAUC(idx, status, time, tau, weights)
+      StratumAUC(idx, status, time, tau, jump_weights)
     ) %>% 
     dplyr::inner_join(
       stratum_sizes[, c("strata", "strat_weight")], 
@@ -70,7 +70,7 @@ CalcStratAUC <- function(
         idx = data$idx,
         status = data$status,
         time = data$time,
-        weights = data$weights
+        jump_weights = data$jump_weights
       )
     }
     
@@ -98,7 +98,7 @@ CalcStratAUC <- function(
 #' @param status Event status.
 #' @param time Observation time.
 #' @param tau Truncation time. 
-#' @param weights Optional column of weights, controlling the size of the jump
+#' @param jump_weights Optional column of jump weights, controlling the size of the jump
 #'   in the cumulative count curve at times with status == 1.
 #' @param calc_var Calculate analytical variance? 
 #' @return Data.frame containing:
@@ -112,7 +112,7 @@ StratumAUC <- function(
     status,
     time,
     tau, 
-    weights,
+    jump_weights,
     calc_var = TRUE
 ) { 
   
@@ -121,7 +121,7 @@ StratumAUC <- function(
     idx = idx,
     status = status,
     time = time,
-    weights = weights,
+    jump_weights = jump_weights,
     calc_var = calc_var
   )
   
@@ -144,7 +144,7 @@ StratumAUC <- function(
     
     # Find variance of area.
     df <- data.frame(idx = idx, status = status, time = time)
-    out$var_area <- VarAUC(df, tau, mcf = mcf, weights = weights)
+    out$var_area <- VarAUC(df, tau, mcf = mcf, jump_weights = jump_weights)
     out$se_area <- sqrt(out$var_area / n)
   }
   
@@ -232,13 +232,13 @@ AvgMCF <- function(curve_list, strat_weights) {
 #' weights proportional to the total number of subjects (across arms)
 #' belonging to that stratum.
 #'
-#' @param data Data.frame containing (arm, idx, status, strata, time, weights).
+#' @param data Data.frame containing (arm, idx, status, strata, time, jump_weights).
 #' @return Data.frame.
 #' @export
 CalcMargMCF <- function(data) {
-  arm <- idx <- status <- strata <- time <- weights <- NULL
+  arm <- idx <- status <- strata <- time <- jump_weights <- NULL
   data <- data %>%
-    dplyr::select(arm, idx, status, strata, time, weights)
+    dplyr::select(arm, idx, status, strata, time, jump_weights)
   n0 <- n1 <- n <- w <- NULL
   stratum_sizes <- data %>%
     dplyr::group_by(strata) %>%
@@ -259,7 +259,7 @@ CalcMargMCF <- function(data) {
     dplyr::filter(arm == 1) %>%
     dplyr::group_by(strata) %>%
     dplyr::reframe(
-      CalcMCF(idx = idx, status = status, time = time, weights = weights, calc_var = TRUE)
+      CalcMCF(idx = idx, status = status, time = time, jump_weights = jump_weights, calc_var = TRUE)
     ) %>%
     dplyr::group_by(strata) %>%
     dplyr::group_split()
@@ -269,7 +269,7 @@ CalcMargMCF <- function(data) {
     dplyr::filter(arm == 0) %>%
     dplyr::group_by(strata) %>%
     dplyr::reframe(
-      CalcMCF(idx = idx, status = status, time = time, weights = weights, calc_var = TRUE)
+      CalcMCF(idx = idx, status = status, time = time, jump_weights = jump_weights, calc_var = TRUE)
     ) %>%
     dplyr::group_by(strata) %>%
     dplyr::group_split()

@@ -4,7 +4,7 @@ test_that("Reused subject IDs raises error.", {
     status = c(1, 2),
     idx = c(1, 1),
     arm = c(1, 0),
-    weights = c(1, 1)
+    jump_weights = c(1, 1)
   )
   
   expect_error(CompareAUCs(data, tau = 1))
@@ -204,7 +204,7 @@ test_that("CalcMargMCF returns data.frame with arm, time, mcf for two-arm strati
     covariates = covariates,
     tau = 3
   )
-  data$weights <- 1
+  data$jump_weights <- 1
   out <- CalcMargMCF(data)
   expect_s3_class(out, "data.frame")
   expect_true("arm" %in% names(out))

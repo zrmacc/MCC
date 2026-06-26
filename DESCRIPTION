@@ -1,6 +1,6 @@
 Package: MCC
 Title: Functions for Comparing Mean Cumulative Count Curves
-Version: 0.8.5
+Version: 0.9.0
 Author: Zachary McCaw [aut, cre]
 Maintainer: Zachary McCaw <zmccaw@alumni.harvard.edu>
 Authors@R: 
@@ -21,7 +21,6 @@ Imports:
   MASS,
   Rcpp,
   stats,
-  tidyr,
   utils
 LinkingTo: 
   Rcpp,
@@ -33,8 +32,8 @@ Suggests:
   knitr,
   rmarkdown,
   testthat (>= 3.0.0),
+  tidyr,
   withr
 Config/testthat/edition: 3
 VignetteBuilder: knitr, rmarkdown
-VignetteEngine: knitr::rmarkdown
 URL: https://github.com/zrmacc/MCC/

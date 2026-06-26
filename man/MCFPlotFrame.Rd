@@ -11,7 +11,7 @@ MCFPlotFrame(
   status_name = "status",
   tau = NULL,
   time_name = "time",
-  weights = NULL
+  jump_weights = NULL
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ MCFPlotFrame(
 
 \item{time_name}{Name of column column in data.}
 
-\item{weights}{Optional column of weights, controlling the size of the jump
+\item{jump_weights}{Optional column of jump weights, controlling the size of the jump
 in the cumulative count curve at times with status == 1.}
 }
 \value{

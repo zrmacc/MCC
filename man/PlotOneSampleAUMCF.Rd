@@ -13,7 +13,7 @@ PlotOneSampleAUMCF(
   time_name = "time",
   title = NULL,
   tau = NULL,
-  weights = NULL,
+  jump_weights = NULL,
   x_breaks = NULL,
   x_lim = NULL,
   x_name = "Time",
@@ -25,24 +25,23 @@ PlotOneSampleAUMCF(
 \arguments{
 \item{data}{Data.frame.}
 
-\item{color}{Color.}
+\item{color}{Line color when a single arm is plotted.}
 
-\item{color_lab}{Color label.}
+\item{color_lab}{Legend label when a single arm is plotted.}
 
 \item{idx_name}{Name of index (subject identifier) column in data.}
 
 \item{status_name}{Name of status column in data.}
 
-\item{time_name}{Name of column column in data.}
+\item{time_name}{Name of time column in data.}
 
 \item{title}{Plot title.}
 
-\item{tau}{Truncation time for shading.}
+\item{tau}{Truncation time.}
 
-\item{weights}{Optional column of weights, controlling the size of the jump
-in the cumulative count curve at times with status == 1.}
+\item{jump_weights}{Optional column of jump weights for one-arm MCF jumps.}
 
-\item{x_breaks}{X-axis breaks.}
+\item{x_breaks}{X-axis breaks for the NAR row.}
 
 \item{x_lim}{X-axis limits.}
 
@@ -58,5 +57,6 @@ in the cumulative count curve at times with status == 1.}
 ggplot object.
 }
 \description{
-Plot area under the mean cumulative function for a single treatment arm.
+Deprecated: use \code{\link{PlotMCFs}} with \code{show_nar = FALSE} and
+\code{show_auc = TRUE}.
 }

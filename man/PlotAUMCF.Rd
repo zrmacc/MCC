@@ -16,7 +16,7 @@ PlotAUMCF(
   time_name = "time",
   title = NULL,
   tau = NULL,
-  weights = NULL,
+  jump_weights = NULL,
   x_breaks = NULL,
   x_lim = NULL,
   x_name = "Time",
@@ -42,14 +42,13 @@ PlotAUMCF(
 
 \item{strata_name}{Name of stratum column in data.}
 
-\item{time_name}{Name of column column in data.}
+\item{time_name}{Name of time column in data.}
 
 \item{title}{Plot title.}
 
 \item{tau}{Truncation time for shading.}
 
-\item{weights}{Optional column of weights, controlling the size of the jump
-in the cumulative count curve at times with status == 1.}
+\item{jump_weights}{Optional per-event jump weights.}
 
 \item{x_breaks}{X-axis breaks.}
 
@@ -67,5 +66,6 @@ in the cumulative count curve at times with status == 1.}
 ggplot object.
 }
 \description{
-Plot area under the mean cumulative function for a single treatment arm.
+Deprecated: use \code{\link{PlotMCFs}} with \code{which_arm}, \code{show_auc =
+TRUE}, and \code{show_nar = FALSE}.
 }

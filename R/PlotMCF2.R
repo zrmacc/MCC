@@ -1,166 +1,235 @@
-# Purpose: Function to plot the mean cumulative functions,
-# comparing two treatment arms.
-# Updated: 2026-02-04
+# Purpose: Univariate mean cumulative function plotting.
+# Updated: 2026-06-17
 
 # ------------------------------------------------------------------------------
 
-#' Plot Two Sample Mean Cumulative Function
-#' 
-#' Plot the mean cumulative functions comparing two treatment arms.
+
+#' Plot Mean Cumulative Functions
+#'
+#' Plot mean cumulative functions for one or two treatment arms, with optional
+#' numbers at risk below the MCF panel (\code{show_nar = TRUE}) and optional
+#' area shading (\code{show_auc = TRUE}).
+#'
+#' @section Migration:
+#' Prior releases returned an MCF-only \code{ggplot} from \code{PlotMCFs()}.
+#' The default is now a combined MCF + NAR layout. Pass \code{show_nar = FALSE}
+#' for MCF-only output. Legacy functions \code{PlotOneSampleMCF},
+#' \code{PlotOneSampleAUMCF}, \code{PlotOneSampleNAR}, \code{PlotAUMCF}, and
+#' \code{PlotNARs} remain as deprecated wrappers.
 #'
 #' @param data Data.frame.
+#' @param which_arm Optional arm code to plot a single arm; \code{NULL} plots
+#'   all arms present.
 #' @param arm_name Name of arm column in data.
-#' @param color_labs Color labels.
-#' @param ctrl_color Color for control arm.
+#' @param color_labs Legend labels for two-arm plots.
+#' @param colors Line and fill colors for two-arm plots.
+#' @param ctrl_color Deprecated control color (used when \code{colors} is
+#'   \code{NULL}).
+#' @param trt_color Deprecated treatment color (used when \code{colors} is
+#'   \code{NULL}).
+#' @param color Line color when a single arm is plotted.
+#' @param color_lab Legend label when a single arm is plotted.
 #' @param idx_name Name of index (subject identifier) column in data.
 #' @param status_name Name of status column in data.
-#' @param strata_name Name of stratum column in data. 
+#' @param strata_name Name of stratum column in data.
 #' @param tau Truncation time.
-#' @param time_name Name of column column in data.
+#' @param time_name Name of time column in data.
 #' @param title Plot title.
-#' @param trt_color Color for treatment arm.
-#' @param weights Optional column of weights, controlling the size of the jump
-#'   in the cumulative count curve at times with status == 1.
-#' @param x_breaks X-axis breaks.
+#' @param jump_weights Optional column of jump weights for one-arm MCF jumps.
+#' @param show_nar Include numbers at risk below the MCF panel?
+#' @param show_auc Shade the area under each MCF curve from 0 to \code{tau}?
+#' @param show_mcf Include the MCF panel? Set \code{FALSE} for NAR-only output.
+#' @param x_breaks X-axis breaks for the NAR row.
+#' @param x_labs X-axis tick labels for the NAR row.
+#' @param x_max X-axis upper limit for the NAR row.
 #' @param x_lim X-axis limits.
 #' @param x_name X-axis label.
 #' @param y_breaks Y-axis breaks.
 #' @param y_lim Y-axis limits.
 #' @param y_name Y-axis label.
-#' @return ggplot object.
+#' @return A \code{ggplot} object, or a cowplot layout when \code{show_nar =
+#'   TRUE} and \code{show_mcf = TRUE}.
+#' @importFrom dplyr "%>%"
 #' @export
 PlotMCFs <- function(
-  data,
-  arm_name = "arm",
-  color_labs = c("Ctrl", "Trt"),
-  ctrl_color = "#C65842",
-  idx_name = "idx",
-  status_name = "status",
-  strata_name = NULL,
-  tau = NULL,
-  time_name = "time",
-  title = NULL,
-  trt_color = "#6385B8",
-  weights = NULL,
-  x_breaks = NULL,
-  x_lim = NULL,
-  x_name = "Time",
-  y_breaks = NULL,
-  y_lim = NULL,
-  y_name = "Mean Cumulative Count"
+    data,
+    which_arm = NULL,
+    arm_name = "arm",
+    color_labs = c("Ctrl", "Trt"),
+    colors = NULL,
+    ctrl_color = "#C65842",
+    trt_color = "#6385B8",
+    color = "#C65842",
+    color_lab = "Arm",
+    idx_name = "idx",
+    status_name = "status",
+    strata_name = NULL,
+    tau = NULL,
+    time_name = "time",
+    title = NULL,
+    jump_weights = NULL,
+    show_nar = TRUE,
+    show_auc = FALSE,
+    show_mcf = TRUE,
+    x_breaks = NULL,
+    x_labs = NULL,
+    x_max = NULL,
+    x_lim = NULL,
+    x_name = "Time",
+    y_breaks = NULL,
+    y_lim = NULL,
+    y_name = "Mean Cumulative Count"
 ) {
-  
-  # Data preparation.
-  data <- .NormDataForPlot(
-    data = data,
-    arm_name = arm_name,
-    strata_name = strata_name,
-    idx_name = idx_name,
-    status_name = status_name,
-    time_name = time_name,
-    weights = weights
-  )
-  
-  # Truncation.
-  if (is.null(x_lim[2])) {
-    x_max <- max(data$time)
-  } else{
-    x_max <- x_lim[2]
-  }
-  if (is.null(tau)) {
-    tau <- x_max
-  }
-  
-  # Calculate marginal MCF.
-  marg_mcf <- CalcMargMCF(data)
-  
-  # MCF function for arm 0
-  g0 <- stats::stepfun(
-    x = marg_mcf$time[marg_mcf$arm == 0],
-    y = c(0, marg_mcf$mcf[marg_mcf$arm == 0])
-  )
-  
-  # MCF function for arm 1
-  g1 <- stats::stepfun(
-    x = marg_mcf$time[marg_mcf$arm == 1],
-    y = c(0, marg_mcf$mcf[marg_mcf$arm == 1])
-  )
-  
-  # Plotting frame for control arm.
-  df0 <- data.frame(time = seq(from = 0, to = x_max, length.out = 200))
-  df1 <- df0
-  df0$mcf <- g0(df0$time)
-  df0$arm <- 0
-  
-  # Plotting frame for treatment arm.
-  df1$mcf <- g1(df1$time)
-  df1$arm <- 1
-  
-  df <- rbind(df0, df1)
-  df$arm <- factor(df$arm, levels = c(0, 1))
-  
-  # Plotting.
-  arm <- NULL
-  mcf <- NULL
-  time <- NULL
-  q <- ggplot2::ggplot() +
-    ggplot2::theme_bw() + 
-    ggplot2::theme(
-      panel.grid.major = ggplot2::element_blank(),
-      panel.grid.minor = ggplot2::element_blank(),
-      legend.position.inside = c(0.2, 0.8)
-    ) + 
-    ggplot2::geom_step(
-      data = df, 
-      ggplot2::aes(x = time, y = mcf, color = arm), 
-      linewidth = 1
-    ) + 
-    ggplot2::scale_color_manual(
-      name = NULL,
-      values = c(ctrl_color, trt_color),
-      labels = color_labs
-    )
-  
-  # X-axis.
-  if (is.null(x_breaks)) {
-    q <- q + 
-      ggplot2::scale_x_continuous(
-        name = x_name,
-        limits = x_lim
-      )
-  } else {
-    q <- q + 
-      ggplot2::scale_x_continuous(
-        name = x_name,
-        breaks = x_breaks,
-        limits = x_lim
-      )
+
+  if (!show_mcf && !show_nar) {
+    stop("At least one of show_mcf or show_nar must be TRUE.", call. = FALSE)
   }
 
-  # Y-axis.
-  if (is.null(y_breaks)) {
-    q <- q + 
-      ggplot2::scale_y_continuous(
-        name = y_name,
-        limits = y_lim
-      )
-  } else {
-    q <- q + 
-      ggplot2::scale_y_continuous(
-        name = y_name,
-        breaks = y_breaks,
-        limits = y_lim
-      )
-  }
-  
-  # Title.
-  q <- q + 
-    ggplot2::ggtitle(
-      label = title
+  data <- .MvSubsetWhichArm(
+    data = data,
+    which_arm = which_arm,
+    arm_name = arm_name
+  )
+  one_arm <- .UniIsOneArm(data = data, arm_name = arm_name)
+  arm_style <- NULL
+
+  if (one_arm) {
+    data_norm <- .NormDataForPlot(
+      data = data,
+      arm_name = NULL,
+      strata_name = NULL,
+      idx_name = idx_name,
+      status_name = status_name,
+      time_name = time_name,
+      jump_weights = jump_weights
     )
-  
-  # Output.
-  return(q)
+  } else {
+    data_norm <- .NormDataForPlot(
+      data = data,
+      arm_name = arm_name,
+      strata_name = strata_name,
+      idx_name = idx_name,
+      status_name = status_name,
+      time_name = time_name,
+      jump_weights = jump_weights
+    )
+    arms <- sort(unique(data_norm[["arm"]]))
+    if (!identical(as.integer(arms), c(0L, 1L))) {
+      stop(
+        "Two-arm plots require exactly arms 0 and 1.",
+        call. = FALSE
+      )
+    }
+    arm_style <- .UniResolveArmStyle(
+      color_labs = color_labs,
+      colors = colors,
+      ctrl_color = ctrl_color,
+      trt_color = trt_color
+    )
+  }
+
+  if (is.null(x_lim) || is.null(x_lim[2])) {
+    x_max_data <- max(data_norm[["time"]])
+  } else {
+    x_max_data <- x_lim[2]
+  }
+  if (is.null(x_max)) {
+    x_max <- x_max_data
+  }
+  if (is.null(tau)) {
+    tau <- x_max_data
+  }
+  if (show_nar && is.null(x_breaks)) {
+    x_breaks <- .MvDefaultXBreaks(tau)
+  }
+
+  if (show_mcf && show_nar) {
+    out <- .UniBuildCombinedPlot(
+      one_arm = one_arm,
+      data_norm = data_norm,
+      arm_style = arm_style,
+      tau = tau,
+      x_breaks = x_breaks,
+      x_labs = x_labs,
+      x_max = x_max,
+      color = color,
+      color_lab = color_lab,
+      show_auc = show_auc,
+      title = title,
+      x_lim = x_lim,
+      x_name = x_name,
+      y_breaks = y_breaks,
+      y_lim = y_lim,
+      y_name = y_name
+    )
+    return(out)
+  }
+
+  if (show_mcf && !show_nar) {
+    if (one_arm) {
+      mcf_df <- .UniOneArmMCFFrame(data = data_norm, tau = tau)
+      out <- .UniOneArmMCFPanel(
+        mcf_df = mcf_df,
+        color = color,
+        color_lab = color_lab,
+        show_auc = show_auc,
+        tau = tau,
+        title = title,
+        x_breaks = x_breaks,
+        x_lim = x_lim,
+        x_name = x_name,
+        y_breaks = y_breaks,
+        y_lim = y_lim,
+        y_name = y_name
+      )
+      return(out)
+    }
+    mcf_df <- .UniTwoArmMCFFrame(data = data_norm, tau = tau)
+    out <- .UniTwoArmMCFPanel(
+      mcf_df = mcf_df,
+      arm_style = arm_style,
+      show_auc = show_auc,
+      tau = tau,
+      title = title,
+      x_breaks = x_breaks,
+      x_lim = x_lim,
+      x_name = x_name,
+      y_breaks = y_breaks,
+      y_lim = y_lim,
+      y_name = y_name
+    )
+    return(out)
+  }
+
+  if (one_arm) {
+    nar_df <- .UniOneArmNARFrame(
+      data = data_norm,
+      x_breaks = x_breaks,
+      y_lab = color_lab
+    )
+    out <- .UniOneArmNARPanel(
+      nar_df = nar_df,
+      x_breaks = x_breaks,
+      x_labs = x_labs,
+      x_max = x_max,
+      x_name = x_name
+    )
+    return(out)
+  }
+
+  nar_df <- .UniTwoArmNARFrame(
+    data = data_norm,
+    x_breaks = x_breaks,
+    color_labs = arm_style$color_labs
+  )
+  out <- .UniTwoArmNARPanel(
+    nar_df = nar_df,
+    x_breaks = x_breaks,
+    x_labs = x_labs,
+    x_max = x_max,
+    x_name = x_name
+  )
+  return(out)
 }
 
 
@@ -168,8 +237,10 @@ PlotMCFs <- function(
 
 
 #' Plot Area Under the Mean Cumulative Function
-#' 
-#' Plot area under the mean cumulative function for a single treatment arm.
+#'
+#' @description
+#' Deprecated: use \code{\link{PlotMCFs}} with \code{which_arm}, \code{show_auc =
+#' TRUE}, and \code{show_nar = FALSE}.
 #'
 #' @param data Data.frame.
 #' @param which_arm Arm to plot.
@@ -178,12 +249,11 @@ PlotMCFs <- function(
 #' @param color Color.
 #' @param idx_name Name of index (subject identifier) column in data.
 #' @param status_name Name of status column in data.
-#' @param strata_name Name of stratum column in data. 
+#' @param strata_name Name of stratum column in data.
 #' @param tau Truncation time for shading.
-#' @param time_name Name of column column in data.
+#' @param time_name Name of time column in data.
 #' @param title Plot title.
-#' @param weights Optional column of weights, controlling the size of the jump
-#'   in the cumulative count curve at times with status == 1.
+#' @param jump_weights Optional per-event jump weights.
 #' @param x_breaks X-axis breaks.
 #' @param x_lim X-axis limits.
 #' @param x_name X-axis label.
@@ -194,140 +264,58 @@ PlotMCFs <- function(
 #' @importFrom dplyr "%>%"
 #' @export
 PlotAUMCF <- function(
-  data,
-  which_arm,
-  arm_label = "Placebo",
-  arm_name = "arm",
-  color = "#C65842",
-  idx_name = "idx",
-  status_name = "status",
-  strata_name = NULL,
-  time_name = "time",
-  title = NULL,
-  tau = NULL,
-  weights = NULL,
-  x_breaks = NULL,
-  x_lim = NULL,
-  x_name = "Time",
-  y_breaks = NULL,
-  y_lim = NULL,
-  y_name = "Mean Cumulative Count"
+    data,
+    which_arm,
+    arm_label = "Placebo",
+    arm_name = "arm",
+    color = "#C65842",
+    idx_name = "idx",
+    status_name = "status",
+    strata_name = NULL,
+    time_name = "time",
+    title = NULL,
+    tau = NULL,
+    jump_weights = NULL,
+    x_breaks = NULL,
+    x_lim = NULL,
+    x_name = "Time",
+    y_breaks = NULL,
+    y_lim = NULL,
+    y_name = "Mean Cumulative Count"
 ) {
-  
-  # Data preparation.
-  data <- .NormDataForPlot(
+
+  out <- PlotMCFs(
     data = data,
+    which_arm = which_arm,
     arm_name = arm_name,
-    strata_name = strata_name,
+    color = color,
+    color_lab = arm_label,
     idx_name = idx_name,
     status_name = status_name,
+    strata_name = strata_name,
     time_name = time_name,
-    weights = weights
+    title = title,
+    tau = tau,
+    jump_weights = jump_weights,
+    x_breaks = x_breaks,
+    x_lim = x_lim,
+    x_name = x_name,
+    y_breaks = y_breaks,
+    y_lim = y_lim,
+    y_name = y_name,
+    show_nar = FALSE,
+    show_auc = TRUE
   )
-  
-  # Truncation.
-  if (is.null(x_lim[2])) {
-    x_max <- max(data$time)
-  } else {
-    x_max <- x_lim[2]
-  }
-  if (is.null(tau)) {
-    tau <- x_max
-  }
-  
-  # Split data.
-  arm <- NULL
-  fit_mcf <- CalcMargMCF(data) %>% dplyr::filter(arm == which_arm)
-  
-  # MCF function.
-  g <- stats::stepfun(
-    x = fit_mcf$time,
-    y = c(0, fit_mcf$mcf)
-  )
-  
-  # Plotting frames.
-  df <- data.frame(time = seq(from = 0, to = x_max, length.out = 1001))
-  df$mcf <- g(df$time)
-  df$arm <- 0
-  df_shade <- df %>% dplyr::filter(time <= tau)
-  df_shade$arm <- factor(df_shade$arm)
-  
-  # Plotting.
-  mcf <- NULL
-  time <- NULL
-  q <- ggplot2::ggplot() +
-    ggplot2::theme_bw() + 
-    ggplot2::theme(
-      panel.grid.major = ggplot2::element_blank(),
-      panel.grid.minor = ggplot2::element_blank(),
-      legend.position.inside = c(0.2, 0.8)
-    ) + 
-    ggplot2::geom_ribbon(
-      data = df_shade,
-      ggplot2::aes(x = time, ymin = 0, ymax = mcf, fill = arm),
-      alpha = 0.5
-    ) +
-    ggplot2::scale_fill_manual(
-      name = NULL,
-      values = color,
-      labels = arm_label
-    ) +
-    ggplot2::geom_step(
-      data = df, 
-      ggplot2::aes(x = time, y = mcf), 
-      color = color,
-      linewidth = 1
-    ) 
-  
-  # X-axis.
-  if (is.null(x_breaks)) {
-      q <- q + 
-        ggplot2::scale_x_continuous(
-          name = x_name,
-          limits = x_lim
-        )
-    } else {
-      q <- q + 
-        ggplot2::scale_x_continuous(
-          name = x_name,
-          breaks = x_breaks,
-          limits = x_lim
-        )
-    }
-  
-  # Y-axis.
-  if (is.null(y_breaks)) {
-    q <- q + 
-      ggplot2::scale_y_continuous(
-        name = y_name,
-        limits = y_lim
-      )
-  } else {
-    q <- q + 
-      ggplot2::scale_y_continuous(
-        name = y_name,
-        breaks = y_breaks,
-        limits = y_lim
-      )
-  }
-  
-  # Title.
-  q <- q + 
-    ggplot2::ggtitle(
-      label = title
-    )
-  
-  # Output.
-  return(q)
+  return(out)
 }
 
 
 # -----------------------------------------------------------------------------
 
 #' Two Sample Number at Risk Plotting Frame
-#' 
+#'
 #' Two sample numbers at risk for recurrent events data.
-#' 
+#'
 #' @param data Data.frame.
 #' @param x_breaks Time points at which to determine the NARs.
 #' @param arm_name Name of arm column.
@@ -335,17 +323,16 @@ PlotAUMCF <- function(
 #' @param status_name Name of status column.
 #' @param time_name Name of time column.
 #' @return Data.frame containing `time`, `nar_ctrl`, `nar_trt`.
-#' @importFrom dplyr "%>%" 
+#' @importFrom dplyr "%>%"
 TwoSampleNARFrame <- function(
-  data, 
-  x_breaks, 
-  arm_name = "arm",
-  idx_name = "idx",
-  status_name = "status",
-  time_name = "time"
+    data,
+    x_breaks,
+    arm_name = "arm",
+    idx_name = "idx",
+    status_name = "status",
+    time_name = "time"
 ) {
-  
-  # Data preparation.
+
   df <- .NormDataForPlot(
     data = data,
     arm_name = arm_name,
@@ -353,15 +340,17 @@ TwoSampleNARFrame <- function(
     idx_name = idx_name,
     status_name = status_name,
     time_name = time_name,
-    weights = NULL
+    jump_weights = NULL
   )
-  
-  # NAR functions.
+
   arm <- NULL
-  g0 <- df %>% dplyr::filter(arm == 0) %>% MCC::NARCurve()
-  g1 <- df %>% dplyr::filter(arm == 1) %>% MCC::NARCurve()
-  
-  # Output.
+  g0 <- df %>%
+    dplyr::filter(arm == 0) %>%
+    NARCurve()
+  g1 <- df %>%
+    dplyr::filter(arm == 1) %>%
+    NARCurve()
+
   out <- data.frame(
     time = x_breaks,
     nar_ctrl = g0(x_breaks),
@@ -372,7 +361,11 @@ TwoSampleNARFrame <- function(
 
 
 #' Plot Two Sample Number at Risk
-#' 
+#'
+#' @description
+#' Deprecated: use \code{\link{PlotMCFs}} with \code{show_mcf = FALSE} and
+#' \code{show_nar = TRUE}.
+#'
 #' @param data Data.frame.
 #' @param x_breaks X-axis breaks.
 #' @param arm_name Name of arm column.
@@ -386,72 +379,31 @@ TwoSampleNARFrame <- function(
 #' @return ggplot.
 #' @export
 PlotNARs <- function(
-  data,
-  x_breaks,
-  arm_name = "arm",
-  idx_name = "idx",
-  status_name = "status",
-  time_name = "time",
-  x_labs = NULL,
-  x_max = NULL,
-  x_name = NULL,
-  y_labs = c("Ctrl", "Trt")
+    data,
+    x_breaks,
+    arm_name = "arm",
+    idx_name = "idx",
+    status_name = "status",
+    time_name = "time",
+    x_labs = NULL,
+    x_max = NULL,
+    x_name = NULL,
+    y_labs = c("Ctrl", "Trt")
 ) {
-  
-  # Defaults.
-  if (is.null(x_labs)) {
-    x_labs = x_breaks
-  }
-  if (is.null(x_max)) {
-    x_max = max(x_breaks)
-  }
-  
-  # Data preparation.
-  df <- .NormDataForPlot(
+
+  out <- PlotMCFs(
     data = data,
     arm_name = arm_name,
-    strata_name = NULL,
+    color_labs = y_labs,
     idx_name = idx_name,
     status_name = status_name,
     time_name = time_name,
-    weights = NULL
+    x_breaks = x_breaks,
+    x_labs = x_labs,
+    x_max = x_max,
+    x_name = x_name,
+    show_mcf = FALSE,
+    show_nar = TRUE
   )
-  
-  nar_ctrl <- NULL
-  nar_trt <- NULL
-  df <- TwoSampleNARFrame(df, x_breaks = x_breaks) %>%
-    tidyr::pivot_longer(
-      cols = c(nar_ctrl, nar_trt),
-      names_to = "arm",
-      values_to = "nar"
-    ) %>%
-    dplyr::mutate(
-      arm = factor(arm, c("nar_ctrl", "nar_trt"), y_labs)
-    )
-  
-  # Plotting.
-  arm <- NULL
-  nar <- NULL
-  time <- NULL
-  q <- ggplot2::ggplot(data = df) +
-    ggplot2::theme_bw() + 
-    ggplot2::theme(
-      panel.border = ggplot2::element_blank(),
-      panel.grid.major = ggplot2::element_blank(),
-      panel.grid.minor = ggplot2::element_blank()
-    ) +
-    ggplot2::geom_text(
-      ggplot2::aes(x = time, y = arm, label = nar)
-    ) +
-    ggplot2::scale_x_continuous(
-      breaks = x_breaks,
-      name = x_name,
-      labels = x_labs,
-      limits = c(0, x_max)
-    ) + 
-    ggplot2::scale_y_discrete(
-      name = NULL,
-      labels = y_labs
-    )
-  return(q)
+  return(out)
 }

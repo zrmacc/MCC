@@ -4,7 +4,7 @@
 \alias{CalcMCF}
 \title{Calculate Mean Cumulative Function}
 \usage{
-CalcMCF(idx, status, time, calc_var = TRUE, weights = NULL)
+CalcMCF(idx, status, time, calc_var = TRUE, jump_weights = NULL)
 }
 \arguments{
 \item{idx}{Unique subject index.}
@@ -15,7 +15,7 @@ CalcMCF(idx, status, time, calc_var = TRUE, weights = NULL)
 
 \item{calc_var}{Calculate variance of the MCF?}
 
-\item{weights}{Jump weights.}
+\item{jump_weights}{Jump weights.}
 }
 \value{
 Data.frame with these columns:

@@ -171,7 +171,7 @@ test_that("Test MCF weighting.", {
       idx = data$idx,
       status = data$status,
       time = data$time,
-      weights = data$weights
+      jump_weights = data$jump_weights
     )
   }
   
@@ -180,7 +180,7 @@ test_that("Test MCF weighting.", {
     time = c(1, 2, 3),
     status = c(1, 1, 2),
     idx = c(1, 1, 1),
-    weights = c(10, 1, 0)
+    jump_weights = c(10, 1, 0)
   )
   observed <- GetMCF(data)
   expect_equal(observed$mcf, c(10, 11, 11))
@@ -190,7 +190,7 @@ test_that("Test MCF weighting.", {
     time = c(1, 2, 3),
     status = c(1, 1, 0),
     idx = c(1, 1, 1),
-    weights = c(1, 2, 1)
+    jump_weights = c(1, 2, 1)
   )
   observed <- GetMCF(data)
   expect_equal(observed$mcf, c(1, 3, 3))
@@ -200,7 +200,7 @@ test_that("Test MCF weighting.", {
     time = c(1, 2, 3, 4),
     status = c(1, 1, 0, 1),
     idx = c(1, 2, 3, 4),
-    weights = c(1, 2, 1, 2)
+    jump_weights = c(1, 2, 1, 2)
   )
   observed <- GetMCF(data)
   expect_equal(observed$mcf, c(1/4, 3/4, 3/4, 3/4 + 2/3))
@@ -210,7 +210,7 @@ test_that("Test MCF weighting.", {
     time = c(1, 2, 3, 4),
     status = c(1, 0, 0, 1),
     idx = c(1, 2, 3, 4),
-    weights = c(1, 2, 2, 1)
+    jump_weights = c(1, 2, 2, 1)
   )
   observed <- GetMCF(data)
   expect_equal(observed$mcf, c(1/4, 1/4, 1/4, 1/4 + 1/2))
@@ -220,7 +220,7 @@ test_that("Test MCF weighting.", {
     time = c(1, 2, 3, 4),
     status = c(1, 0, 2, 1),
     idx = c(1, 2, 3, 4),
-    weights = c(2, 1, 0, 2)
+    jump_weights = c(2, 1, 0, 2)
   )
   observed <- GetMCF(data)
   expect_equal(observed$mcf, c(2/4, 2/4, 2/4, 2/4 + 2/2 * 2/3))
@@ -230,7 +230,7 @@ test_that("Test MCF weighting.", {
     time = c(1, 2, 3, 4),
     status = c(1, 2, 2, 1),
     idx = c(1, 2, 3, 4),
-    weights = c(0, 0, 0, 0)
+    jump_weights = c(0, 0, 0, 0)
   )
   observed <- GetMCF(data)
   expect_equal(observed$mcf, c(0, 0, 0, 0))

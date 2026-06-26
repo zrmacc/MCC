@@ -9,7 +9,7 @@
 #' 
 #' Calculate test statistics for augmentation estimator.
 #'
-#' @param data Data.frame containing (arm, idx, status, time, weights).
+#' @param data Data.frame containing (arm, idx, status, time, jump_weights).
 #' @param tau Truncation time.
 #' @param alpha Type I error.
 #' @param return_areas Return the AUCs?
@@ -30,7 +30,7 @@ CalcAugAUC <- function(
   # Summarize to per-subject covariate data.
   arm <- idx <- NULL
   covars <- data %>% 
-    dplyr::select(-c("time", "status", "weights")) %>%
+    dplyr::select(-c("time", "status", "jump_weights")) %>%
     dplyr::group_by(arm, idx) %>%
     dplyr::summarise_all(.funs = mean, .groups = "drop") %>%
     as.data.frame()
@@ -108,7 +108,7 @@ CalcAugAUC <- function(
 
 #' Calculate Augmentation Components for a Single Arm
 #'
-#' @param data Data.frame including (idx, status, time, weights).
+#' @param data Data.frame including (idx, status, time, jump_weights).
 #' @param covars Per-subject covariate data.
 #' @param tau Truncation time. 
 #' @param calc_var Calculate analytical variance of MCF?
@@ -132,7 +132,7 @@ AugAUC <- function(
     idx = data$idx,
     status = data$status,
     time = data$time,
-    weights = data$weights,
+    jump_weights = data$jump_weights,
     calc_var = calc_var
   )
   

@@ -30,7 +30,7 @@ DGP <- function() {
     tau = 5,
     n = N
   )
-  out$weights <- 2
+  out$jump_weights <- 2
   return(out)
 }
 ```
@@ -43,7 +43,7 @@ GetMCF <- function(df) {
     idx = df$idx,
     status = df$status,
     time = df$time,
-    weights = df$weights
+    jump_weights = df$jump_weights
   )
   return(mcf)
 }
@@ -151,7 +151,7 @@ DGP <- function() {
     tau = 5,
     n = N
   )
-  out$weights <- 2
+  out$jump_weights <- 2
   return(out)
 }
 ```
@@ -162,7 +162,7 @@ DGP <- function() {
 GetAUC <- function(df, tau) {
   auc <- SingleArmAUC(
     data = df,
-    weights = df$weights,
+    jump_weights = df$jump_weights,
     tau = tau
   )
   out <- auc@MargAreas

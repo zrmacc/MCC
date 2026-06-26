@@ -34,14 +34,14 @@ FormatSubj <- function(df, cens_after_last = TRUE) {
 #' Normalize Data for Plotting
 #'
 #' Single helper for one- and two-sample plot data: select/rename columns,
-#' convert index to integer, add weights (and optional arm/strata).
+#' convert index to integer, add jump_weights (and optional arm/strata).
 #'
 #' @param data Data.frame.
 #' @param arm_name Name of arm column, or NULL for one-sample.
 #' @param strata_name Name of stratum column, or NULL.
 #' @param idx_name,status_name,time_name Column names.
-#' @param weights Optional weights vector.
-#' @return Normalized data.frame (idx, status, time, weights; and arm, strata if two-sample).
+#' @param jump_weights Optional jump weights vector.
+#' @return Normalized data.frame (idx, status, time, jump_weights; and arm, strata if two-sample).
 #' @noRd
 .NormDataForPlot <- function(
   data,
@@ -50,7 +50,7 @@ FormatSubj <- function(df, cens_after_last = TRUE) {
   idx_name = "idx",
   status_name = "status",
   time_name = "time",
-  weights = NULL
+  jump_weights = NULL
 ) {
   if (is.null(arm_name)) {
     key_cols <- c(idx_name, status_name, time_name)
@@ -79,8 +79,10 @@ FormatSubj <- function(df, cens_after_last = TRUE) {
     }
   }
   data <- ConvertIdxToInt(data)
-  if (is.null(weights)) weights <- 1
-  data$weights <- weights
+  if (is.null(jump_weights)) {
+    jump_weights <- 1
+  }
+  data$jump_weights <- jump_weights
   return(data)
 }
 
@@ -113,7 +115,7 @@ ConvertIdxToInt <- function(data) {
 #' Format Data
 #' 
 #' Subsets the key columns for analysis, converts the index to an integer,
-#' adds placeholders for `strata` and `weights` if not specified, checks
+#' adds placeholders for `strata` and `jump_weights` if not specified, checks
 #' to ensure each unique index has 1 and only 1 o
 #' 
 #' @param data Data.frame.
@@ -131,7 +133,7 @@ ConvertIdxToInt <- function(data) {
 #' @param strata Optional stratification factor. Should not be provided if a
 #'   covariate matrix is provided.
 #' @param time_name Name of column containing the observation time.
-#' @param weights Optional column of weights.
+#' @param jump_weights Optional column of jump weights.
 #' @return Formatted data.frame.
 #' @export 
 FormatData <- function(
@@ -144,7 +146,7 @@ FormatData <- function(
   status_name = "status",
   strata = NULL,
   time_name = "time",
-  weights = NULL
+  jump_weights = NULL
 ) {
   
   # Rename columns as necessary.
@@ -186,10 +188,10 @@ FormatData <- function(
   }
   
   # Add jump weights.
-  if (is.null(weights)) {
-    data$weights <- 1
+  if (is.null(jump_weights)) {
+    data$jump_weights <- 1
   } else {
-    data$weights <- weights
+    data$jump_weights <- jump_weights
   }
   
   # Crate an indicator of an observation-terminating event.

@@ -1,21 +1,9 @@
 
-# Comparison of mean cumulative count curves via the area under the curve (AUC)
+# Comparison of mean cumulative count curves via the area under the curve
 
 [![R-CMD-check](https://github.com/zrmacc/MCC/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zrmacc/MCC/actions/workflows/R-CMD-check.yaml)
 
-Zachary R. McCaw <br> Updated: 2026-03-08
-
-### Description
-
-This package provides functions for inference on the difference and
-ratio in AUCs comparing two mean cumulative count (MCC) curves. The MCC
-curves are estimated using an approach based on the method of [Ghosh and
-Lin
-(2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x),
-which accounts for the presence of terminal competing risks. Also see:
-
-- [CICs](https://github.com/zrmacc/CICs) for comparing cumulative
-  incidence curves.
+Zachary R. McCaw <br> Updated: 2026-06-25
 
 ## Installation
 
@@ -23,47 +11,67 @@ which accounts for the presence of terminal competing risks. Also see:
 remotes::install_github("zrmacc/MCC", build_vignettes = TRUE)
 ```
 
-## Methods
+## Description
 
-### Estimation of the mean cumulative count curve
+This package provides estimation and inference for the mean cumulative
+function (MCF) and the area under the MCF (AUMCF). The mean cumulative
+count (MCC) curve is an alias for the MCF. Estimation and inference for
+the MCF follow [Ghosh and Lin
+(2000)](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2000.00554.x);
+corresponding procedures for the AUMCF are described by [Gronsbell et
+al. (2026)](https://academic.oup.com/biometrics/article/82/2/ujag053/8689483).
 
-For each study arm, the MCC is estimated as follows. Define $N(\cdot)$
-as the counting process for events of interest, both terminal and
-non-terminal, $Y(\cdot)$ as the number of subjects who remain at risk,
-and $S(\cdot)$ as the probability of not having experienced a terminal
-event. The MCC $\mu(t)$ at time $t$ is estimated by:
+## Univariate
+
+Univariate analysis considers a single multiple- or recurrent-events
+process, subject to right-censoring and terminal events.
+
+### Methods
+
+#### MCF estimation
+
+For each study arm, define $N(\cdot)$ as the counting process for events
+of interest (terminal and non-terminal), $Y(\cdot)$ as the number of
+subjects at risk, and $S(\cdot)$ as the probability of not having
+experienced a terminal event. The MCF $\mu(t)$ at time $t$ is estimated
+by:
 
 $$
 \mu(t) = \int_{0}^{t}\ \hat{S}(u)\ \frac{ dN(u) }{ Y(u) }
 $$
 
 Here $\hat{S}(u)$ is the Kaplan-Meier estimate of the probability of
-being terminal event-free, estimated from *all* terminal events, both
-those of interest and those regarded as a competing risk; $dN(u)$ is the
-number of events of interest, both non-terminal and terminal, occurring
-at time $u$; and $Y(u)$ is the number of subjects who remain at risk,
-which are subjects who have neither been censored nor experienced a
-terminal event.
+being terminal event-free; $dN(u)$ is the number of events of interest
+at time $u$; and $Y(u)$ is the number of subjects who remain at risk.
+The AUMCF to time $\tau$ is
+$\hat\alpha(\tau) = \int_0^\tau \hat\mu(u)\,du$.
 
-### Standard error calibration
+#### Influence function
 
-See the [calibration
-vignette](https://github.com/zrmacc/MCC/blob/master/vignettes/calibration.pdf).
+Let $\theta(\tau)$ denote the MCF or AUMCF at time $\tau$. The influence
+function $\psi_{i}(\tau)$ measures the contribution of subject $i$ to
+the estimation error:
+
+$$
+\hat{\theta}(\tau) - \theta(\tau) = \frac{1}{n}\sum_{i=1}^{n}\psi_{i}(\tau) + o_{p}(n^{-1/2})
+$$
+
+The influence function contributions estimate the variance of
+$\hat{\theta}(\tau)$:
+
+$$
+\hat{\mathbb{V}}(\hat{\theta}) = \frac{1}{n^2}\sum_{i=1}^{n}\psi_{i}^{2}(\tau).
+$$
 
 ### Data
 
-The function `GenData` simulates example data in the format expected by
-this package. The recurrent event times are generated from a Poisson
-process that continues until censoring or death, whichever occurs first.
-Optionally, a gamma `frailty_variance` may be specified such that the
-patient-specific event and death rates are correlated. The example data
-includes 100 patients in each of the treatment and control arms. The
-maximum duration of follow-up is `tau = 4` (e.g. years). The rate of
-recurrent events for patients in the treatment arm is 80% the rate for
-patients in the control arm.
+The function `GenData` simulates example data. Recurrent event times are
+generated from a Poisson process until censoring or death. Optionally, a
+gamma `frailty_variance` correlates patient-specific event and death
+rates. The example below has 100 patients per arm, `tau = 4`, and an 80%
+recurrent-event rate in the treatment arm relative to control.
 
 ``` r
-library(MCC)
 covariates <- data.frame(
   arm = c(rep(1, 100), rep(0, 100))
 )
@@ -77,14 +85,14 @@ head(data)
 ```
 
     ##   idx status      time arm cens_rate death_rate event_rate   frailty
-    ## 1   1      1 0.3410881   1      0.25  0.1214263  0.3885640 0.4857050
-    ## 2   1      0 1.6749694   1      0.25  0.1214263  0.3885640 0.4857050
-    ## 3   2      1 2.5421423   1      0.25  0.2278416  0.7290933 0.9113666
-    ## 4   2      1 3.1638195   1      0.25  0.2278416  0.7290933 0.9113666
-    ## 5   2      0 4.0000000   1      0.25  0.2278416  0.7290933 0.9113666
-    ## 6   3      1 0.4335336   1      0.25  0.2988435  0.9562991 1.1953739
+    ## 1   1      0 0.5900957   1      0.25  0.3946803  1.2629769 1.5787211
+    ## 2   2      1 0.2753939   1      0.25  0.1688872  0.5404391 0.6755488
+    ## 3   2      1 0.6651751   1      0.25  0.1688872  0.5404391 0.6755488
+    ## 4   2      0 3.0821456   1      0.25  0.1688872  0.5404391 0.6755488
+    ## 5   3      1 2.3232824   1      0.25  0.1282805  0.4104975 0.5131219
+    ## 6   3      0 4.0000000   1      0.25  0.1282805  0.4104975 0.5131219
 
-The essential data are:
+The essential columns are:
 
 - `idx`, the subject index.
 - `time`, the observation time.
@@ -92,43 +100,26 @@ The essential data are:
   competing terminal event).
 - `arm`, coded as 1 for treatment, 0 for reference.
 
-For analyzing other data sets, arm and status should have the same
-coding. Each subject should experience an observation-terminating event,
-i.e. either death or censoring.
+Each subject should experience an observation-terminating event
+(censoring or death). For other data sets, use the same arm and status
+coding.
 
-The example data also include:
+#### Observation-terminating events
 
-- `true_death_rate`, the patient-specific terminal event rate,
-  calculated as `frailty` x `base_death_rate` x
-  `exp(covariates %*% beta_death)`. If omitted, `beta_death` is set to
-  zero.
-- `true_event_rate`, the patient-specific recurrent event rate,
-  calculated as `frailty` x `base_event_rate` x
-  `exp(covariates %*% beta_event)`. If omitted, `beta_event` is set to
-  zero.
-- `frailty`,the patient-specific frailty drawn from a gamma distribution
-  with mean 1 and the specified variance.
-
-### Observation-terminating events
-
-In contrast to the time to first event setting, in the multiple or
-recurrent events setting, a subject may remain at risk after
-experiencing an event of interest. An *observation-terminating* event,
-either censoring or the occurrence of a competing risk, is therefore
-necessary to remove a subject from the risk set. Conversely, a subject
-who lacks an observation-terminating event is implicitly assumed to
-remain at risk indefinitely. If a subject *lacks* an
-observation-terminating event, then by default `CompareAUCs` will add a
-censoring time immediately after their last event of interest. For
-example, if the data for subject 1 were:
+In the recurrent-events setting, a subject may remain at risk after an
+event of interest. An *observation-terminating* event (censoring or
+competing risk) removes the subject from the risk set. If a subject
+lacks such an event, they are assumed to remain at risk indefinitely. By
+default, `CompareAUCs` adds a censoring time immediately after the last
+event of interest. For example, if the data for subject 1 were:
 
     ##   idx time status
     ## 1   1    2      1
     ## 2   1    3      1
     ## 3   1    5      1
 
-then, for analysis, the subject is assumed to have been censored after
-the last event, as in the following:
+then, for analysis, the subject is assumed censored after the last
+event:
 
     ##   idx time status
     ## 1   1    2      1
@@ -136,22 +127,14 @@ the last event, as in the following:
     ## 3   1    5      1
     ## 4   1    5      0
 
-If a subject who lacks an observation-terminating event should, in fact,
-remain at risk indefinitely, set `cens_after_last = FALSE`.
+Set `cens_after_last = FALSE` if the subject should remain at risk
+indefinitely.
 
-### Terminal events of interest
+#### Terminal events of interest
 
-Suppose the endpoint of interest includes a fatal event. One such
-endpoint is heart failure hospitalization (HFH) or cardiovascular
-(CV)-death. In this setting, it becomes necessary to distinguish
-non-fatal events of interest (e.g. HFH), after which the subject remains
-in the risk set, from fatal events of interest (e.g. CV-death), after
-which the subject is removed from the risk set. To achieve this, a fatal
-event of interest should be recorded using two records. The first, with
-`status = 1`, indicates that an event of interest has occurred. The
-second, with `status = 2`, indicates that the event was terminal. For
-example, the following data indicate that subject 1 had 3 events of
-interest, and that the 3rd event, occurring at `time = 5`, was terminal.
+When a fatal event is of interest, record it with two rows: `status = 1`
+(event occurred) and `status = 2` (event was terminal). For example,
+subject 1 had three events and the third was terminal:
 
     ##   idx time status
     ## 1   1    2      1
@@ -159,16 +142,8 @@ interest, and that the 3rd event, occurring at `time = 5`, was terminal.
     ## 3   1    5      1
     ## 4   1    5      2
 
-By contrast, the following data indicate that subject 2 had 3 events of
-interest, none of which was terminal:
-
-    ##   idx time status
-    ## 1   2    2      1
-    ## 2   2    3      1
-    ## 3   2    5      1
-
-Note that, by default, subject 2 is assumed to have been censored after
-their 3rd event of interest, as in the following:
+By contrast, subject 2 had three non-terminal events and is censored
+after the last by default:
 
     ##   idx time status
     ## 1   2    2      1
@@ -176,18 +151,13 @@ their 3rd event of interest, as in the following:
     ## 3   2    5      1
     ## 4   2    5      0
 
-Although censoring (`status = 0`) and a terminal event (`status = 2`)
-both remove a subject from the risk set, there is an important
-distinction. Censoring leaves open the possibility that the subject
-experienced more events of interest in the future, whereas a terminal
-event precludes the possibility of any future events of interest.
+Censoring (`status = 0`) and terminal events (`status = 2`) both remove
+a subject from the risk set, but only censoring leaves open the
+possibility of future events.
 
-## Analyses
+### Analyses
 
-### Single-arm AUC
-
-To calculate the areas under the mean cumulative count curve for a
-single arm up to time $\tau = 4$:
+#### Single-arm AUC
 
 ``` r
 auc <- MCC::SingleArmAUC(
@@ -214,9 +184,7 @@ show(auc)
     ##       method contrast observed        p
     ## 1 asymptotic       A0     6.65 8.21e-26
 
-### AUCs
-
-To compare the AUCs of two treatment arms up to time $\tau = 4$:
+#### Two-arm comparison
 
 ``` r
 aucs <- MCC::CompareAUCs(
@@ -253,63 +221,53 @@ show(aucs)
     ## 4   bootstrap    A1/A0     0.64 0.01990
     ## 6 permutation    A1/A0     0.64 0.02990
 
-Here:
+- `tau` is the truncation time for the AUC.
+- `boot` constructs bootstrap confidence intervals.
+- `perm` performs permutation tests for the difference and ratio of
+  AUCs.
+- `reps` is the number of bootstrap/permutation replicates (grouped by
+  `idx`, stratified by `strata` if applicable).
+- `alpha` is 1 minus the desired CI coverage.
 
-- `tau` is the truncation time, or the time up to which the AUC is
-  calculated.
-- `boot` indicates to construct bootstrap confidence intervals.
-- `perm` indicates to perform permutation tests for the difference and
-  ratio of AUCs.
-- `reps` is the number of simulation replicates.
-  - The bootstrap is grouped by `idx`, and stratified by `strata`, if
-    applicable.
-- `alpha` is 1 minus the desired coverage for confidence intervals.
+#### Jump-weighted analysis
 
-### Weighted Analysis
-
-Weights may be supplied to control the size of the jump in the
-cumulative count curve at each event time (i.e. each time with
-`status == 1`). The following example weights each event by how many
-events a patient has experienced. For example, if a patient has 3 events
-before censoring, the first contributes a jump of size 1, the second a
-jump of size 2, and the third a jump of size 3. Other weighting schemes
-are of course possible. Note that the weights assigned to censoring
-(`status == 0`) and terminal event (`status == 2`) records are not used,
-and may be set to any value.
+The `jump_weights` argument scales the jump in the MCF at each recurrent
+event (`status == 1`). The example below weights each event by the
+patient’s cumulative event count:
 
 ``` r
 data <- data %>%
   dplyr::group_by(idx) %>%
-  dplyr::mutate(weights = dplyr::row_number()) %>%
+  dplyr::mutate(jump_weights = dplyr::row_number()) %>%
   dplyr::ungroup()
 
-cat("Visualization of weights for the first 10 records.\n")
+cat("Jump weights for the first 10 records.\n")
 data %>%
-  dplyr::select(idx, time, status, weights) %>%
+  dplyr::select(idx, time, status, jump_weights) %>%
   dplyr::slice(1:10)
 ```
 
-    ## Visualization of weights for the first 10 records.
+    ## Jump weights for the first 10 records.
     ## # A tibble: 10 × 4
-    ##      idx  time status weights
-    ##    <dbl> <dbl>  <dbl>   <int>
-    ##  1     1 0.341      1       1
-    ##  2     1 1.67       0       2
-    ##  3     2 2.54       1       1
-    ##  4     2 3.16       1       2
-    ##  5     2 4          0       3
-    ##  6     3 0.434      1       1
-    ##  7     3 0.571      1       2
-    ##  8     3 1.49       1       3
-    ##  9     3 1.86       0       4
-    ## 10     4 0.597      2       1
+    ##      idx  time status jump_weights
+    ##    <dbl> <dbl>  <dbl>        <int>
+    ##  1     1 0.341      1            1
+    ##  2     1 1.67       0            2
+    ##  3     2 2.54       1            1
+    ##  4     2 3.16       1            2
+    ##  5     2 4          0            3
+    ##  6     3 0.434      1            1
+    ##  7     3 0.571      1            2
+    ##  8     3 1.49       1            3
+    ##  9     3 1.86       0            4
+    ## 10     4 0.597      2            1
 
 ``` r
 aucs <- MCC::CompareAUCs(
   data,
   tau = 4,
   alpha = 0.05,
-  weights = data$weights
+  jump_weights = data$jump_weights
 )
 show(aucs)
 ```
@@ -331,15 +289,12 @@ show(aucs)
     ## 1 asymptotic    A1-A0   -7.860 0.00934
     ## 2 asymptotic    A1/A0    0.522 0.00614
 
-#### Stratified Analysis
+#### Stratified analysis
 
-`CompareAUCs` also allows for stratified analysis. Consider a data set,
-similar to that described previously, but with the additional of a
-binary stratification factor. The event rate for individuals in stratum
-1 is increased by 20%.
+The example below adds a binary stratification factor; the event rate in
+stratum 1 is increased by 20%.
 
 ``` r
-# Generate data with strata.
 covariates <- data.frame(
   arm = c(rep(1, 100), rep(0, 100)),
   strata = stats::rbinom(200, 1, 0.25)
@@ -350,8 +305,6 @@ data <- MCC::GenData(
   frailty_variance = 0.2,
   tau = 4
 )
-
-# Stratified AUC analysis.
 aucs <- MCC::CompareAUCs(
   data,
   strata = data$strata,
@@ -389,9 +342,9 @@ show(aucs)
 
 #### Outputs
 
-The output of `CompareAUCs` is an object with these slots.
+The `CompareAUCs` object includes:
 
-- `@StratumAreas` containing the stratum-specific AUCs for each arm.
+- `@StratumAreas`: stratum-specific AUCs per arm.
 
 ``` r
 aucs@StratumAreas
@@ -403,8 +356,7 @@ aucs@StratumAreas
     ## 3   1      0 74   4 4.860945 29.09823 0.6270720        0.725
     ## 4   1      1 26   4 5.597732 31.10359 1.0937513        0.275
 
-- `@MargAreas` containing the AUCs for each arm, marginalized over any
-  strata.
+- `@MargAreas`: marginal AUCs per arm.
 
 ``` r
 aucs@MargAreas
@@ -414,8 +366,7 @@ aucs@MargAreas
     ## 1   0 100 5.908366 0.6736537   4
     ## 2   1 100 5.063561 0.5451197   4
 
-- `@CIs` containing confidence intervals for the difference and ratio of
-  AUCs.
+- `@CIs`: confidence intervals for the difference and ratio of AUCs.
 
 ``` r
 aucs@CIs
@@ -427,8 +378,7 @@ aucs@CIs
     ## 2 asymptotic    A1/A0  0.8570156 0.1343891  0.6302478 1.1653760
     ## 4  bootstrap    A1/A0  0.8570156 0.1365854  0.6364443 1.2147199
 
-- `@MCF` containing the per arm mean cumulative count curve, averaged
-  across strata.
+- `@MCF`: per-arm MCFs.
 
 ``` r
 head(aucs@MCF)
@@ -442,7 +392,7 @@ head(aucs@MCF)
     ## 5 0.0318463015 0.029526101 0.020626585 0.14361958   1
     ## 6 0.0436269205 0.039457608 0.027231065 0.16501838   1
 
-- `@Pvals` containing the bootstrap and permutation p-values.
+- `@Pvals`: bootstrap and permutation p-values.
 
 ``` r
 aucs@Pvals
@@ -456,32 +406,15 @@ aucs@Pvals
     ## 4   bootstrap    A1/A0  0.8570156 0.3482587
     ## 6 permutation    A1/A0  0.8570156 0.4079602
 
-- `@Reps` is a list containing the bootstrap and permutation test
-  statistics.
+- `@Reps`: bootstrap and permutation test statistics.
 
-### Influence function
+#### Influence function
 
-Let $\theta(\tau)$ denote the MCF or AUMCF at time $\tau$. The influence
-function $\psi_{i}(\tau)$ measures the contribution of subject $i$ to
-the estimation error:
-
-$$
-\hat{\theta}(\tau) - \theta(\tau) = \frac{1}{n}\sum_{i=1}^{n}\psi_{i}(\tau)
-$$
-
-The influence function contributions are useful for estimating the
-variance of $\hat{\theta}(\tau)$:
-
-$$
-\hat{\mathbb{V}}(\hat{\theta}) = \frac{1}{n^2}\sum_{i=1}^{n}\psi_{i}^{2}(\tau).
-$$
-
-`InfluenceFunction` can be used to calculate the influence contributions
-of each subject to the MCF (`type = "MCF"`) or AUMCF (`type = "AUC"`) at
-a given time $\tau$.
+`InfluenceFunction` calculates per-subject influence contributions for
+the MCF (`type = "MCF"`) or AUMCF (`type = "AUC"`) at time $\tau$; see
+Methods for the definition of $\psi_i(\tau)$.
 
 ``` r
-# Influence for AUC up to tau (one row per subject).
 psi_auc <- MCC::InfluenceFunction(
   data %>% dplyr::filter(arm == 0),
   tau = 4,
@@ -498,40 +431,14 @@ head(psi_auc)
     ## 5 105 -2.3703085
     ## 6 106  0.3932801
 
-``` r
-# Influence for MCF at tau.
-psi_mcf <- MCC::InfluenceFunction(
-  data %>% dplyr::filter(arm == 0),
-  tau = 4,
-  type = "MCF"
-)
-head(psi_mcf)
-```
+#### Adjusted AUCs
 
-    ##   idx         psi
-    ## 1 101  0.03212038
-    ## 2 102 -1.76936792
-    ## 3 103  1.48895373
-    ## 4 104 -2.58604980
-    ## 5 105 -0.39307438
-    ## 6 106 -0.86405517
-
-### Adjusted AUCs
-
-The previous estimator allows for stratification, but a different
-approach is needed to accommodate continuous covariates. If covariates
-are provided, then `CompareAUCs` uses an augmentation estimator to
-adjust for differences between the treatment groups. Note that strata
-and covariates should not both be provided. If adjustment for both is
-needed, use `model.matrix` to generate a design matrix including both
-covariates and stratum indicators,
-e.g. `model.matrix(~ 0 + covar + strata, data = data)`, then supply the
-design matrix `covar` argument.
+With continuous covariates, `CompareAUCs` uses an augmentation
+estimator. Do not supply both `strata` and `covar`; use `model.matrix`
+to combine them if needed.
 
 ``` r
 set.seed(100)
-
-# Generate data with a continuous covariate.
 n <- 1000
 covariates <- data.frame(
   arm = c(rep(1, n), rep(0, n)),
@@ -546,28 +453,17 @@ data <- MCC::GenData(
   frailty_variance = 0.2,
   tau = 4
 )
-
-# Unadjusted.
-paste("Unadjusted AUCs:")
-unadj_aucs <- MCC::CompareAUCs(
-  data,
-  tau = 4,
-  alpha = 0.05
-)
-show(unadj_aucs)
-
-# Adjusted.
-paste("Adjusted AUCs:")
+unadj_aucs <- MCC::CompareAUCs(data, tau = 4, alpha = 0.05)
 adj_aucs <- MCC::CompareAUCs(
   data,
   tau = 4,
   alpha = 0.05,
   covar = data %>% dplyr::select(x1, x2)
 )
+show(unadj_aucs)
 show(adj_aucs)
 ```
 
-    ## [1] "Unadjusted AUCs:"
     ## Marginal Areas:
     ##   arm    n area    se tau
     ## 1   0 1000 3.74 0.147   4
@@ -586,7 +482,6 @@ show(adj_aucs)
     ## 2 asymptotic    A1/A0    1.100 0.0757
     ## 
     ## 
-    ## [1] "Adjusted AUCs:"
     ## Marginal Areas:
     ##   arm    n tau area    se
     ## 1   0 1000   4 3.74 0.147
@@ -602,7 +497,189 @@ show(adj_aucs)
     ##       method contrast observed        p
     ## 1 asymptotic    A1-A0    -2.45 3.48e-32
 
-### Plotting
+#### Plotting
+
+``` r
+q_uni <- MCC::PlotMCFs(
+  data = data,
+  tau = 4,
+  x_breaks = seq(0, 4, by = 1),
+  color_labs = c("Control", "Treatment")
+)
+q_uni
+```
+
+![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 See the [plotting
-vignette](https://github.com/zrmacc/MCC/blob/master/vignettes/plotting.pdf).
+vignette](https://github.com/zrmacc/MCC/blob/master/vignettes/plotting.pdf)
+for additional options.
+
+## Multivariate
+
+Multivariate analysis considers several potentially dependent multiple-
+or recurrent-events processes, each subject to right-censoring and
+terminal events.
+
+### Methods
+
+For event types $k = 1,\ldots,K$, the arm–process estimand is the AUMCF
+$\alpha_{ak}(\tau)$. The multivariate contrast is
+
+$$
+\hat\Delta(\tau) = \bigl(\hat\Delta_1(\tau),\ldots,\hat\Delta_K(\tau)\bigr)^\top,
+\qquad \hat\Delta_k(\tau) = \hat\alpha_{1k}(\tau) - \hat\alpha_{0k}(\tau).
+$$
+
+Optional `process_weights` $w \in \mathbb{R}^K$ defines a secondary
+scalar estimand $w^\top\hat\Delta(\tau)$, returned in `@Weighted`.
+Per-event jump weighting is not supported for multivariate data; each
+recurrent event contributes a jump of size 1.
+
+Arm-specific influence vectors $\hat\phi_{ia} \in \mathbb{R}^K$ are
+stacked from per-process influence functions. The arm covariance is
+
+$$
+\hat\Sigma_a = \frac{1}{n_a} \sum_{i: A_i=a} \hat\phi_{ia}\hat\phi_{ia}^\top,
+$$
+
+and
+$\widehat{\mathrm{Cov}}(\hat\Delta) = \hat\Sigma_1/n_1 + \hat\Sigma_0/n_0$.
+
+When patient $i$ is eligible for only a subset of processes, let
+$Q_{ik} = I(\text{patient } i \text{ eligible for process } k)$ and
+$\hat\pi_{ak} = n_{ak}/n_a$. Per-process influence functions on the
+eligible subset are embedded in the arm-level matrix with eligibility
+weight $Q_{ik}/\hat\pi_{ak}$; ineligible patients contribute zero.
+
+### Data
+
+Multivariate data are in **long format** with an `event_type` column on
+every row, plus `idx`, `arm`, `time`, and `status`. Set
+`n_event_types > 1` in `GenData` to simulate such data.
+
+#### Risk sets and terminal events
+
+A subject is at risk for process $k$ if they have at least one row with
+non-missing `event_type = k` (recurrent or typed terminal). Subjects
+with no type-$k$ rows are excluded from $\hat\Delta_k(\tau)$. Terminal
+rows are interpreted as follows:
+
+| `status` | `event_type` | Effect                                           |
+|----------|--------------|--------------------------------------------------|
+| 0 or 2   | missing      | Ends follow-up for all processes that rely on it |
+| 0 or 2   | $k$          | Ends follow-up for process $k$ only              |
+
+A global terminal row does not place a subject in the risk set for
+processes without typed rows. To include a subject at risk for $k$ with
+zero recurrent type-$k$ events, add a typed censoring or death row with
+`event_type = k`.
+
+For each event type $k$ for which a subject is at risk, follow-up must
+end with a single observation-terminating event. By default
+(`cens_after_last = TRUE`), a censoring event is added after the last
+recurrent event for each remaining at-risk event type when no typed
+terminal row is present. Set `cens_after_last = FALSE` to leave such
+patients at risk indefinitely (with a warning).
+
+### Analyses
+
+#### Multivariate AUCs
+
+``` r
+covariates <- data.frame(
+  arm = c(rep(1, 100), rep(0, 100))
+)
+mv_data <- MCC::GenData(
+  beta_event = c(log(0.8)),
+  covariates = covariates,
+  n_event_types = 2L,
+  base_event_rate = c(1.0, 0.8),
+  death_frailty_variance = 0.2,
+  event_frailty_variance = 0.2,
+  tau = 4
+)
+head(mv_data)
+```
+
+    ##   idx status      time event_type event_rate arm cens_rate death_rate
+    ## 1   1      0 0.9317431         NA         NA   1      0.25  0.1491921
+    ## 2   2      1 1.8535908          1  0.1913279   1      0.25  0.1013353
+    ## 3   2      2 2.1421942         NA         NA   1      0.25  0.1013353
+    ## 4   3      1 1.8915038          1  0.6923577   1      0.25  0.1749469
+    ## 5   3      1 2.2586972          1  0.6923577   1      0.25  0.1749469
+    ## 6   3      1 2.8287012          2  0.5538862   1      0.25  0.1749469
+    ##   death_frailty event_frailty   frailty
+    ## 1     0.5967683     1.3802323 0.8236789
+    ## 2     0.4053410     0.5900213 0.2391598
+    ## 3     0.4053410     0.5900213 0.2391598
+    ## 4     0.6997878     1.2367280 0.8654472
+    ## 5     0.6997878     1.2367280 0.8654472
+    ## 6     0.6997878     1.2367280 0.8654472
+
+``` r
+mv_aucs <- MCC::CompareMvAUCs(
+  mv_data,
+  tau = 4,
+  reps = 200
+)
+show(mv_aucs)
+```
+
+    ## Marginal Areas:
+    ##    arm event_type  n tau area    se
+    ## 1    0          1 62   4 7.96 0.842
+    ## 2    0          2 62   4 7.22 0.569
+    ## 11   1          1 55   4 6.44 0.547
+    ## 21   1          2 55   4 5.94 0.545
+    ## 
+    ## 
+    ## CIs:
+    ##        method contrast event_type observed    se lower  upper
+    ## 1  asymptotic    A1-A0          1    -1.52 1.000 -3.49 0.4500
+    ## 11  bootstrap    A1-A0          1    -1.52 1.110 -3.86 0.5020
+    ## 2  asymptotic    A1-A0          2    -1.29 0.788 -2.83 0.2590
+    ## 21  bootstrap    A1-A0          2    -1.29 0.775 -2.71 0.0605
+    ## 
+    ## 
+    ## P-values:
+    ##        method contrast event_type observed      p
+    ## 1  asymptotic    A1-A0          1    -1.52 0.1310
+    ## 2  asymptotic    A1-A0          2    -1.29 0.1030
+    ## 11  bootstrap    A1-A0          1    -1.52 0.2190
+    ## 21  bootstrap    A1-A0          2    -1.29 0.0896
+
+By default, inference is asymptotic (`reps = NULL`); setting `reps` adds
+subject-level bootstrap CIs and p-values per event type. Optional
+`covars` invoke multivariate augmentation. A weighted scalar contrast is
+available via `process_weights`:
+
+``` r
+mv_weighted <- MCC::CompareMvAUCs(
+  mv_data,
+  tau = 4,
+  process_weights = c(1, 1)
+)
+mv_weighted@Weighted
+```
+
+    ##   contrast  observed      se     lower    upper          p
+    ## 1  w'Delta -2.803201 1.50447 -5.751908 0.145507 0.06242744
+
+#### Plotting
+
+``` r
+q_mv <- MCC::PlotMvMCFs(
+  mv_data,
+  tau = 4,
+  x_breaks = seq(0, 4, by = 1),
+  event_type_labs = c("Hospitalization", "Heart failure")
+)
+q_mv
+```
+
+![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+See the [plotting
+vignette](https://github.com/zrmacc/MCC/blob/master/vignettes/plotting.pdf)
+for additional multivariate plotting options.

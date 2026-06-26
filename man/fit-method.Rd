@@ -3,17 +3,22 @@
 \name{show,CompAugAUCs-method}
 \alias{show,CompAugAUCs-method}
 \alias{show,CompStratAUCs-method}
+\alias{show,CompMvAugAUCs-method}
 \title{Show Method for Compare Augmented AUCs Object}
 \usage{
 \S4method{show}{CompAugAUCs}(object)
 
 \S4method{show}{CompStratAUCs}(object)
+
+\S4method{show}{CompMvAugAUCs}(object)
 }
 \arguments{
-\item{object}{An object of class \code{CompareStratAUCs}.}
+\item{object}{An object of class \code{CompMvAugAUCs}.}
 }
 \description{
 Show Method for Compare Augmented AUCs Object
 
 Show Method for Compare AUCs Object
+
+Show Method for Compare Multivariate Augmented AUCs Object
 }
