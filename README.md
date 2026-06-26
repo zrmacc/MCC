@@ -85,12 +85,12 @@ head(data)
 ```
 
     ##   idx status      time arm cens_rate death_rate event_rate   frailty
-    ## 1   1      0 0.5900957   1      0.25  0.3946803  1.2629769 1.5787211
-    ## 2   2      1 0.2753939   1      0.25  0.1688872  0.5404391 0.6755488
-    ## 3   2      1 0.6651751   1      0.25  0.1688872  0.5404391 0.6755488
-    ## 4   2      0 3.0821456   1      0.25  0.1688872  0.5404391 0.6755488
-    ## 5   3      1 2.3232824   1      0.25  0.1282805  0.4104975 0.5131219
-    ## 6   3      0 4.0000000   1      0.25  0.1282805  0.4104975 0.5131219
+    ## 1   1      2 0.1044391   1      0.25 0.12048786  0.3855611 0.4819514
+    ## 2   2      0 1.2789400   1      0.25 0.25071207  0.8022786 1.0028483
+    ## 3   3      0 0.1032018   1      0.25 0.24440011  0.7820804 0.9776004
+    ## 4   4      0 0.3694932   1      0.25 0.08458025  0.2706568 0.3383210
+    ## 5   5      1 1.2741433   1      0.25 0.29986879  0.9595801 1.1994752
+    ## 6   5      1 1.3955067   1      0.25 0.29986879  0.9595801 1.1994752
 
 The essential columns are:
 
@@ -171,18 +171,18 @@ show(auc)
 
     ## Marginal Areas:
     ##   arm   n area    se tau
-    ## 1   0 100 6.65 0.633   4
+    ## 1   0 100  5.7 0.631   4
     ## 
     ## 
     ## CIs:
     ##       method contrast observed    se lower upper
-    ## 1 asymptotic       A0     6.65 0.633  5.41  7.89
-    ## 2  bootstrap       A0     6.65 0.632  5.32  7.72
+    ## 1 asymptotic       A0      5.7 0.631  4.46  6.94
+    ## 2  bootstrap       A0      5.7 0.588  4.66  6.91
     ## 
     ## 
     ## P-values:
     ##       method contrast observed        p
-    ## 1 asymptotic       A0     6.65 8.21e-26
+    ## 1 asymptotic       A0      5.7 1.64e-19
 
 #### Two-arm comparison
 
@@ -200,26 +200,26 @@ show(aucs)
 
     ## Marginal Areas:
     ##   arm   n area    se tau
-    ## 1   0 100 6.65 0.633   4
-    ## 2   1 100 4.26 0.516   4
+    ## 1   0 100 5.70 0.631   4
+    ## 2   1 100 3.67 0.471   4
     ## 
     ## 
     ## CIs:
-    ##       method contrast observed     se  lower  upper
-    ## 1 asymptotic    A1-A0    -2.39 0.8160 -3.990 -0.789
-    ## 3  bootstrap    A1-A0    -2.39 0.7630 -3.600 -0.812
-    ## 2 asymptotic    A1/A0     0.64 0.0987  0.473  0.866
-    ## 4  bootstrap    A1/A0     0.64 0.0971  0.487  0.854
+    ##       method contrast observed    se  lower  upper
+    ## 1 asymptotic    A1-A0   -2.030 0.788 -3.570 -0.487
+    ## 3  bootstrap    A1-A0   -2.030 0.805 -3.880 -0.335
+    ## 2 asymptotic    A1/A0    0.644 0.109  0.462  0.898
+    ## 4  bootstrap    A1/A0    0.644 0.115  0.429  0.928
     ## 
     ## 
     ## P-values:
     ##        method contrast observed       p
-    ## 1  asymptotic    A1-A0    -2.39 0.00343
-    ## 3   bootstrap    A1-A0    -2.39 0.01990
-    ## 5 permutation    A1-A0    -2.39 0.02990
-    ## 2  asymptotic    A1/A0     0.64 0.00385
-    ## 4   bootstrap    A1/A0     0.64 0.01990
-    ## 6 permutation    A1/A0     0.64 0.02990
+    ## 1  asymptotic    A1-A0   -2.030 0.00993
+    ## 3   bootstrap    A1-A0   -2.030 0.00995
+    ## 5 permutation    A1-A0   -2.030 0.01990
+    ## 2  asymptotic    A1/A0    0.644 0.00938
+    ## 4   bootstrap    A1/A0    0.644 0.00995
+    ## 6 permutation    A1/A0    0.644 0.00995
 
 - `tau` is the truncation time for the AUC.
 - `boot` constructs bootstrap confidence intervals.
@@ -251,16 +251,16 @@ data %>%
     ## # A tibble: 10 × 4
     ##      idx  time status jump_weights
     ##    <dbl> <dbl>  <dbl>        <int>
-    ##  1     1 0.341      1            1
-    ##  2     1 1.67       0            2
-    ##  3     2 2.54       1            1
-    ##  4     2 3.16       1            2
-    ##  5     2 4          0            3
-    ##  6     3 0.434      1            1
-    ##  7     3 0.571      1            2
-    ##  8     3 1.49       1            3
-    ##  9     3 1.86       0            4
-    ## 10     4 0.597      2            1
+    ##  1     1 0.104      2            1
+    ##  2     2 1.28       0            1
+    ##  3     3 0.103      0            1
+    ##  4     4 0.369      0            1
+    ##  5     5 1.27       1            1
+    ##  6     5 1.40       1            2
+    ##  7     5 1.92       1            3
+    ##  8     5 2.14       2            4
+    ##  9     6 1.64       2            1
+    ## 10     7 2.47       1            1
 
 ``` r
 aucs <- MCC::CompareAUCs(
@@ -274,20 +274,20 @@ show(aucs)
 
     ## Marginal Areas:
     ##   arm   n area   se tau
-    ## 1   0 100 16.5 2.62   4
-    ## 2   1 100  8.6 1.51   4
+    ## 1   0 100 13.6 2.52   4
+    ## 2   1 100  6.7 1.22   4
     ## 
     ## 
     ## CIs:
-    ##       method contrast observed    se   lower  upper
-    ## 1 asymptotic    A1-A0   -7.860 3.030 -13.800 -1.930
-    ## 2 asymptotic    A1/A0    0.522 0.124   0.328  0.831
+    ##       method contrast observed    se   lower upper
+    ## 1 asymptotic    A1-A0   -6.900 2.800 -12.400 -1.41
+    ## 2 asymptotic    A1/A0    0.493 0.128   0.296  0.82
     ## 
     ## 
     ## P-values:
     ##       method contrast observed       p
-    ## 1 asymptotic    A1-A0   -7.860 0.00934
-    ## 2 asymptotic    A1/A0    0.522 0.00614
+    ## 1 asymptotic    A1-A0   -6.900 0.01370
+    ## 2 asymptotic    A1/A0    0.493 0.00645
 
 #### Stratified analysis
 
@@ -319,26 +319,26 @@ show(aucs)
 
     ## Marginal Areas:
     ##   arm   n area    se tau
-    ## 1   0 100 5.91 0.674   4
-    ## 2   1 100 5.06 0.545   4
+    ## 1   0 100 5.62 0.629   4
+    ## 2   1 100 4.75 0.535   4
     ## 
     ## 
     ## CIs:
     ##       method contrast observed    se  lower upper
-    ## 1 asymptotic    A1-A0   -0.845 0.867 -2.540 0.854
-    ## 3  bootstrap    A1-A0   -0.845 0.865 -2.610 1.000
-    ## 2 asymptotic    A1/A0    0.857 0.134  0.630 1.170
-    ## 4  bootstrap    A1/A0    0.857 0.137  0.636 1.210
+    ## 1 asymptotic    A1-A0   -0.868 0.826 -2.490 0.750
+    ## 3  bootstrap    A1-A0   -0.868 0.850 -2.550 0.783
+    ## 2 asymptotic    A1/A0    0.845 0.134  0.619 1.150
+    ## 4  bootstrap    A1/A0    0.845 0.140  0.615 1.170
     ## 
     ## 
     ## P-values:
     ##        method contrast observed     p
-    ## 1  asymptotic    A1-A0   -0.845 0.330
-    ## 3   bootstrap    A1-A0   -0.845 0.348
-    ## 5 permutation    A1-A0   -0.845 0.418
-    ## 2  asymptotic    A1/A0    0.857 0.325
-    ## 4   bootstrap    A1/A0    0.857 0.348
-    ## 6 permutation    A1/A0    0.857 0.408
+    ## 1  asymptotic    A1-A0   -0.868 0.293
+    ## 3   bootstrap    A1-A0   -0.868 0.328
+    ## 5 permutation    A1-A0   -0.868 0.259
+    ## 2  asymptotic    A1/A0    0.845 0.290
+    ## 4   bootstrap    A1/A0    0.845 0.328
+    ## 6 permutation    A1/A0    0.845 0.259
 
 #### Outputs
 
@@ -351,10 +351,10 @@ aucs@StratumAreas
 ```
 
     ##   arm strata  n tau     area var_area   se_area strat_weight
-    ## 1   0      0 71   4 5.123762 41.65009 0.7659119        0.725
-    ## 2   0      1 29   4 7.976865 55.78223 1.3869121        0.275
-    ## 3   1      0 74   4 4.860945 29.09823 0.6270720        0.725
-    ## 4   1      1 26   4 5.597732 31.10359 1.0937513        0.275
+    ## 1   0      0 72   4 5.718939 43.73699 0.7793960        0.755
+    ## 2   0      1 28   4 5.298774 23.15360 0.9093483        0.245
+    ## 3   1      0 79   4 4.624937 20.81846 0.5133467        0.755
+    ## 4   1      1 21   4 5.125637 47.54470 1.5046705        0.245
 
 - `@MargAreas`: marginal AUCs per arm.
 
@@ -363,8 +363,8 @@ aucs@MargAreas
 ```
 
     ##   arm   n     area        se tau
-    ## 1   0 100 5.908366 0.6736537   4
-    ## 2   1 100 5.063561 0.5451197   4
+    ## 1   0 100 5.615998 0.6292073   4
+    ## 2   1 100 4.747609 0.5348966   4
 
 - `@CIs`: confidence intervals for the difference and ratio of AUCs.
 
@@ -373,10 +373,10 @@ aucs@CIs
 ```
 
     ##       method contrast   observed        se      lower     upper
-    ## 1 asymptotic    A1-A0 -0.8448043 0.8665822 -2.5432742 0.8536656
-    ## 3  bootstrap    A1-A0 -0.8448043 0.8652351 -2.6080192 1.0044493
-    ## 2 asymptotic    A1/A0  0.8570156 0.1343891  0.6302478 1.1653760
-    ## 4  bootstrap    A1/A0  0.8570156 0.1365854  0.6364443 1.2147199
+    ## 1 asymptotic    A1-A0 -0.8683895 0.8258427 -2.4870116 0.7502325
+    ## 3  bootstrap    A1-A0 -0.8683895 0.8504744 -2.5518060 0.7831389
+    ## 2 asymptotic    A1/A0  0.8453722 0.1343220  0.6191555 1.1542402
+    ## 4  bootstrap    A1/A0  0.8453722 0.1396226  0.6153331 1.1712872
 
 - `@MCF`: per-arm MCFs.
 
@@ -384,13 +384,13 @@ aucs@CIs
 head(aucs@MCF)
 ```
 
-    ##           time         mcf     var_mcf     se_mcf arm
-    ## 1 0.0003918607 0.009797297 0.007007054 0.08370814   1
-    ## 2 0.0045640871 0.019594595 0.013822133 0.11756757   1
-    ## 3 0.0209474391 0.019594595 0.013822133 0.11756757   1
-    ## 4 0.0277815206 0.019594595 0.013822133 0.11756757   1
-    ## 5 0.0318463015 0.029526101 0.020626585 0.14361958   1
-    ## 6 0.0436269205 0.039457608 0.027231065 0.16501838   1
+    ##          time         mcf     var_mcf    se_mcf arm
+    ## 1 0.003448538 0.009556962 0.007124171 0.0844048   1
+    ## 2 0.007348028 0.009556962 0.007124171 0.0844048   1
+    ## 3 0.011750647 0.019113924 0.014065611 0.1185985   1
+    ## 4 0.030294899 0.019113924 0.014065611 0.1185985   1
+    ## 5 0.033153978 0.030780591 0.016787834 0.1295679   1
+    ## 6 0.034315284 0.030780591 0.016787834 0.1295679   1
 
 - `@Pvals`: bootstrap and permutation p-values.
 
@@ -399,12 +399,12 @@ aucs@Pvals
 ```
 
     ##        method contrast   observed         p
-    ## 1  asymptotic    A1-A0 -0.8448043 0.3296251
-    ## 3   bootstrap    A1-A0 -0.8448043 0.3482587
-    ## 5 permutation    A1-A0 -0.8448043 0.4179104
-    ## 2  asymptotic    A1/A0  0.8570156 0.3251229
-    ## 4   bootstrap    A1/A0  0.8570156 0.3482587
-    ## 6 permutation    A1/A0  0.8570156 0.4079602
+    ## 1  asymptotic    A1-A0 -0.8683895 0.2930202
+    ## 3   bootstrap    A1-A0 -0.8683895 0.3283582
+    ## 5 permutation    A1-A0 -0.8683895 0.2587065
+    ## 2  asymptotic    A1/A0  0.8453722 0.2904239
+    ## 4   bootstrap    A1/A0  0.8453722 0.3283582
+    ## 6 permutation    A1/A0  0.8453722 0.2587065
 
 - `@Reps`: bootstrap and permutation test statistics.
 
@@ -423,13 +423,13 @@ psi_auc <- MCC::InfluenceFunction(
 head(psi_auc)
 ```
 
-    ##   idx        psi
-    ## 1 101  0.4459027
-    ## 2 102 -2.7169950
-    ## 3 103 -1.8083700
-    ## 4 104 -6.1644698
-    ## 5 105 -2.3703085
-    ## 6 106  0.3932801
+    ##   idx       psi
+    ## 1 101 -1.427580
+    ## 2 102 -3.112179
+    ## 3 103 -5.214129
+    ## 4 104  3.969131
+    ## 5 105 10.300938
+    ## 6 106 -6.139007
 
 #### Adjusted AUCs
 
@@ -627,27 +627,27 @@ show(mv_aucs)
 ```
 
     ## Marginal Areas:
-    ##    arm event_type  n tau area    se
-    ## 1    0          1 62   4 7.96 0.842
-    ## 2    0          2 62   4 7.22 0.569
-    ## 11   1          1 55   4 6.44 0.547
-    ## 21   1          2 55   4 5.94 0.545
+    ##  arm event_type  n tau area    se
+    ##    0          1 62   4 7.96 0.842
+    ##    0          2 62   4 7.22 0.569
+    ##    1          1 55   4 6.44 0.547
+    ##    1          2 55   4 5.94 0.545
     ## 
     ## 
     ## CIs:
-    ##        method contrast event_type observed    se lower  upper
-    ## 1  asymptotic    A1-A0          1    -1.52 1.000 -3.49 0.4500
-    ## 11  bootstrap    A1-A0          1    -1.52 1.110 -3.86 0.5020
-    ## 2  asymptotic    A1-A0          2    -1.29 0.788 -2.83 0.2590
-    ## 21  bootstrap    A1-A0          2    -1.29 0.775 -2.71 0.0605
+    ##      method contrast event_type observed    se lower  upper
+    ##  asymptotic    A1-A0          1    -1.52 1.000 -3.49 0.4500
+    ##   bootstrap    A1-A0          1    -1.52 1.110 -3.86 0.5020
+    ##  asymptotic    A1-A0          2    -1.29 0.788 -2.83 0.2590
+    ##   bootstrap    A1-A0          2    -1.29 0.775 -2.71 0.0605
     ## 
     ## 
     ## P-values:
-    ##        method contrast event_type observed      p
-    ## 1  asymptotic    A1-A0          1    -1.52 0.1310
-    ## 2  asymptotic    A1-A0          2    -1.29 0.1030
-    ## 11  bootstrap    A1-A0          1    -1.52 0.2190
-    ## 21  bootstrap    A1-A0          2    -1.29 0.0896
+    ##      method contrast event_type observed      p
+    ##  asymptotic    A1-A0          1    -1.52 0.1310
+    ##  asymptotic    A1-A0          2    -1.29 0.1030
+    ##   bootstrap    A1-A0          1    -1.52 0.2190
+    ##   bootstrap    A1-A0          2    -1.29 0.0896
 
 By default, inference is asymptotic (`reps = NULL`); setting `reps` adds
 subject-level bootstrap CIs and p-values per event type. Optional
@@ -660,11 +660,11 @@ mv_weighted <- MCC::CompareMvAUCs(
   tau = 4,
   process_weights = c(1, 1)
 )
-mv_weighted@Weighted
+print(mv_weighted@Weighted, row.names = FALSE)
 ```
 
-    ##   contrast  observed      se     lower    upper          p
-    ## 1  w'Delta -2.803201 1.50447 -5.751908 0.145507 0.06242744
+    ##  contrast  observed      se     lower    upper          p
+    ##   w'Delta -2.803201 1.50447 -5.751908 0.145507 0.06242744
 
 #### Plotting
 

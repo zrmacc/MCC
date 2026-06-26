@@ -243,29 +243,28 @@ print.CompMvAugAUCs <- function(x, ...) {
     return(out)
   }
 
+  print_df <- function(y) {
+    out <- as.data.frame(y)
+    out[, ] <- lapply(out, disp)
+    print(out, row.names = FALSE)
+    return(invisible(NULL))
+  }
+
   cat("Marginal Areas:\n")
-  areas <- x@Areas
-  areas[, ] <- lapply(areas, disp)
-  show(areas)
+  print_df(x@Areas)
   cat("\n\n")
 
   cat("CIs:\n")
-  cis <- x@CIs
-  cis[, ] <- lapply(cis, disp)
-  show(cis)
+  print_df(x@CIs)
   cat("\n\n")
 
   cat("P-values:\n")
-  pvals <- x@Pvals
-  pvals[, ] <- lapply(pvals, disp)
-  show(pvals)
+  print_df(x@Pvals)
   cat("\n\n")
 
   if (nrow(x@Weighted) > 0) {
     cat("Weighted contrast:\n")
-    weighted <- x@Weighted
-    weighted[, ] <- lapply(weighted, disp)
-    show(weighted)
+    print_df(x@Weighted)
     cat("\n\n")
   }
 }

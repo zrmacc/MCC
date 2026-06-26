@@ -393,7 +393,7 @@ mv_weighted <- MCC::CompareMvAUCs(
   tau = 4,
   process_weights = c(1, 1)
 )
-mv_weighted@Weighted
+print(mv_weighted@Weighted, row.names = FALSE)
 ```
 
 #### Plotting
