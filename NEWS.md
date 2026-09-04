@@ -1,5 +1,6 @@
 ## Version 0.9.0
 
+* Added `PseudoReg` for identity-link MCF and AUMCF pseudo-value regression with second-order-corrected covariance estimation.
 * Added `CompareMvAUCs` for multivariate AUC contrasts with asymptotic and bootstrap inference.
 * Added multivariate augmentation and process-specific eligibility weighting in influence functions.
 * Extended `GenData` to simulate multiple recurrent event types with shared frailty.
@@ -33,4 +34,3 @@
 
 * Added ability to plot one sample mean cumulative function.
 * Added plotting vignette.
-

@@ -269,6 +269,21 @@ psi_auc <- MCC::InfluenceFunction(
 head(psi_auc)
 ```
 
+#### Pseudo-value regression
+
+`PseudoReg` fits identity-link OLS regression to MCF or AUMCF pseudo-values and reports the second-order-corrected covariance. The underlying ordinary `lm` fit remains available in the `fit` component.
+
+```{r}
+pseudo_fit <- MCC::PseudoReg(
+  ~ arm,
+  data = data,
+  tau = 4,
+  type = "AUC"
+)
+summary(pseudo_fit)
+vcov(pseudo_fit)
+```
+
 #### Adjusted AUCs
 
 With continuous covariates, `CompareAUCs` uses an augmentation estimator. Do not supply both `strata` and `covar`; use `model.matrix` to combine them if needed.

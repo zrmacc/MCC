@@ -431,6 +431,37 @@ head(psi_auc)
     ## 5 105 10.300938
     ## 6 106 -6.139007
 
+#### Pseudo-value regression
+
+`PseudoReg` fits identity-link OLS regression to MCF or AUMCF
+pseudo-values and reports the second-order-corrected covariance. The
+underlying ordinary `lm` fit remains available in the `fit` component.
+
+``` r
+pseudo_fit <- MCC::PseudoReg(
+  ~ arm,
+  data = data,
+  tau = 4,
+  type = "AUC"
+)
+summary(pseudo_fit)
+```
+
+    ## Second-order-corrected pseudo-value regression
+    ## Estimand: AUMCF  at tau = 4
+    ##
+    ##         term   estimate std_error         z      p_value     lower     upper
+    ##  (Intercept)  5.6343905 0.6052031  9.309916 1.279333e-20  4.448214 6.8205668
+    ##          arm -0.9304761 0.7929686 -1.173409 2.406320e-01 -2.484666 0.6237138
+
+``` r
+vcov(pseudo_fit)
+```
+
+    ##             (Intercept)        arm
+    ## (Intercept)   0.3662708 -0.3681021
+    ## arm          -0.3681021  0.6287992
+
 #### Adjusted AUCs
 
 With continuous covariates, `CompareAUCs` uses an augmentation
@@ -509,7 +540,7 @@ q_uni <- MCC::PlotMCFs(
 q_uni
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 See the [plotting
 vignette](https://github.com/zrmacc/MCC/blob/master/vignettes/plotting.pdf)
@@ -678,7 +709,7 @@ q_mv <- MCC::PlotMvMCFs(
 q_mv
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 See the [plotting
 vignette](https://github.com/zrmacc/MCC/blob/master/vignettes/plotting.pdf)

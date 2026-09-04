@@ -78,11 +78,12 @@ FormatSubj <- function(df, cens_after_last = TRUE) {
       data$strata <- 1
     }
   }
-  data <- ConvertIdxToInt(data)
   if (is.null(jump_weights)) {
-    jump_weights <- 1
+    data$jump_weights <- 1
+  } else {
+    data$jump_weights <- jump_weights
   }
-  data$jump_weights <- jump_weights
+  data <- ConvertIdxToInt(data)
   return(data)
 }
 
@@ -175,6 +176,13 @@ FormatData <- function(
       )
   }
 
+  # Attach row-level quantities before index conversion, which may reorder rows.
+  if (is.null(jump_weights)) {
+    data$jump_weights <- 1
+  } else {
+    data$jump_weights <- jump_weights
+  }
+
   # Ensure index is an integer.
   data <- ConvertIdxToInt(data)
   
@@ -186,13 +194,7 @@ FormatData <- function(
   } else if(is.null(covars) & !is.null(strata)) {
     data$strata <- strata
   }
-  
-  # Add jump weights.
-  if (is.null(jump_weights)) {
-    data$jump_weights <- 1
-  } else {
-    data$jump_weights <- jump_weights
-  }
+  data <- data[, c(setdiff(names(data), "jump_weights"), "jump_weights")]
   
   # Crate an indicator of an observation-terminating event.
   # Sort by index > time > terminal indicator.

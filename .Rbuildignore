@@ -20,3 +20,4 @@ README
 ^R/\.Rhistory$
 ^src/\.Rhistory$
 ^src/\.DS_Store$
+^development$

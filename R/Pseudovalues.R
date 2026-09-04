@@ -31,6 +31,35 @@ GenPseudo <- function(
     jump_weights = NULL
 ) {
 
+  prepared <- .PreparePseudo(
+    data = data,
+    cens_after_last = cens_after_last,
+    idx_name = idx_name,
+    status_name = status_name,
+    tau = tau,
+    time_name = time_name,
+    type = type,
+    jump_weights = jump_weights
+  )
+  return(prepared$pseudo)
+}
+
+
+#' Prepare pseudo-values and their process inputs
+#'
+#' @return Internal list used by \code{GenPseudo()} and \code{PseudoReg()}.
+#' @noRd
+.PreparePseudo <- function(
+    data,
+    cens_after_last = TRUE,
+    idx_name = "idx",
+    status_name = "status",
+    tau = NULL,
+    time_name = "time",
+    type = c("MCF", "AUC"),
+    jump_weights = NULL
+) {
+
   type <- match.arg(type)
 
   # Rename columns as necessary.
@@ -102,5 +131,14 @@ GenPseudo <- function(
     dplyr::select(-idx) %>%
     dplyr::relocate(orig_idx) %>%
     dplyr::rename(idx = orig_idx)
-  return(out)
+  return(list(
+    pseudo = out,
+    process_data = data,
+    idx_map = idx_map,
+    mcf = mcf,
+    parameter = param,
+    tau = tau,
+    tau_effective = if (type == "MCF") tau_eff else tau,
+    type = type
+  ))
 }

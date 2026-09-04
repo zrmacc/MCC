@@ -84,6 +84,10 @@ CalcMCFCpp <- function(idx, status, time, weights, calc_var = TRUE) {
     .Call(`_MCC_CalcMCFCpp`, idx, status, time, weights, calc_var)
 }
 
+H12MCFCpp <- function(idx, status, time, weights, design, grid_time, nar, death, event_weighted, surv, tau, integrate) {
+    .Call(`_MCC_H12MCFCpp`, idx, status, time, weights, design, grid_time, nar, death, event_weighted, surv, tau, integrate)
+}
+
 #' Calculate AUC Influence Function Contributions 
 #'
 #' @param event_rate Event rate. 

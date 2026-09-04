@@ -88,6 +88,28 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// H12MCFCpp
+arma::mat H12MCFCpp(const arma::colvec idx, const arma::colvec status, const arma::colvec time, const arma::colvec weights, const arma::mat design, const arma::colvec grid_time, const arma::colvec nar, const arma::colvec death, const arma::colvec event_weighted, const arma::colvec surv, const double tau, const bool integrate);
+RcppExport SEXP _MCC_H12MCFCpp(SEXP idxSEXP, SEXP statusSEXP, SEXP timeSEXP, SEXP weightsSEXP, SEXP designSEXP, SEXP grid_timeSEXP, SEXP narSEXP, SEXP deathSEXP, SEXP event_weightedSEXP, SEXP survSEXP, SEXP tauSEXP, SEXP integrateSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::colvec >::type idx(idxSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type status(statusSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< const arma::mat >::type design(designSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type grid_time(grid_timeSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type nar(narSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type death(deathSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type event_weighted(event_weightedSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec >::type surv(survSEXP);
+    Rcpp::traits::input_parameter< const double >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< const bool >::type integrate(integrateSEXP);
+    rcpp_result_gen = Rcpp::wrap(H12MCFCpp(idx, status, time, weights, design, grid_time, nar, death, event_weighted, surv, tau, integrate));
+    return rcpp_result_gen;
+END_RCPP
+}
 // PsiAUC
 SEXP PsiAUC(const arma::colvec event_rate, const arma::colvec grid_time, const arma::colvec idx, const arma::colvec haz, const arma::colvec nar, const arma::colvec status, const arma::colvec surv, const double tau, const arma::colvec time, const arma::colvec weights);
 RcppExport SEXP _MCC_PsiAUC(SEXP event_rateSEXP, SEXP grid_timeSEXP, SEXP idxSEXP, SEXP hazSEXP, SEXP narSEXP, SEXP statusSEXP, SEXP survSEXP, SEXP tauSEXP, SEXP timeSEXP, SEXP weightsSEXP) {
@@ -115,6 +137,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_MCC_SimMvDataCpp", (DL_FUNC) &_MCC_SimMvDataCpp, 5},
     {"_MCC_PsiMCF", (DL_FUNC) &_MCC_PsiMCF, 10},
     {"_MCC_CalcMCFCpp", (DL_FUNC) &_MCC_CalcMCFCpp, 5},
+    {"_MCC_H12MCFCpp", (DL_FUNC) &_MCC_H12MCFCpp, 12},
     {"_MCC_PsiAUC", (DL_FUNC) &_MCC_PsiAUC, 10},
     {NULL, NULL, 0}
 };
